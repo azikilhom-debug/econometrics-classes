@@ -1,0 +1,308 @@
+Toshkent xalqaro
+universiteti Akademik 
+ishlar bo‘yicha prorektor
+A.T. Absalamov
+________________________
+2025 yil “___” _________
+EKONOMETRIKA
+FANINING O‘QUV DASTURI (SILLABUS)
+Akademik daraja
+Bakalavr
+Ta’lim
+yo’nalishi
+60410100-Iqtisodiyot
+Fan kodi
+DAT301
+Ta’lim shakli
+Kunduzgi
+Semestr
+5-semestr
+Modulning davomiyligi
+15 hafta
+Kredit hajmi
+ECTS: 5
+Tayyorladi
+TIU
+Ajratilgan akademik soat hajmi
+150
+Talabalarni erkin qabul qilish vaqti
+Chorshanba kunlari,
+ soat 14.00-18.00
+60
+(aud)
+90
+(must)
+Tuzuvchi:</w:r><w:r w:rsidRPr="00EE0116"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:b/><w:bCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ"/></w:rPr><w:tab/></w:r><w:r w:rsidR="00AA6107" w:rsidRPr="00EE0116"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Calibri"/><w:b/><w:bCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ" w:eastAsia="x-none"/></w:rPr><w:t xml:space="preserve"> Xannayev Sh.Q. 
+Toshkent xalqaro universiteti prorektori, PhD. dots.
+        Taqrizchilar:</w:r><w:r w:rsidR="00AF42D9" w:rsidRPr="00EE0116"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:b/><w:bCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ"/></w:rPr><w:tab/><w:t>1. Komilov S.A.
+                                                  Toshkent xalqaro universiteti, kafedra o‘qituvchisi
+</w:r><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ"/></w:rPr><w:tab/></w:r><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ"/></w:rPr><w:tab/></w:r><w:r w:rsidRPr="00EE0116"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:b/><w:bCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ"/></w:rPr><w:tab/></w:r><w:bookmarkEnd w:id="0"/><w:r w:rsidR="00E94EA7" w:rsidRPr="00EE0116"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Calibri"/><w:b/><w:bCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="en-US" w:eastAsia="x-none"/></w:rPr><w:t xml:space="preserve">2. Raximov E.N. 
+Toshkent Iqtisodiyot universiteti, Makroiqtisodiyot kafedrasi dots.,PhD.
+Ushbu fan sillabusi Toshkent xalqaro universiteti Kengashining 2025-yil 25-iyuldagi
+ 12-son majlisida muhokama qilindi.
+Fan bo`yicha talabaning bilimi, ko`nikmasi va
+malakasiga qo`yilgan talablar
+Mazkur fanni o`rganish davomida talaba:
+<w:tab w:val="left" w:pos="993"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:right="56" w:firstLine="851"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Times New Roman"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Times New Roman"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t>-Ekonometrikaning mazmuni, maqsadi va vazifalarini tushunadi, iqtisodiy jarayonlarni miqdoriy tahlil qilishda ekonometrik modellashtirishning ahamiyatini bilib oladi.
+<w:tab w:val="left" w:pos="993"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:right="56" w:firstLine="851"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Times New Roman"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Times New Roman"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ"/></w:rPr><w:t>-Ekonometrik modellarni tuzish bosqichlari: spetsifikatsiya, parametrlarni baholash, verifikatsiya va prognozlash jarayonlarini izohlab bera oladi.
+<w:tab w:val="left" w:pos="993"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:right="56" w:firstLine="851"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Times New Roman"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Times New Roman"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ"/></w:rPr><w:t>-Ekonometrik modellarning axborot ta’minoti, iqtisodiy ma’lumotlarning     statistik tabiati, bog‘liq va bog‘liq bo‘lmagan o‘zgaruvchilarni to‘g‘ri tanlay oladi.
+<w:tab w:val="left" w:pos="993"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:right="56" w:firstLine="851"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Times New Roman"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Times New Roman"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="en-US"/></w:rPr><w:t>-Juft va ko‘p omilli korrelyatsion-regression tahlil usullaridan foydalana oladi, eng kichik kvadratlar usuli orqali model parametrlarini baholashni o‘rganadi.
+<w:tab w:val="left" w:pos="993"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:right="56" w:firstLine="851"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Times New Roman"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Times New Roman"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ"/></w:rPr><w:t>-Vaqtli qatorlar va dinamik modellarni tahlil qilish, prognozlash va ularning tarkibiy elementlarini (trend, mavsumiylik, sikliklik) aniqlash ko‘nikmasini hosil qiladi.
+<w:tab w:val="left" w:pos="993"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:right="56" w:firstLine="851"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Times New Roman"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Times New Roman"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="en-US"/></w:rPr><w:t>-Tenglamalar tizimi asosidagi modellar, talab va taklif, ishlab chiqarish funksiyalari kabi amaliy ekonometrik modellardan foydalanishni bilib oladi.
+<w:tab w:val="left" w:pos="993"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:right="56" w:firstLine="851"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Times New Roman"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Times New Roman"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ"/></w:rPr><w:t>-Nazariy bilimlarni amaliyotda qo‘llash uchun EViews dasturida iqtisodiy ma’lumotlarni kiritish, regressiya modeli tuzish va natijalarni talqin qilishni o‘rganadi.
+<w:tab w:val="left" w:pos="993"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:right="56"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Times New Roman"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Times New Roman"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ"/></w:rPr><w:t xml:space="preserve">              -Talabalik davrida iqtisodiy masalalarni hal qilish uchun miqdoriy tahlil, modellashtirish va prognozlash asosiy ko‘nikmalarini shakllantiradi, mustaqil ekonometrik tadqiqot olib borish malakasini egallashi taminlanadi.
+<w:tab w:val="left" w:pos="993"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:right="56" w:firstLine="851"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Times New Roman"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Times New Roman"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ"/></w:rPr><w:t xml:space="preserve">Fanga ajratilgan soatlar. Fanga ajratilgan umumiy soatlar hajmi 150  akademik soat bo‘lib, shundan auditoriya mashg‘ulotlari 60 soatni, mustaqil ta’lim 90 soatni tashkil etadi. Auditoriya mashg‘ulotlarida jami 60 soat (ma’ruza, amaliy/seminar, laboratoriya) fan mavzulari o‘qitiladi va yakuniy imtihonlar uchun 2 soat vaqt ajratilgan.
+Fanni o`zlashtirish va mustaqil o`qib-o`rganish uchun 
+asosiy adabiyotlar ro`yxati
+<w:tab w:val="left" w:pos="993"/></w:tabs><w:rPr><w:rFonts w:ascii="Cambria" w:eastAsia="Batang" w:hAnsi="Cambria" w:cs="Times New Roman"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ" w:eastAsia="ru-RU"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Times New Roman"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ"/></w:rPr><w:t>Jeffrey M. Wooldridge. Econometrics A modern approach 5th EDITION 2. – T.: 2024
+<w:tab w:val="left" w:pos="993"/></w:tabs><w:rPr><w:rFonts w:ascii="Cambria" w:eastAsia="Batang" w:hAnsi="Cambria" w:cs="Times New Roman"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ" w:eastAsia="ru-RU"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria" w:cs="Times New Roman"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="en-US"/></w:rPr><w:t>Stock, J. H., & Watson, M. W. (2020). Introduction to econometrics (4th ed.). Pearson Education.
+Ma’ruza va amaliyot mashg‘ulotlari rejasi
+№
+Mavzular
+Dars mazmuni
+Ma’ruza hajmi
+Amaliy mash
+g`ulot hajmi
+Jami o‘quv soatlari hajmi
+Ekonometrik modellashtirish asoslari
+1.Ekonometrikaga kirish. Fanning maqsadi va vazifalari 
+2.Iqtisodiyotni ekonometrik modellashtirishning zarurligi 
+2
+2
+4
+Ekonometrik model tushunchasi va modellashtirish bosqichlari
+1.Ekonometrik model tushunchasi, turlari va undagi o’zgaruvchilar 
+2.Ekonometrik modellashtirish bosqichlari
+2
+2
+4
+Ekonometrik modellarning axborot ta’minoti
+1.Iqtisodiy ma’lumotlarning statistik tabiati
+2.Bog’liq va bog’liq bo’lmagan o’zgaruvchilarni tanlash
+3.Ekonometrik modellarni tuzishda qatnashadigan iqtisodiy ma’lumotlarga qo’yiladigan talablar
+2
+2
+4
+Ekonometrikada ehtimollar nazariyasi va matematik statistikaning asosiy tushunchalari
+1.Ehtimollar nazariyasi va matematik statistikaning asosiy tushunchalari 
+2.To’plamlar va ularning xossalari 
+3.Diskret va uzluksiz tasodifiy miqdorlar 
+4.Tasodifiy miqdorlarning xarakteristikalarini hisoblash
+2
+2
+4
+Korrelyatsion-regression tahlil
+1.Iqtisodiy-ijtimoiy jarayonlarda bog’likliklar turlarini o’rganish 2.Korrelyatsiya koeffitsientining turlari va hisoblash usullari 
+3.Chiziqli va chiziqsiz regression bog’lanishlar 
+4.Korrelyatsion-regression tahlilda eng kichik kvadratlar usulining qo’llanilishi
+2
+2
+4
+Regressiyaning xususiy tenglamasi
+1.Regressiyaning xususiy tenglamasining yozilishi va elastiklikning xususiy
+koeffitsientini aniqlash
+2.Ko’p omilli korrelyatsiya
+3.Xususiy korrelyatsiya
+2
+2
+4
+Ekonometrik modellarni baholash
+1.Ekonometrik modellarning iqtisodiy tahlilida verifikatsiya
+bosqichining ahamiyati
+2.Ekonometrik modellar sifati va ahamiyatini mezonlar bo’yicha baholash 
+3.Regressiya tenglamaning parametrlarni baholarining xususiyatlari
+2
+2
+4
+Vaqtli qatorlar
+1.Vaqtli qatorlar to’g’risida umumiy tushunchalar 
+2.Multiplikativ va additiv modellarning tarkibiy tuzilishi 
+3.Vaqtli qatorlarni tekislash usullari
+4
+4
+8
+Dinamik ekonometrik modellar
+1.Dinamik ekonometrik modellarning umumiy xarakteristikalari 2.Avtoregressiya modeli va uning parametrlarini baholash 3.Taqsimlangan lagli modellarning xarakteristikasi
+2
+2
+4
+Tenglamalar tizimi ko’rinishidagi ekonometrik model
+1.Bir-biriga bog’liq tenglamalar tizimini tushunchalari va turlari 2.Ekonometrik tenglamlar tizimi parametrlarini hisoblash uslubiyoti 3.Ekonometrik tenglamalar tizimini indentifikatsiyalash muammolari
+2
+2
+4
+Amaliy ekonometrik modellar 1
+1.Iqtisodiy o’sish jarayonini ishlab chiqarish funktsiyalari yordamida tadqiq etish 
+2.Ishlab chiqarish funktsiyalarining xarakteristikalari
+2
+2
+4
+Amaliy ekonometrik modellar 2
+1.Talab va taklifning ekonometrik modellari 
+2.Makroiqtisodiy ekonometrik modellarning turlari va ularni iqtisodiy tahlilda qo’llanilishi
+2
+2
+4
+Iqtisodiy ko’rsatkichlarni prognozlashda ekonometrik
+Modellardan foydalanish 1
+1.Ijtimoiy-iqtisodiy prognozlashning umumiy tushunchalari va obyektlari 2.Prognozlash usullari va ularning turlari 
+2
+2
+4
+Iqtisodiy ko’rsatkichlarni prognozlashda ekonometrik
+Modellardan foydalanish 2
+1.Ekonometrik tenglamalar tizimi yordamida prognozlash uslubiyoti
+2
+2
+4
+Yakuniy imtihon
+Jami
+30
+30
+60
+Mustaqil ta’lim (MT) topshiriqlari
+№
+Mustaqil ta’lim (mt)
+Soat
+Ekonometrik modellashtirish asoslari
+6
+Ekonometrik modellarning axborot ta’minoti
+6
+Ekonometrikada ehtimollar nazariyasi va matematik statistikaning asosiy tushunchalari
+6
+Juft korrelyatsion-regression tahlil
+6
+ Ko’p omilli ekonometrik tahlil
+6
+Regressiyaning xususiy tenglamasi
+6
+Ekonometrik modellarni baholash
+6
+Vaqtli qatorlar
+6
+Dinamik ekonometrik modellar
+6
+Tenglamalar tizimi ko’rinishidagi ekonometrik model
+6
+Amaliy ekonometrik modellar 1
+6
+Amaliy ekonometrik modellar 2
+6
+Iqtisodiy ko’rsatkichlarni prognozlashda ekonometrik
+Modellardan foydalanish 1
+6
+Iqtisodiy ko’rsatkichlarni prognozlashda ekonometrik
+Modellardan foydalanish 2
+6
+O‘zbekistonda inflyatsiya darajasiga pul massasining o‘sish ta’sir
+6
+Jami
+90 
+<w:tab w:val="left" w:pos="709"/><w:tab w:val="left" w:pos="993"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:right="56" w:firstLine="567"/><w:jc w:val="center"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:b/><w:bCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:b/><w:bCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t>FANNI BAHOLASH MEZONI VA REJASI
+<w:tab w:val="left" w:pos="709"/><w:tab w:val="left" w:pos="993"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:right="56" w:firstLine="567"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t>Talabalar bilimini baholash turlari.
+<w:tab w:val="left" w:pos="709"/><w:tab w:val="left" w:pos="993"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:right="56" w:firstLine="567"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t xml:space="preserve">Mazkur fandan talabalar bilimini baholashda 3 ta nazorat turidan foydalaniladi. Darsga qatnashish (DV), oraliq imtihon (OI), yakuniy imtihon (YI).
+<w:tab w:val="left" w:pos="709"/><w:tab w:val="left" w:pos="993"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:right="56" w:firstLine="567"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t>Darsga qatnashish (DV): Talabaning darsga kelishi, mashg‘ulotlarda faolligi va ekspress tarzda berilgan savollarga bergan javobi baholanib boriladi.
+<w:tab w:val="left" w:pos="709"/><w:tab w:val="left" w:pos="993"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:right="56" w:firstLine="567"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t xml:space="preserve">1. Joriy baholash (JB): Ushbu nazorat turi semestr davomida to‘planib boriladi va quyidagilardan tarkib topadi: 
+<w:tab w:val="left" w:pos="709"/><w:tab w:val="left" w:pos="993"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:right="56" w:firstLine="567"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t>2. Loyiha ishi. Fanning xususiyatidan kelib chiqib, talaba kichik guruhlarga bo‘lingan holda berilgan vazifalarni taqdimot/media/yozma/viziual ko‘rinishda himoya qiladi. Guruh a’zolari (komanda) uyushgan holda pedagog-o‘qituvchi tomonidan berilgan topshiriqni bajarib kelishadi. Guruhga qo‘yilgan umumiy ball, har bir a’zo-talabaga qo‘yilgan individual ball sifatida qayd etiladi. 
+<w:tab w:val="left" w:pos="709"/><w:tab w:val="left" w:pos="993"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:right="56" w:firstLine="567"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t>3. Vazifa/topshiriqlar. Har bir talaba individual tarzda o‘qituvchi tomonidan berilgan muammoli vaziyat/masala/topshiriqni Esse/Hisobot (1000 so‘zdan kam bo‘lmagan)  ko‘rinishida bajaradi. 
+<w:tab w:val="left" w:pos="709"/><w:tab w:val="left" w:pos="993"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:right="56" w:firstLine="567"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t>Oraliq imtihon (OI). Ushbu imtihon turi semestrning (8-haftasida) belgilangan kunida dars mashg‘uloti vaqtida (test) olinadi. Unda quyidagilar aks etadi:
+<w:tab w:val="left" w:pos="709"/><w:tab w:val="left" w:pos="993"/><w:tab w:val="left" w:pos="1276"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:left="0" w:right="56" w:firstLine="567"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t>Test. Modulning 8-haftasiga qadar o‘tilgan mavzular asosida uch darajali testlar asosida.
+<w:tab w:val="left" w:pos="709"/><w:tab w:val="left" w:pos="993"/><w:tab w:val="left" w:pos="1276"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:left="0" w:right="56" w:firstLine="567"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t>Atamalar izohi. Fanga doir ijtimoiy-iqtisodiy qonun-qoidalar, kategoriyalarning ma’nosi, tavsifi yozma ko‘rinishda izohlanishi so‘raladi.
+<w:tab w:val="left" w:pos="709"/><w:tab w:val="left" w:pos="993"/><w:tab w:val="left" w:pos="1276"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:left="0" w:right="56" w:firstLine="567"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t>Muammoli vaziyat. Masala yoki muammolarni hal etish/yechish bilan bog‘liq vazifalar(2 ta yoki undan ko‘p).
+Yakuniy imtihon (YI). Modulning oxirgi (16-haftada) haftasida test, atamalar izohi va muammoli vaziyat ko‘rinishida amalga oshiriladi (yozma shaklda).
+Talabalar bilimini baholash mezoni
+№
+Nazorat turlar
+Izoh
+Ball
+O‘tkazilish vaqti
+Joriy baholash (JB)
+1.
+Davomat
+Mashg‘ulotlarda ishtiroki
+15
+1-15 hafta
+2.
+Loyiha ishi
+Taqdimot/media/yozma/viziual shakllarda amalga oshiriladi
+10
+1-15 hafta
+3.
+Vazifa/topshiriqlar
+Esse /hisobot ko‘rinishida rasmiylashtiriladi
+15
+1-15 hafta
+Jami
+40
+Oraliq imtihon (OI)
+1.
+Test
+Fanga doir 5-10 test
+5
+8 hafta
+Atamalar izohi
+Fanga doir 5-10 ta atamalar izohi
+5
+Muammoli vaziyat (case study)
+Masala/misol/muammoli topshiriqlar
+10
+Jami
+20
+Yakuniy imtihon (YI)
+1.
+Test
+Fanga doir 5-10 test
+10
+16 hafta
+Atamalar izohi
+Fanga doir 5-10 ta atamalar izohi
+10
+Muammoli vaziyat (case study)
+Masala/misol/muammoli topshiriqlar
+20
+Jami
+40
+Umumiy
+100
+IMTIHONGA QO‘YILGAN TALAB VA KO‘RSATMALAR
+<w:tab w:val="left" w:pos="-8614"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:left="299" w:hanging="142"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:eastAsia="Times New Roman" w:hAnsi="Cambria"/><w:i/><w:iCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:eastAsia="Times New Roman" w:hAnsi="Cambria"/><w:i/><w:iCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t>Talaba imtihon nazorati qoidalarini buzgan hollarda, mazkur fandan imtihon bali bekor qilinishi haqida ogohlantiriladi.
+<w:tab w:val="left" w:pos="-8614"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:left="299" w:hanging="142"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:eastAsia="Times New Roman" w:hAnsi="Cambria"/><w:i/><w:iCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:eastAsia="Times New Roman" w:hAnsi="Cambria"/><w:i/><w:iCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t>Komissiya a’zosi imtihon boshlanishini e’lon qilgunga qadar imtihon varag‘ini ochish ta’qiqlanadi.
+<w:tab w:val="left" w:pos="-8614"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:left="299" w:hanging="142"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:eastAsia="Times New Roman" w:hAnsi="Cambria"/><w:i/><w:iCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:eastAsia="Times New Roman" w:hAnsi="Cambria"/><w:i/><w:iCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t>Talaba uyali yoki boshqa aloqa vositalari, gadjetlarni o‘chirib, komissiya a’zosi ko‘rsatmasiga binoan o‘zidan uzoqlikda saqlashi shart. Kitob, manuskript, daftar va boshqa ko‘maklashuvchi materiallardan foydalanish mumkin emas.
+<w:tab w:val="left" w:pos="-8614"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:left="299" w:hanging="142"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:eastAsia="Times New Roman" w:hAnsi="Cambria"/><w:i/><w:iCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:eastAsia="Times New Roman" w:hAnsi="Cambria"/><w:i/><w:iCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t>Talabalar bir-biri bilan gaplashishi, imtihon varaqlarini ko‘rsatishi, ko‘chirtirishi, boshqalarni chalg‘itishi ma’n etiladi.
+<w:tab w:val="left" w:pos="-8614"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:left="567" w:hanging="283"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:eastAsia="Times New Roman" w:hAnsi="Cambria"/><w:i/><w:iCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:eastAsia="Times New Roman" w:hAnsi="Cambria"/><w:i/><w:iCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t xml:space="preserve">Oziq-ovqat va ichimliklarni auditoriyaga olib kirishi mumkin emas. Shifokor ko‘rsatmasiga binoan dori-darmon, kichik idishdagi suv bundan mustasno. 
+<w:tab w:val="left" w:pos="-8614"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:left="567" w:hanging="283"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:eastAsia="Times New Roman" w:hAnsi="Cambria"/><w:i/><w:iCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:eastAsia="Times New Roman" w:hAnsi="Cambria"/><w:i/><w:iCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t xml:space="preserve">Auditoriyadan ruxsatsiz chiqish mumkin emas. Xususan, imtihonning birinchi va oxirgi 10 minutida auditoriyadan chiqish ta’qiqlanadi. Talaba imtihon varaqasini muddatidan oldin topshirib chiqib ketgan holatda qayta auditoriyaga qo‘yilmaydi. 
+<w:tab w:val="left" w:pos="-8614"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:left="567" w:hanging="284"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:eastAsia="Times New Roman" w:hAnsi="Cambria"/><w:i/><w:iCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:eastAsia="Times New Roman" w:hAnsi="Cambria"/><w:i/><w:iCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t>Komissiya a’zosi imtihon tugashini e’lon qilganidan so‘ng, talaba yozishni to‘xtatadi va imtihon varaqlari yig‘ilgunga qadar auditoriyani tark etmaydi.
+ECTS kredit ta’lim tizimi asosida baholash
+tavsifi
+Baho
+ Foiz
+Shkala(GPA)
+A+
+95-100
+4.5
+A
+90-94
+4
+B+
+80-89
+3.5
+B
+70-79
+3
+C+
+65-69
+2.5
+C
+60-64
+2
+F
+0-59
+0
+<w:tab w:val="left" w:pos="851"/></w:tabs><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:ind w:left="567" w:firstLine="567"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:eastAsia="Times New Roman" w:hAnsi="Cambria"/><w:b/><w:bCs/><w:i/><w:color w:val="000000"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="000C782A"><w:rPr><w:rFonts w:ascii="Cambria" w:eastAsia="Times New Roman" w:hAnsi="Cambria"/><w:b/><w:bCs/><w:i/><w:color w:val="000000"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t>Izoh:
+<w:tab w:val="left" w:pos="851"/></w:tabs><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:ind w:left="567" w:firstLine="567"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:eastAsia="Times New Roman" w:hAnsi="Cambria"/><w:i/><w:color w:val="000000"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:eastAsia="Times New Roman" w:hAnsi="Cambria"/><w:i/><w:color w:val="000000"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t>Talaba 0-59 oralig‘ida o‘zlashtirish ko‘rsatkichiga va mazkur fanga ajratilgan o`quv soatining 33% (20 soat)ni sababsiz dars qoldirsa o‘qiyotgan semestrida mazkur fandan o‘zlashtirmagan (feyl) hisoblanadi.
+<w:tab w:val="left" w:pos="851"/></w:tabs><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:ind w:left="567" w:firstLine="567"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:eastAsia="Times New Roman" w:hAnsi="Cambria"/><w:i/><w:color w:val="000000"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:eastAsia="Times New Roman" w:hAnsi="Cambria"/><w:i/><w:color w:val="000000"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t>O‘zlashtirilmagan fanlarni qayta o‘zlashtirish uchun talaba o‘rnatilgan tartibda fan o‘qituvchisi tomonidan berilgan topshiriqlarni bajarishi zarur.
+<w:tab w:val="left" w:pos="709"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:b/><w:bCs/><w:iCs/><w:noProof/><w:color w:val="000000"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="en-US"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:iCs/><w:noProof/><w:color w:val="000000"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:tab/></w:r><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:iCs/><w:noProof/><w:color w:val="000000"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:tab/></w:r><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:b/><w:bCs/><w:iCs/><w:noProof/><w:color w:val="000000"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="en-US"/></w:rPr><w:t xml:space="preserve">Akademik ishlar 
+<w:tab w:val="left" w:pos="709"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:b/><w:bCs/><w:iCs/><w:color w:val="000000"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="en-US"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:b/><w:bCs/><w:iCs/><w:noProof/><w:color w:val="000000"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="en-US"/></w:rPr><w:tab/></w:r><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:b/><w:bCs/><w:iCs/><w:noProof/><w:color w:val="000000"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="en-US"/></w:rPr><w:tab/><w:t xml:space="preserve">departamenti boshligʻi        </w:r><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:b/><w:bCs/><w:iCs/><w:noProof/><w:color w:val="000000"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="en-US"/></w:rPr><w:tab/></w:r><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:b/><w:bCs/><w:iCs/><w:noProof/><w:color w:val="000000"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="en-US"/></w:rPr><w:tab/></w:r><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:b/><w:bCs/><w:iCs/><w:noProof/><w:color w:val="000000"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="en-US"/></w:rPr><w:tab/></w:r><w:r w:rsidR="004D3EAF" w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:b/><w:bCs/><w:iCs/><w:noProof/><w:color w:val="000000"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="en-US"/></w:rPr><w:t xml:space="preserve">  A.O. Bozorov
+<w:tab w:val="left" w:pos="5940"/><w:tab w:val="left" w:pos="8325"/></w:tabs><w:spacing w:after="0"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:b/><w:bCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:b/><w:bCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t xml:space="preserve">        
+<w:tab w:val="left" w:pos="851"/></w:tabs><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:ind w:left="567" w:firstLine="567"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:eastAsia="Times New Roman" w:hAnsi="Cambria"/><w:i/><w:color w:val="000000"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Cyrl-UZ"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:b/><w:bCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t xml:space="preserve">      Kafedra mudiri <w:t xml:space="preserve">                   </w:r><w:r w:rsidR="00C25B08" w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:b/><w:bCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:tab/></w:r><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:b/><w:bCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t xml:space="preserve">  </w:r><w:r w:rsidR="00C81F49" w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:b/><w:bCs/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="uz-Latn-UZ"/></w:rPr><w:t xml:space="preserve">               I.X. Abduraxmonov
+<w:tab w:val="left" w:pos="851"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:ind w:left="567" w:right="283"/><w:jc w:val="both"/><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="en-US"/></w:rPr></w:pPr><w:r w:rsidRPr="00662A2D"><w:rPr><w:rFonts w:ascii="Cambria" w:hAnsi="Cambria"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="en-US"/></w:rPr><w:tab/><w:t xml:space="preserve">                                                
