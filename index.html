@@ -3,8 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Эконометрика · TIU Learning Hub</title>
-<meta name="description" content="Курс эконометрики: лекции, практика и учебные материалы для студентов TIU.">
 <script src="./support.js"></script>
 </head>
 <body>
@@ -33,14 +31,6 @@
 body{margin:0;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body)}
 a{color:var(--color-accent-700);text-decoration:none;border-bottom:1px solid var(--color-accent-300)}
 a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
-@media (max-width: 760px){
-  body{overflow:auto}
-  nav{position:relative!important;flex:1 1 100%!important;min-width:0!important;max-height:none!important;border-right:0!important;border-bottom:2px solid var(--color-divider)}
-  main{flex:1 1 100%!important;max-height:none!important;overflow:visible!important}
-  article{padding:34px 20px 72px!important}
-  article h1{font-size:30px!important}
-  article table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
-}
 </style>
 </helmet>
 
@@ -50,10 +40,14 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
     <div style="padding:28px 24px 20px;border-bottom:2px solid var(--color-divider)">
       <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:10px">DAT301 · 5 семестр</div>
       <div style="font-family:var(--font-heading);font-weight:800;font-size:30px;line-height:1.05;letter-spacing:-.02em">Эконометрика</div>
-      <div style="font-size:12.5px;color:var(--color-neutral-700);margin-top:10px;line-height:1.45">Курс лекций и практикума.<br>Первые две недели — 6 занятий.</div>
+      <div style="font-size:12.5px;color:var(--color-neutral-700);margin-top:10px;line-height:1.45">Полный курс: 14 тем, 60 аудиторных и 90 самостоятельных часов. Лекция и практикум в каждой теме.</div>
     </div>
 
-    <div style="padding:16px 24px 8px;font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700)">Неделя 1</div>
+        <button onClick="{{ goPlan }}" style="display:flex;gap:12px;width:100%;text-align:left;align-items:flex-start;background:{{ bgPlan }};border:0;border-top:1px solid var(--color-neutral-300);padding:13px 24px;font-family:var(--font-body);color:var(--color-text);cursor:pointer" style-hover="background:var(--color-accent-100)">
+      <span style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent-700);padding-top:2px">00</span>
+      <span style="font-size:13.5px;line-height:1.35">Обзор курса, часы и оценивание</span>
+    </button>
+    <div style="padding:20px 24px 8px;border-top:2px solid var(--color-divider);font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700)">Модуль 1 · Основы и данные</div>
     <button onClick="{{ go1 }}" style="display:flex;gap:12px;width:100%;text-align:left;align-items:flex-start;background:{{ bg1 }};border:0;border-top:1px solid var(--color-neutral-300);padding:13px 24px;font-family:var(--font-body);color:var(--color-text);cursor:pointer" style-hover="background:var(--color-accent-100)">
       <span style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent-700);padding-top:2px">01</span>
       <span style="font-size:13.5px;line-height:1.35">Основы эконометрического моделирования</span>
@@ -66,19 +60,52 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
       <span style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent-700);padding-top:2px">03</span>
       <span style="font-size:13.5px;line-height:1.35">Информационное обеспечение моделей</span>
     </button>
-
-    <div style="padding:20px 24px 8px;border-top:2px solid var(--color-divider);font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700)">Неделя 2</div>
     <button onClick="{{ go4 }}" style="display:flex;gap:12px;width:100%;text-align:left;align-items:flex-start;background:{{ bg4 }};border:0;border-top:1px solid var(--color-neutral-300);padding:13px 24px;font-family:var(--font-body);color:var(--color-text);cursor:pointer" style-hover="background:var(--color-accent-100)">
       <span style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent-700);padding-top:2px">04</span>
       <span style="font-size:13.5px;line-height:1.35">Вероятность и математическая статистика</span>
     </button>
+    <div style="padding:20px 24px 8px;border-top:2px solid var(--color-divider);font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700)">Модуль 2 · Регрессионный анализ</div>
     <button onClick="{{ go5 }}" style="display:flex;gap:12px;width:100%;text-align:left;align-items:flex-start;background:{{ bg5 }};border:0;border-top:1px solid var(--color-neutral-300);padding:13px 24px;font-family:var(--font-body);color:var(--color-text);cursor:pointer" style-hover="background:var(--color-accent-100)">
       <span style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent-700);padding-top:2px">05</span>
       <span style="font-size:13.5px;line-height:1.35">Корреляционно-регрессионный анализ</span>
     </button>
-    <button onClick="{{ go6 }}" style="display:flex;gap:12px;width:100%;text-align:left;align-items:flex-start;background:{{ bg6 }};border:0;border-top:1px solid var(--color-neutral-300);border-bottom:2px solid var(--color-divider);padding:13px 24px;font-family:var(--font-body);color:var(--color-text);cursor:pointer" style-hover="background:var(--color-accent-100)">
+    <button onClick="{{ go6 }}" style="display:flex;gap:12px;width:100%;text-align:left;align-items:flex-start;background:{{ bg6 }};border:0;border-top:1px solid var(--color-neutral-300);padding:13px 24px;font-family:var(--font-body);color:var(--color-text);cursor:pointer" style-hover="background:var(--color-accent-100)">
       <span style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent-700);padding-top:2px">06</span>
       <span style="font-size:13.5px;line-height:1.35">Частное уравнение регрессии</span>
+    </button>
+    <button onClick="{{ go7 }}" style="display:flex;gap:12px;width:100%;text-align:left;align-items:flex-start;background:{{ bg7 }};border:0;border-top:1px solid var(--color-neutral-300);padding:13px 24px;font-family:var(--font-body);color:var(--color-text);cursor:pointer" style-hover="background:var(--color-accent-100)">
+      <span style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent-700);padding-top:2px">07</span>
+      <span style="font-size:13.5px;line-height:1.35">Оценка качества и верификация модели</span>
+    </button>
+    <div style="padding:20px 24px 8px;border-top:2px solid var(--color-divider);font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700)">Модуль 3 · Динамика и системы</div>
+    <button onClick="{{ go8 }}" style="display:flex;gap:12px;width:100%;text-align:left;align-items:flex-start;background:{{ bg8 }};border:0;border-top:1px solid var(--color-neutral-300);padding:13px 24px;font-family:var(--font-body);color:var(--color-text);cursor:pointer" style-hover="background:var(--color-accent-100)">
+      <span style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent-700);padding-top:2px">08</span>
+      <span style="font-size:13.5px;line-height:1.35">Временные ряды</span>
+    </button>
+    <button onClick="{{ go9 }}" style="display:flex;gap:12px;width:100%;text-align:left;align-items:flex-start;background:{{ bg9 }};border:0;border-top:1px solid var(--color-neutral-300);padding:13px 24px;font-family:var(--font-body);color:var(--color-text);cursor:pointer" style-hover="background:var(--color-accent-100)">
+      <span style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent-700);padding-top:2px">09</span>
+      <span style="font-size:13.5px;line-height:1.35">Динамические эконометрические модели</span>
+    </button>
+    <button onClick="{{ go10 }}" style="display:flex;gap:12px;width:100%;text-align:left;align-items:flex-start;background:{{ bg10 }};border:0;border-top:1px solid var(--color-neutral-300);padding:13px 24px;font-family:var(--font-body);color:var(--color-text);cursor:pointer" style-hover="background:var(--color-accent-100)">
+      <span style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent-700);padding-top:2px">10</span>
+      <span style="font-size:13.5px;line-height:1.35">Системы одновременных уравнений</span>
+    </button>
+    <div style="padding:20px 24px 8px;border-top:2px solid var(--color-divider);font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700)">Модуль 4 · Прикладные модели и прогноз</div>
+    <button onClick="{{ go11 }}" style="display:flex;gap:12px;width:100%;text-align:left;align-items:flex-start;background:{{ bg11 }};border:0;border-top:1px solid var(--color-neutral-300);padding:13px 24px;font-family:var(--font-body);color:var(--color-text);cursor:pointer" style-hover="background:var(--color-accent-100)">
+      <span style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent-700);padding-top:2px">11</span>
+      <span style="font-size:13.5px;line-height:1.35">Производственные функции и экономический рост</span>
+    </button>
+    <button onClick="{{ go12 }}" style="display:flex;gap:12px;width:100%;text-align:left;align-items:flex-start;background:{{ bg12 }};border:0;border-top:1px solid var(--color-neutral-300);padding:13px 24px;font-family:var(--font-body);color:var(--color-text);cursor:pointer" style-hover="background:var(--color-accent-100)">
+      <span style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent-700);padding-top:2px">12</span>
+      <span style="font-size:13.5px;line-height:1.35">Модели спроса, предложения и макромодели</span>
+    </button>
+    <button onClick="{{ go13 }}" style="display:flex;gap:12px;width:100%;text-align:left;align-items:flex-start;background:{{ bg13 }};border:0;border-top:1px solid var(--color-neutral-300);padding:13px 24px;font-family:var(--font-body);color:var(--color-text);cursor:pointer" style-hover="background:var(--color-accent-100)">
+      <span style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent-700);padding-top:2px">13</span>
+      <span style="font-size:13.5px;line-height:1.35">Прогнозирование: основы и методы</span>
+    </button>
+    <button onClick="{{ go14 }}" style="display:flex;gap:12px;width:100%;text-align:left;align-items:flex-start;background:{{ bg14 }};border:0;border-top:1px solid var(--color-neutral-300);border-bottom:2px solid var(--color-divider);padding:13px 24px;font-family:var(--font-body);color:var(--color-text);cursor:pointer" style-hover="background:var(--color-accent-100)">
+      <span style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent-700);padding-top:2px">14</span>
+      <span style="font-size:13.5px;line-height:1.35">Прогнозирование по системе уравнений</span>
     </button>
 
     <div style="padding:20px 24px 32px;font-size:11.5px;color:var(--color-neutral-700);line-height:1.5">
@@ -88,12 +115,129 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
 
   <main id="lesson-scroll" style="flex:1 1 560px;min-width:0;max-height:100vh;overflow:auto;padding:0">
 
+  <sc-if value="{{ isPlan }}" hint-placeholder-val="{{ true }}">
+  <article data-screen-label="Обзор курса" style="max-width:920px;padding:48px 56px 96px">
+    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
+      <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">00</div>
+      <div style="flex:1 1 320px;min-width:0">
+        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">DAT301 · Бакалавриат · 60410100 «Экономика» · 5 семестр</div>
+        <h1 style="font-size:38px;margin:0">Эконометрика: программа курса</h1>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0 2px;background:transparent;margin:0 0 34px">
+      <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:18px">
+        <div style="font-family:var(--font-heading);font-weight:800;font-size:28px;line-height:1">150</div>
+        <div style="font-size:12.5px;color:var(--color-neutral-700);margin-top:4px">академических часов всего</div>
+      </div>
+      <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:18px">
+        <div style="font-family:var(--font-heading);font-weight:800;font-size:28px;line-height:1">60</div>
+        <div style="font-size:12.5px;color:var(--color-neutral-700);margin-top:4px">аудиторных: 30 лекций + 30 практики</div>
+      </div>
+      <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:18px">
+        <div style="font-family:var(--font-heading);font-weight:800;font-size:28px;line-height:1">90</div>
+        <div style="font-size:12.5px;color:var(--color-neutral-700);margin-top:4px">часов самостоятельной работы</div>
+      </div>
+      <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:18px">
+        <div style="font-family:var(--font-heading);font-weight:800;font-size:28px;line-height:1">5</div>
+        <div style="font-size:12.5px;color:var(--color-neutral-700);margin-top:4px">кредитов ECTS · 15 недель</div>
+      </div>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">0.1</h6>
+    <h3>Результаты обучения</h3>
+    <ul style="margin:0 0 30px;padding-left:22px;font-size:14.5px;line-height:1.7;max-width:72ch">
+      <li>понимать предмет и задачи эконометрики, роль количественного анализа в экономике;</li>
+      <li>проходить все этапы моделирования: спецификация → оценивание → верификация → прогноз;</li>
+      <li>подбирать данные, различать их типы и обосновывать выбор переменных;</li>
+      <li>применять парный и множественный корреляционно-регрессионный анализ и МНК;</li>
+      <li>анализировать временные ряды: тренд, сезонность, динамические модели;</li>
+      <li>работать с системами уравнений и прикладными моделями спроса, предложения, производства;</li>
+      <li>строить и интерпретировать модели в EViews, оформлять самостоятельное исследование.</li>
+    </ul>
+
+    <h6 style="color:var(--color-neutral-700)">0.2</h6>
+    <h3>Тематический план</h3>
+    <table class="table" style="width:100%;margin:16px 0 34px">
+      <thead><tr><th style="width:7%">№</th><th>Тема</th><th style="width:12%">Лекция</th><th style="width:12%">Практика</th></tr></thead>
+      <tbody>
+        <tr><td>01</td><td>Основы эконометрического моделирования</td><td>2</td><td>2</td></tr>
+        <tr><td>02</td><td>Эконометрическая модель и этапы моделирования</td><td>2</td><td>2</td></tr>
+        <tr><td>03</td><td>Информационное обеспечение моделей</td><td>2</td><td>2</td></tr>
+        <tr><td>04</td><td>Вероятность и математическая статистика</td><td>2</td><td>2</td></tr>
+        <tr><td>05</td><td>Корреляционно-регрессионный анализ</td><td>2</td><td>2</td></tr>
+        <tr><td>06</td><td>Частное уравнение регрессии</td><td>2</td><td>2</td></tr>
+        <tr><td>07</td><td>Оценка качества и верификация модели</td><td>2</td><td>2</td></tr>
+        <tr><td>08</td><td>Временные ряды</td><td>4</td><td>4</td></tr>
+        <tr><td>09</td><td>Динамические эконометрические модели</td><td>2</td><td>2</td></tr>
+        <tr><td>10</td><td>Системы одновременных уравнений</td><td>2</td><td>2</td></tr>
+        <tr><td>11</td><td>Производственные функции и экономический рост</td><td>2</td><td>2</td></tr>
+        <tr><td>12</td><td>Модели спроса, предложения и макромодели</td><td>2</td><td>2</td></tr>
+        <tr><td>13</td><td>Прогнозирование: основы и методы</td><td>2</td><td>2</td></tr>
+        <tr><td>14</td><td>Прогнозирование по системе уравнений</td><td>2</td><td>2</td></tr>
+        <tr><td></td><td><strong>Итого</strong></td><td><strong>30</strong></td><td><strong>30</strong></td></tr>
+      </tbody>
+    </table>
+
+    <h6 style="color:var(--color-neutral-700)">0.3</h6>
+    <h3>Оценивание</h3>
+    <table class="table" style="width:100%;margin:16px 0 20px">
+      <thead><tr><th style="width:34%">Вид контроля</th><th>Форма</th><th style="width:12%">Балл</th><th style="width:18%">Срок</th></tr></thead>
+      <tbody>
+        <tr><td>Посещаемость и активность</td><td>участие в занятиях, экспресс-опрос</td><td>15</td><td>1–15 неделя</td></tr>
+        <tr><td>Проектная работа</td><td>групповая презентация / визуальный отчёт</td><td>10</td><td>1–15 неделя</td></tr>
+        <tr><td>Задания</td><td>эссе или отчёт от 1000 слов</td><td>15</td><td>1–15 неделя</td></tr>
+        <tr><td>Промежуточный экзамен</td><td>тест, толкование терминов, кейс</td><td>20</td><td>8 неделя</td></tr>
+        <tr><td>Итоговый экзамен</td><td>тест, термины, задача (письменно)</td><td>40</td><td>16 неделя</td></tr>
+        <tr><td><strong>Всего</strong></td><td></td><td><strong>100</strong></td><td></td></tr>
+      </tbody>
+    </table>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin:0 0 34px">
+      <span class="tag tag-outline">A+ 95–100 · 4.5</span>
+      <span class="tag tag-outline">A 90–94 · 4.0</span>
+      <span class="tag tag-outline">B+ 80–89 · 3.5</span>
+      <span class="tag tag-outline">B 70–79 · 3.0</span>
+      <span class="tag tag-outline">C+ 65–69 · 2.5</span>
+      <span class="tag tag-outline">C 60–64 · 2.0</span>
+      <span class="tag tag-accent">F 0–59</span>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">0.4</h6>
+    <h3>Самостоятельная работа</h3>
+    <p style="max-width:70ch;font-size:14.5px;margin-bottom:14px">90 часов распределены по 15 темам, по 6 часов на каждую. Темы повторяют программу лекций; отдельная прикладная тема — «Влияние роста денежной массы на уровень инфляции в Узбекистане». Формат сдачи — эссе или расчётный отчёт с обязательной оценённой моделью, её верификацией и выводом.</p>
+    <div style="background:var(--color-surface);border-top:2px solid var(--color-divider);padding:20px 22px;margin:0 0 34px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:10px">Структура отчёта по самостоятельной работе</div>
+      <ol style="margin:0;padding-left:20px;font-size:14px;line-height:1.7;display:flex;flex-direction:column;gap:5px">
+        <li>постановка задачи и гипотеза;</li>
+        <li>данные: источник, тип, период, единицы измерения;</li>
+        <li>спецификация модели и ожидаемые знаки коэффициентов;</li>
+        <li>оценка МНК и вывод программы;</li>
+        <li>верификация: R², t, F, средняя ошибка аппроксимации, диагностика предпосылок;</li>
+        <li>экономическая интерпретация и прогноз с интервалом.</li>
+      </ol>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">0.5</h6>
+    <h3>Литература и инструменты</h3>
+    <ul style="margin:0 0 30px;padding-left:22px;font-size:14.5px;line-height:1.7;max-width:72ch">
+      <li>Jeffrey M. Wooldridge. Econometrics: A Modern Approach. 5th ed.</li>
+      <li>Stock J. H., Watson M. W. Introduction to Econometrics. 4th ed. — Pearson, 2020.</li>
+      <li>Программные средства: EViews (основной), Excel / Google Sheets для ручных расчётов.</li>
+      <li>Данные: открытая статистика Агентства статистики Узбекистана, Всемирного банка, МВФ.</li>
+    </ul>
+
+    <div style="border-top:2px solid var(--color-divider);padding-top:20px">
+      <button onClick="{{ go1 }}" class="btn btn-primary">Начать: занятие 01 →</button>
+    </div>
+  </article>
+  </sc-if>
+
   <sc-if value="{{ isL1 }}" hint-placeholder-val="{{ true }}">
   <article data-screen-label="Занятие 01" style="max-width:860px;padding:48px 56px 96px">
     <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
       <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">01</div>
       <div style="flex:1 1 320px;min-width:0">
-        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Неделя 1 · Лекция 2 ч + Практика 2 ч</div>
+        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 1 · Лекция 2 ч + практика 2 ч</div>
         <h1 style="font-size:38px;margin:0">Основы эконометрического моделирования</h1>
       </div>
     </div>
@@ -113,16 +257,16 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
     <h6 style="color:var(--color-neutral-700)">1.1</h6>
     <h3>Что такое эконометрика</h3>
     <p style="max-width:66ch">Термин образован от «эконом» и «метрика» — измерение в экономике. Эконометрика — это применение математико-статистических методов к экономическим данным для того, чтобы придать количественную форму утверждениям экономической теории, проверить их и построить прогноз.</p>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2px;background:var(--color-divider);margin:22px 0 30px">
-      <div style="background:var(--color-bg);padding:18px 18px 20px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 2px;background:transparent;margin:22px 0 30px">
+      <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:18px 18px 20px">
         <div style="font-family:var(--font-heading);font-weight:800;font-size:15px;margin-bottom:6px">Экономическая теория</div>
         <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5">Даёт гипотезу: какие переменные включить в модель и какой знак связи ожидать.</div>
       </div>
-      <div style="background:var(--color-bg);padding:18px 18px 20px">
+      <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:18px 18px 20px">
         <div style="font-family:var(--font-heading);font-weight:800;font-size:15px;margin-bottom:6px">Математическая статистика</div>
         <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5">Даёт метод: как оценить параметры и проверить, значимы ли они.</div>
       </div>
-      <div style="background:var(--color-bg);padding:18px 18px 20px">
+      <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:18px 18px 20px">
         <div style="font-family:var(--font-heading);font-weight:800;font-size:15px;margin-bottom:6px">Экономические данные</div>
         <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5">Даёт материал: наблюдения по фирмам, регионам, годам, домохозяйствам.</div>
       </div>
@@ -168,6 +312,28 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
       </ul>
     </div>
 
+    <div style="border-top:2px solid var(--color-divider);padding-top:18px;margin-top:34px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:12px">Ключевые термины</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:0 2px;background:transparent">
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Эконометрика</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Измерение экономических связей: статистические методы, применённые к экономическим данным.</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Случайная ошибка u</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Совокупное влияние неучтённых факторов и ошибок измерения; принципиально ненаблюдаема.</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Ceteris paribus</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">«При прочих равных»: эффект фактора измеряется при фиксированных остальных условиях.</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Коэффициент детерминации R²</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Доля разброса y, объяснённая моделью; от 0 до 1.</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Ложная корреляция</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Связь двух показателей через общий скрытый фактор, а не причинная зависимость.</div></div>
+      </div>
+    </div>
+
+    <sc-if value="{{ showSelfCheck }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:1px solid var(--color-neutral-300);padding-top:18px;margin-top:30px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:10px">Вопросы для самопроверки</div>
+      <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.7;display:flex;flex-direction:column;gap:5px">
+        <li>Чем эконометрическая модель отличается от экономической?</li>
+        <li>Что попадает в случайную ошибку и почему её нельзя устранить полностью?</li>
+        <li>Почему модель с R² = 0,19 может быть полезной?</li>
+      </ul>
+    </div>
+    </sc-if>
+
     <sc-if value="{{ showPractice }}" hint-placeholder-val="{{ true }}">
     <div style="border-top:2px solid var(--color-divider);padding-top:22px;margin-top:36px">
       <h4 style="margin-bottom:14px">Практическое занятие</h4>
@@ -194,7 +360,7 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
     <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
       <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">02</div>
       <div style="flex:1 1 320px;min-width:0">
-        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Неделя 1 · Лекция 2 ч + Практика 2 ч</div>
+        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 1 · Лекция 2 ч + практика 2 ч</div>
         <h1 style="font-size:38px;margin:0">Эконометрическая модель и этапы моделирования</h1>
       </div>
     </div>
@@ -227,16 +393,16 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
 
     <h6 style="color:var(--color-neutral-700)">2.2</h6>
     <h3>Классификация моделей</h3>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:2px;background:var(--color-divider);margin:16px 0 30px">
-      <div style="background:var(--color-bg);padding:18px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0 2px;background:transparent;margin:16px 0 30px">
+      <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:18px">
         <div style="font-family:var(--font-heading);font-weight:800;font-size:15px;margin-bottom:6px">Регрессионные с одним уравнением</div>
         <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5">Парная и множественная регрессия; линейные и нелинейные по переменным или по параметрам.</div>
       </div>
-      <div style="background:var(--color-bg);padding:18px">
+      <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:18px">
         <div style="font-family:var(--font-heading);font-weight:800;font-size:15px;margin-bottom:6px">Системы одновременных уравнений</div>
         <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5">Спрос и предложение, макромодели: переменная одного уравнения объясняет другое.</div>
       </div>
-      <div style="background:var(--color-bg);padding:18px">
+      <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:18px">
         <div style="font-family:var(--font-heading);font-weight:800;font-size:15px;margin-bottom:6px">Модели временных рядов</div>
         <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5">Тренд, сезонность, авторегрессия, распределённые лаги — тема занятий 8–9 курса.</div>
       </div>
@@ -278,6 +444,28 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
       </ul>
     </div>
 
+    <div style="border-top:2px solid var(--color-divider);padding-top:18px;margin-top:34px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:12px">Ключевые термины</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:0 2px;background:transparent">
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Спецификация</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Выбор переменных и функциональной формы уравнения — первый и главный этап моделирования.</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Эндогенная переменная</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Объясняется внутри модели; результат.</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Экзогенная переменная</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Задаётся извне; фактор, влияющий на результат.</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Предопределённые переменные</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Экзогенные плюс лаговые эндогенные.</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Смещение пропущенной переменной</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Искажение оценки, когда существенный фактор оставлен в ошибке.</div></div>
+      </div>
+    </div>
+
+    <sc-if value="{{ showSelfCheck }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:1px solid var(--color-neutral-300);padding-top:18px;margin-top:30px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:10px">Вопросы для самопроверки</div>
+      <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.7;display:flex;flex-direction:column;gap:5px">
+        <li>Почему процесс моделирования итеративен, а не линеен?</li>
+        <li>Что опаснее — пропустить существенный фактор или включить лишний? Почему?</li>
+        <li>Как выбрать между линейной и логарифмической формой связи?</li>
+      </ul>
+    </div>
+    </sc-if>
+
     <sc-if value="{{ showPractice }}" hint-placeholder-val="{{ true }}">
     <div style="border-top:2px solid var(--color-divider);padding-top:22px;margin-top:36px">
       <h4 style="margin-bottom:14px">Практическое занятие</h4>
@@ -304,7 +492,7 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
     <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
       <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">03</div>
       <div style="flex:1 1 320px;min-width:0">
-        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Неделя 1 · Лекция 2 ч + Практика 2 ч</div>
+        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 1 · Лекция 2 ч + практика 2 ч</div>
         <h1 style="font-size:38px;margin:0">Информационное обеспечение эконометрических моделей</h1>
       </div>
     </div>
@@ -353,20 +541,20 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
 
     <h6 style="color:var(--color-neutral-700)">3.4</h6>
     <h3>Требования к данным</h3>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:2px;background:var(--color-divider);margin:16px 0 30px">
-      <div style="background:var(--color-bg);padding:18px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:0 2px;background:transparent;margin:16px 0 30px">
+      <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:18px">
         <div style="font-family:var(--font-heading);font-weight:800;font-size:15px;margin-bottom:6px">Достаточность объёма</div>
         <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5">Практическое правило: n ≥ 6–7 наблюдений на каждый оцениваемый фактор.</div>
       </div>
-      <div style="background:var(--color-bg);padding:18px">
+      <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:18px">
         <div style="font-family:var(--font-heading);font-weight:800;font-size:15px;margin-bottom:6px">Однородность</div>
         <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5">Объекты одного класса; резкие выбросы выявляются и объясняются, а не игнорируются.</div>
       </div>
-      <div style="background:var(--color-bg);padding:18px">
+      <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:18px">
         <div style="font-family:var(--font-heading);font-weight:800;font-size:15px;margin-bottom:6px">Сопоставимость</div>
         <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5">Единые единицы измерения, методология и границы объекта во всём периоде.</div>
       </div>
-      <div style="background:var(--color-bg);padding:18px">
+      <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:18px">
         <div style="font-family:var(--font-heading);font-weight:800;font-size:15px;margin-bottom:6px">Достоверность</div>
         <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5">Официальный источник, отсутствие пропусков и ошибок ввода.</div>
       </div>
@@ -383,6 +571,28 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
         <li>Итог: модель <em>ln(I) = β<sub>0</sub> + β<sub>1</sub>·ln(GDP) + u</em> на сопоставимых реальных данных.</li>
       </ul>
     </div>
+
+    <div style="border-top:2px solid var(--color-divider);padding-top:18px;margin-top:34px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:12px">Ключевые термины</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:0 2px;background:transparent">
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Генеральная совокупность</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Все объекты, о которых делается вывод; наблюдается лишь её выборка.</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Панельные данные</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Одни и те же объекты, наблюдаемые в нескольких периодах.</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Фиктивная переменная</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Признак 0/1 для качественных характеристик: пол, регион, сезон.</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Мультиколлинеарность</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Сильная взаимная корреляция факторов, делающая оценки неустойчивыми.</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Сопоставимость</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Единые методология, единицы и границы объекта на всём периоде наблюдения.</div></div>
+      </div>
+    </div>
+
+    <sc-if value="{{ showSelfCheck }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:1px solid var(--color-neutral-300);padding-top:18px;margin-top:30px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:10px">Вопросы для самопроверки</div>
+      <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.7;display:flex;flex-direction:column;gap:5px">
+        <li>Почему оценка параметра сама является случайной величиной?</li>
+        <li>В каких случаях в модель вводят фиктивные переменные?</li>
+        <li>Почему нельзя объяснять выручку одновременно ценой и объёмом продаж?</li>
+      </ul>
+    </div>
+    </sc-if>
 
     <sc-if value="{{ showPractice }}" hint-placeholder-val="{{ true }}">
     <div style="border-top:2px solid var(--color-divider);padding-top:22px;margin-top:36px">
@@ -410,7 +620,7 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
     <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
       <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">04</div>
       <div style="flex:1 1 320px;min-width:0">
-        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Неделя 2 · Лекция 2 ч + Практика 2 ч</div>
+        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 1 · Лекция 2 ч + практика 2 ч</div>
         <h1 style="font-size:38px;margin:0">Вероятность и математическая статистика в эконометрике</h1>
       </div>
     </div>
@@ -481,6 +691,28 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
       </ul>
     </div>
 
+    <div style="border-top:2px solid var(--color-divider);padding-top:18px;margin-top:34px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:12px">Ключевые термины</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:0 2px;background:transparent">
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Математическое ожидание</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Среднее значение случайной величины по её распределению.</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Дисперсия</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Мера разброса вокруг среднего; корень из неё — стандартное отклонение.</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Ковариация</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Мера совместной изменчивости двух величин; зависит от единиц измерения.</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Уровень значимости α</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Допустимая вероятность ошибочно отклонить верную H₀ (обычно 0,05).</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">p-значение</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Вероятность получить такое же или более сильное расхождение, если H₀ верна.</div></div>
+      </div>
+    </div>
+
+    <sc-if value="{{ showSelfCheck }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:1px solid var(--color-neutral-300);padding-top:18px;margin-top:30px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:10px">Вопросы для самопроверки</div>
+      <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.7;display:flex;flex-direction:column;gap:5px">
+        <li>Почему из ρ = 0 не следует независимость величин?</li>
+        <li>Зачем в выборочной дисперсии делитель (n − 1), а не n?</li>
+        <li>Как трактовать p = 0,03 при α = 0,05, и что изменилось бы при α = 0,01?</li>
+      </ul>
+    </div>
+    </sc-if>
+
     <sc-if value="{{ showPractice }}" hint-placeholder-val="{{ true }}">
     <div style="border-top:2px solid var(--color-divider);padding-top:22px;margin-top:36px">
       <h4 style="margin-bottom:14px">Практическое занятие</h4>
@@ -507,7 +739,7 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
     <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
       <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">05</div>
       <div style="flex:1 1 320px;min-width:0">
-        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Неделя 2 · Лекция 2 ч + Практика 2 ч</div>
+        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 2 · Лекция 2 ч + практика 2 ч</div>
         <h1 style="font-size:38px;margin:0">Корреляционно-регрессионный анализ</h1>
       </div>
     </div>
@@ -594,6 +826,28 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
       </ul>
     </div>
 
+    <div style="border-top:2px solid var(--color-divider);padding-top:18px;margin-top:34px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:12px">Ключевые термины</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:0 2px;background:transparent">
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Метод наименьших квадратов</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Оценивание параметров через минимум суммы квадратов отклонений от линии.</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Коэффициент регрессии b₁</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Изменение y при росте x на одну единицу.</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Коэффициент корреляции r</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Теснота и направление линейной связи, от −1 до 1.</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Эластичность</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Процентное изменение y при росте x на 1 %; величина безразмерная.</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Линеаризация</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Приведение нелинейной модели к линейной по параметрам заменой переменных или логарифмированием.</div></div>
+      </div>
+    </div>
+
+    <sc-if value="{{ showSelfCheck }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:1px solid var(--color-neutral-300);padding-top:18px;margin-top:30px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:10px">Вопросы для самопроверки</div>
+      <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.7;display:flex;flex-direction:column;gap:5px">
+        <li>Почему минимизируют именно сумму квадратов отклонений, а не сумму модулей?</li>
+        <li>Как изменятся b₁ и r, если x перевести из миллионов в тысячи?</li>
+        <li>Почему высокое значение r ещё не означает правильной модели?</li>
+      </ul>
+    </div>
+    </sc-if>
+
     <sc-if value="{{ showPractice }}" hint-placeholder-val="{{ true }}">
     <div style="border-top:2px solid var(--color-divider);padding-top:22px;margin-top:36px">
       <h4 style="margin-bottom:14px">Практическое занятие</h4>
@@ -621,7 +875,7 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
     <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
       <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">06</div>
       <div style="flex:1 1 320px;min-width:0">
-        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Неделя 2 · Лекция 2 ч + Практика 2 ч</div>
+        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 2 · Лекция 2 ч + практика 2 ч</div>
         <h1 style="font-size:38px;margin:0">Частное уравнение регрессии</h1>
       </div>
     </div>
@@ -683,6 +937,28 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
       </ul>
     </div>
 
+    <div style="border-top:2px solid var(--color-divider);padding-top:18px;margin-top:34px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:12px">Ключевые термины</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:0 2px;background:transparent">
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Частное уравнение регрессии</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Зависимость y от одного фактора при остальных, закреплённых на средних уровнях.</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Частная эластичность</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Процентная реакция y на рост одного фактора на 1 % при прочих равных.</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Множественный R</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Теснота связи y со всеми факторами модели одновременно.</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Скорректированный R²</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">R² со штрафом за число факторов; основа сравнения моделей.</div></div>
+        <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:14px 16px"><div style="font-family:var(--font-heading);font-weight:800;font-size:13.5px;margin-bottom:4px">Частная корреляция</div><div style="font-size:12.5px;color:var(--color-neutral-700);line-height:1.5">Связь y и фактора, очищенная от влияния остальных факторов.</div></div>
+      </div>
+    </div>
+
+    <sc-if value="{{ showSelfCheck }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:1px solid var(--color-neutral-300);padding-top:18px;margin-top:30px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:10px">Вопросы для самопроверки</div>
+      <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.7;display:flex;flex-direction:column;gap:5px">
+        <li>Почему частные эластичности сравнимы между собой, а коэффициенты регрессии — нет?</li>
+        <li>Что произойдёт с R²adj при добавлении незначимого фактора?</li>
+        <li>Чем частный коэффициент корреляции отличается от парного и почему их значения расходятся?</li>
+      </ul>
+    </div>
+    </sc-if>
+
     <sc-if value="{{ showPractice }}" hint-placeholder-val="{{ true }}">
     <div style="border-top:2px solid var(--color-divider);padding-top:22px;margin-top:36px">
       <h4 style="margin-bottom:14px">Практическое занятие</h4>
@@ -703,17 +979,958 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
 
     <div style="border-top:2px solid var(--color-divider);margin-top:38px;padding-top:20px">
       <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:8px">Дальше</div>
-      <p style="font-size:14.5px;max-width:66ch;margin-bottom:16px">Занятия 07–08: оценка качества эконометрических моделей (верификация, t- и F-статистики) и временные ряды. Материал будет добавлен в этот же курс.</p>
-      <button onClick="{{ go1 }}" class="btn btn-secondary">← К занятию 01</button>
+      <p style="font-size:14.5px;max-width:66ch;margin-bottom:16px">Модуль 2 завершается занятием 07 — верификацией модели: разложением дисперсии, t- и F-критериями, диагностикой предпосылок МНК. Далее модуль 3: временные ряды, динамические модели и системы уравнений.</p>
+      <button onClick="{{ go7 }}" class="btn btn-primary">Занятие 07 →</button>
+    </div>
+  </article>
+  </sc-if>
+
+  <sc-if value="{{ isL7 }}" hint-placeholder-val="{{ true }}">
+  <article data-screen-label="Занятие 07" style="max-width:860px;padding:48px 56px 96px">
+    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
+      <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">07</div>
+      <div style="flex:1 1 320px;min-width:0">
+        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 2 · Лекция 2 ч + практика 2 ч</div>
+        <h1 style="font-size:38px;margin:0">Оценка качества и верификация модели</h1>
+      </div>
+    </div>
+
+    <p style="font-size:17px;line-height:1.6;max-width:66ch">Оценённое уравнение — это ещё не результат. Прежде чем интерпретировать коэффициенты и строить прогноз, модель нужно проверить: объясняет ли она разброс зависимой переменной, значимы ли коэффициенты, выполняются ли предпосылки МНК.</p>
+
+    <div style="background:var(--color-surface);border-top:2px solid var(--color-divider);padding:20px 22px;margin:28px 0 36px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:10px">Цель занятия</div>
+      <ul style="margin:0;padding-left:20px;font-size:14.5px;line-height:1.6;display:flex;flex-direction:column;gap:6px">
+        <li>раскладывать общую дисперсию на объяснённую и остаточную;</li>
+        <li>считать и читать R², R²<sub>adj</sub>, стандартную ошибку регрессии;</li>
+        <li>проверять значимость коэффициентов по t-критерию и уравнения по F-критерию;</li>
+        <li>знать предпосылки Гаусса—Маркова и признаки их нарушения.</li>
+      </ul>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">7.1</h6>
+    <h3>Что означает верификация</h3>
+    <table class="table" style="width:100%;margin:16px 0 30px">
+      <thead><tr><th style="width:28%">Направление проверки</th><th>Вопрос</th><th style="width:26%">Инструмент</th></tr></thead>
+      <tbody>
+        <tr><td>Адекватность</td><td>описывает ли модель данные в целом</td><td>R², F-критерий</td></tr>
+        <tr><td>Значимость факторов</td><td>отличается ли коэффициент от нуля</td><td>t-критерий, p-значение</td></tr>
+        <tr><td>Точность</td><td>насколько велики ошибки модели</td><td>s<sub>e</sub>, средняя ошибка аппроксимации</td></tr>
+        <tr><td>Корректность предпосылок</td><td>можно ли доверять стандартным ошибкам</td><td>тесты на гетероскедастичность, автокорреляцию</td></tr>
+        <tr><td>Экономический смысл</td><td>правдоподобны ли знаки и величины</td><td>сопоставление с теорией</td></tr>
+      </tbody>
+    </table>
+
+    <h6 style="color:var(--color-neutral-700)">7.2</h6>
+    <h3>Разложение дисперсии и коэффициент детерминации</h3>
+    <div style="border-top:2px solid var(--color-divider);border-bottom:1px solid var(--color-neutral-300);padding:18px 0;margin:16px 0 26px;display:flex;flex-direction:column;gap:12px">
+      <div style="font-style:italic;font-size:20px">Σ(y<sub>i</sub> − ȳ)² = Σ(ŷ<sub>i</sub> − ȳ)² + Σ(y<sub>i</sub> − ŷ<sub>i</sub>)²   ⇔   TSS = ESS + RSS</div>
+      <div style="font-style:italic;font-size:20px">R² = ESS / TSS = 1 − RSS / TSS  ·  R²<sub>adj</sub> = 1 − (1 − R²)·(n − 1)/(n − k − 1)  ·  s<sub>e</sub> = √(RSS/(n − k − 1))</div>
+      <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.6">TSS — общая вариация y; ESS — объяснённая моделью; RSS — остаточная. s<sub>e</sub> измеряется в единицах y и показывает типичную ошибку модели. Добавление любого фактора никогда не снижает R² — поэтому модели с разным числом факторов сравнивают по R²<sub>adj</sub>.</div>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">7.3</h6>
+    <h3>Значимость коэффициента: t-критерий</h3>
+    <div style="border-top:2px solid var(--color-divider);border-bottom:1px solid var(--color-neutral-300);padding:18px 0;margin:16px 0 26px;display:flex;flex-direction:column;gap:12px">
+      <div style="font-style:italic;font-size:20px">t<sub>b</sub> = b<sub>j</sub> / se(b<sub>j</sub>)  ·  se(b<sub>1</sub>) = s<sub>e</sub> / √Σ(x<sub>i</sub> − x̄)²  ·  β<sub>j</sub> ∈ b<sub>j</sub> ± t<sub>крит</sub>·se(b<sub>j</sub>)</div>
+      <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.6">H<sub>0</sub>: β<sub>j</sub> = 0. Если |t| &gt; t<sub>крит</sub>(α; n − k − 1), гипотеза отклоняется — фактор значим. Эквивалентно: p &lt; 0,05. Если доверительный интервал накрывает ноль, фактор незначим.</div>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">7.4</h6>
+    <h3>Значимость уравнения: F-критерий</h3>
+    <div style="border-top:2px solid var(--color-divider);border-bottom:1px solid var(--color-neutral-300);padding:18px 0;margin:16px 0 26px;display:flex;flex-direction:column;gap:12px">
+      <div style="font-style:italic;font-size:20px">F = (ESS/k) / (RSS/(n − k − 1)) = R²/(1 − R²) · (n − k − 1)/k</div>
+      <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.6">H<sub>0</sub>: все коэффициенты при факторах равны нулю. При F &gt; F<sub>крит</sub>(α; k; n − k − 1) уравнение признаётся статистически значимым. В парной регрессии F = t².</div>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">7.5</h6>
+    <h3>Точность: средняя ошибка аппроксимации</h3>
+    <div style="border-top:2px solid var(--color-divider);border-bottom:1px solid var(--color-neutral-300);padding:18px 0;margin:16px 0 26px">
+      <div style="font-style:italic;font-size:20px;margin-bottom:8px">Ā = (1/n)·Σ |(y<sub>i</sub> − ŷ<sub>i</sub>) / y<sub>i</sub>| · 100 %</div>
+      <div style="font-size:13px;color:var(--color-neutral-700)">Приемлемым считается Ā до 8–10 %. Величина свыше 15 % говорит о плохом качестве подгонки, даже если R² выглядит высоким.</div>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">7.6</h6>
+    <h3>Предпосылки МНК и их нарушения</h3>
+    <table class="table" style="width:100%;margin:16px 0 30px">
+      <thead><tr><th style="width:30%">Предпосылка</th><th>Нарушение</th><th style="width:28%">Диагностика</th></tr></thead>
+      <tbody>
+        <tr><td>E(u<sub>i</sub>) = 0</td><td>систематическое смещение</td><td>анализ остатков, свободный член</td></tr>
+        <tr><td>Var(u<sub>i</sub>) = σ² (гомоскедастичность)</td><td>гетероскедастичность — неверные se и t</td><td>тесты Голдфелда—Квандта, Уайта, Бреуша—Пагана</td></tr>
+        <tr><td>cov(u<sub>i</sub>, u<sub>j</sub>) = 0</td><td>автокорреляция остатков</td><td>критерий Дарбина—Уотсона, тест Бреуша—Годфри</td></tr>
+        <tr><td>Факторы не коллинеарны</td><td>мультиколлинеарность — неустойчивые оценки</td><td>матрица r<sub>xx</sub>, VIF &gt; 10</td></tr>
+        <tr><td>u ~ N(0, σ²)</td><td>ненормальность при малом n</td><td>тест Жарка—Бера</td></tr>
+      </tbody>
+    </table>
+    <p style="max-width:70ch;font-size:14.5px">Признак нарушения — не повод отбрасывать модель: гетероскедастичность лечится робастными стандартными ошибками или взвешенным МНК, автокорреляция — обобщённым МНК и включением лагов, мультиколлинеарность — исключением дублирующего фактора или переходом к темпам роста.</p>
+
+    <div style="background:var(--color-accent-100);padding:20px 22px;margin:26px 0 34px;border-top:2px solid var(--color-accent)">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:12px">Разобранный пример: полная верификация модели из занятия 05</div>
+      <p style="font-size:14.5px;margin-bottom:12px">Модель <em>ŷ = 18,86 + 5,19x</em> (реклама → продажи), n = 6, k = 1. Из расчётов занятия 05: Σ(x − x̄)² = 42, Σ(y − ȳ)² = TSS = 1138, Σ(x − x̄)(y − ȳ) = 218.</p>
+      <table class="table" style="width:100%;margin:0 0 14px;font-size:13px">
+        <thead><tr><th>x</th><th>y</th><th>ŷ</th><th>e = y − ŷ</th><th>e²</th><th>|e/y|·100 %</th></tr></thead>
+        <tbody>
+          <tr><td>2</td><td>30</td><td>29,24</td><td>0,76</td><td>0,58</td><td>2,54</td></tr>
+          <tr><td>4</td><td>38</td><td>39,62</td><td>−1,62</td><td>2,62</td><td>4,26</td></tr>
+          <tr><td>5</td><td>45</td><td>44,81</td><td>0,19</td><td>0,04</td><td>0,42</td></tr>
+          <tr><td>7</td><td>55</td><td>55,19</td><td>−0,19</td><td>0,04</td><td>0,35</td></tr>
+          <tr><td>8</td><td>62</td><td>60,38</td><td>1,62</td><td>2,62</td><td>2,61</td></tr>
+          <tr><td>10</td><td>70</td><td>70,76</td><td>−0,76</td><td>0,58</td><td>1,09</td></tr>
+          <tr><td colspan="4"><strong>Итого</strong></td><td><strong>6,48</strong></td><td><strong>11,27</strong></td></tr>
+        </tbody>
+      </table>
+      <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.8">
+        <li>RSS = 6,48; ESS = TSS − RSS = 1138 − 6,48 = 1131,52.</li>
+        <li>R² = 1131,52 / 1138 = <strong>0,994</strong>; R²<sub>adj</sub> = 1 − (1 − 0,994)·5/4 = <strong>0,993</strong>.</li>
+        <li>s<sub>e</sub> = √(6,48/4) = √1,62 = <strong>1,27</strong> млн сум — типичная ошибка модели.</li>
+        <li>se(b<sub>1</sub>) = 1,27 / √42 = 1,27 / 6,48 = <strong>0,196</strong>; t = 5,19 / 0,196 = <strong>26,4</strong>.</li>
+        <li>t<sub>крит</sub>(0,05; 4) = 2,776 → 26,4 &gt; 2,776, коэффициент значим.</li>
+        <li>Доверительный интервал: 5,19 ± 2,776·0,196 = (4,65; 5,74) — ноль не накрыт.</li>
+        <li>F = 1131,52 / 1,62 = <strong>698</strong> при F<sub>крит</sub>(0,05; 1; 4) = 7,71 → уравнение значимо; проверка F ≈ t² = 26,4² = 697. ✓</li>
+        <li>Ā = 11,27 / 6 = <strong>1,88 %</strong> — высокая точность подгонки.</li>
+        <li>Вывод: модель адекватна, коэффициент значим, ошибки малы и без видимой структуры.</li>
+      </ul>
+    </div>
+
+    <sc-if value="{{ showSelfCheck }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:1px solid var(--color-neutral-300);padding-top:18px;margin-top:30px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:10px">Вопросы для самопроверки</div>
+      <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.7;display:flex;flex-direction:column;gap:5px">
+        <li>Почему R² нельзя использовать для сравнения моделей с разным числом факторов?</li>
+        <li>Что произойдёт со стандартной ошибкой коэффициента, если увеличить разброс фактора x?</li>
+        <li>Чем опасна гетероскедастичность, если сами оценки коэффициентов остаются несмещёнными?</li>
+      </ul>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ showPractice }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:2px solid var(--color-divider);padding-top:22px;margin-top:36px">
+      <h4 style="margin-bottom:14px">Практическое занятие</h4>
+      <ol style="margin:0;padding-left:22px;font-size:14.5px;line-height:1.7;display:flex;flex-direction:column;gap:8px">
+        <li>Дано: n = 20, k = 2, TSS = 480, RSS = 96. Найдите R², R²<sub>adj</sub>, s<sub>e</sub> и F; сделайте вывод о значимости уравнения.</li>
+        <li>Коэффициент b<sub>2</sub> = 1,4 при se = 0,9, n = 15, k = 2. Значим ли фактор при α = 0,05? Постройте доверительный интервал.</li>
+        <li>Постройте таблицу остатков для своей модели из занятия 05 и рассчитайте Ā.</li>
+        <li>В EViews выведите Equation Output и найдите в нём R², R²<sub>adj</sub>, S.E. of regression, t-Statistic, Prob(F-statistic), Durbin—Watson stat.</li>
+      </ol>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ showSources }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:1px solid var(--color-neutral-300);margin-top:34px;padding-top:14px;font-size:12.5px;color:var(--color-neutral-700)">
+      Литература: Wooldridge, разд. 2.3, 4.1—4.5, гл. 8; Stock &amp; Watson, гл. 5, 7 и разд. 17.3.
+    </div>
+    </sc-if>
+
+    <button onClick="{{ go8 }}" class="btn btn-primary" style="margin-top:34px">Занятие 08 →</button>
+  </article>
+  </sc-if>
+
+  <sc-if value="{{ isL8 }}" hint-placeholder-val="{{ true }}">
+  <article data-screen-label="Занятие 08" style="max-width:860px;padding:48px 56px 96px">
+    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
+      <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">08</div>
+      <div style="flex:1 1 320px;min-width:0">
+        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 3 · Лекция 4 ч + практика 4 ч</div>
+        <h1 style="font-size:38px;margin:0">Временные ряды</h1>
+      </div>
+    </div>
+
+    <p style="font-size:17px;line-height:1.6;max-width:66ch">Временной ряд — последовательность значений показателя, упорядоченная во времени. Соседние уровни зависят друг от друга, поэтому ряд анализируют не как случайную выборку, а как совокупность закономерных компонент и случайного остатка.</p>
+
+    <div style="background:var(--color-surface);border-top:2px solid var(--color-divider);padding:20px 22px;margin:28px 0 36px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:10px">Цель занятия</div>
+      <ul style="margin:0;padding-left:20px;font-size:14.5px;line-height:1.6;display:flex;flex-direction:column;gap:6px">
+        <li>выделять компоненты ряда: тренд, сезонность, цикл, случайную составляющую;</li>
+        <li>различать аддитивную и мультипликативную модели;</li>
+        <li>считать показатели динамики и сглаживать ряд;</li>
+        <li>строить трендовое уравнение и сезонные индексы, давать прогноз.</li>
+      </ul>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">8.1</h6>
+    <h3>Компоненты ряда</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 2px;background:transparent;margin:16px 0 30px">
+      <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:18px">
+        <div style="font-family:var(--font-heading);font-weight:800;font-size:15px;margin-bottom:6px">Тренд T</div>
+        <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5">Долговременное направление изменения: рост ВВП, снижение доли занятых в сельском хозяйстве.</div>
+      </div>
+      <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:18px">
+        <div style="font-family:var(--font-heading);font-weight:800;font-size:15px;margin-bottom:6px">Сезонность S</div>
+        <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5">Регулярные колебания с периодом до года: кварталы, месяцы, дни недели.</div>
+      </div>
+      <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:18px">
+        <div style="font-family:var(--font-heading);font-weight:800;font-size:15px;margin-bottom:6px">Цикл C</div>
+        <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5">Колебания длиной в несколько лет — деловой цикл, инвестиционные волны.</div>
+      </div>
+      <div style="background:var(--color-bg);border-top:2px solid var(--color-divider);padding:18px">
+        <div style="font-family:var(--font-heading);font-weight:800;font-size:15px;margin-bottom:6px">Случайная E</div>
+        <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5">Непредсказуемая часть: погода, разовые решения, шоки.</div>
+      </div>
+    </div>
+    <div style="border-top:2px solid var(--color-divider);border-bottom:1px solid var(--color-neutral-300);padding:18px 0;margin:16px 0 26px;display:flex;flex-direction:column;gap:10px">
+      <div style="font-style:italic;font-size:20px">Аддитивная: y<sub>t</sub> = T<sub>t</sub> + S<sub>t</sub> + C<sub>t</sub> + E<sub>t</sub>  ·  Мультипликативная: y<sub>t</sub> = T<sub>t</sub> · S<sub>t</sub> · C<sub>t</sub> · E<sub>t</sub></div>
+      <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.6">Аддитивная модель применяется, когда амплитуда сезонных колебаний примерно постоянна; мультипликативная — когда колебания растут вместе с уровнем ряда. Логарифмирование превращает мультипликативную модель в аддитивную.</div>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">8.2</h6>
+    <h3>Показатели динамики</h3>
+    <table class="table" style="width:100%;margin:16px 0 30px">
+      <thead><tr><th style="width:34%">Показатель</th><th>Формула</th><th style="width:26%">Смысл</th></tr></thead>
+      <tbody>
+        <tr><td>Абсолютный прирост</td><td>Δ<sub>t</sub> = y<sub>t</sub> − y<sub>t−1</sub></td><td>изменение в единицах</td></tr>
+        <tr><td>Темп роста</td><td>T<sub>р</sub> = y<sub>t</sub> / y<sub>t−1</sub> · 100 %</td><td>во сколько раз</td></tr>
+        <tr><td>Темп прироста</td><td>T<sub>пр</sub> = T<sub>р</sub> − 100 %</td><td>на сколько процентов</td></tr>
+        <tr><td>Средний темп роста</td><td>T̄<sub>р</sub> = <sup>n−1</sup>√(y<sub>n</sub> / y<sub>1</sub>)</td><td>средняя динамика за период</td></tr>
+        <tr><td>Абсолютное значение 1 % прироста</td><td>y<sub>t−1</sub> / 100</td><td>цена одного процента</td></tr>
+      </tbody>
+    </table>
+
+    <h6 style="color:var(--color-neutral-700)">8.3</h6>
+    <h3>Методы сглаживания и выделения тренда</h3>
+    <ul style="margin:0 0 26px;padding-left:22px;font-size:14.5px;line-height:1.7;max-width:70ch">
+      <li><strong>Укрупнение интервалов</strong> — переход от месяцев к кварталам, от кварталов к годам.</li>
+      <li><strong>Скользящая средняя</strong> — среднее из m соседних уровней; при чётном m применяют центрирование.</li>
+      <li><strong>Экспоненциальное сглаживание</strong>: ŷ<sub>t</sub> = α·y<sub>t</sub> + (1 − α)·ŷ<sub>t−1</sub>, 0 &lt; α &lt; 1 — свежие наблюдения весомее старых.</li>
+      <li><strong>Аналитическое выравнивание</strong> — оценка уравнения тренда по МНК: линейного ŷ<sub>t</sub> = a + b·t, параболического, экспоненциального, логистического.</li>
+    </ul>
+
+    <h6 style="color:var(--color-neutral-700)">8.4</h6>
+    <h3>Сезонные индексы и десезонализация</h3>
+    <div style="border-top:2px solid var(--color-divider);border-bottom:1px solid var(--color-neutral-300);padding:18px 0;margin:16px 0 26px;display:flex;flex-direction:column;gap:10px">
+      <div style="font-style:italic;font-size:19px">Аддитивная: S<sub>j</sub> = среднее (y<sub>t</sub> − T<sub>t</sub>) по одноимённым периодам, ΣS<sub>j</sub> = 0</div>
+      <div style="font-style:italic;font-size:19px">Мультипликативная: I<sub>j</sub> = среднее (y<sub>t</sub> / T<sub>t</sub>), ΣI<sub>j</sub> = число периодов</div>
+      <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.6">Десезонализированный ряд: y<sub>t</sub> − S<sub>j</sub> (или y<sub>t</sub> / I<sub>j</sub>). Именно по нему сравнивают кварталы между собой.</div>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">8.5</h6>
+    <h3>Автокорреляция уровней и стационарность</h3>
+    <div style="border-top:2px solid var(--color-divider);border-bottom:1px solid var(--color-neutral-300);padding:18px 0;margin:16px 0 26px">
+      <div style="font-style:italic;font-size:20px;margin-bottom:8px">r<sub>τ</sub> = Σ(y<sub>t</sub> − ȳ)(y<sub>t−τ</sub> − ȳ) / Σ(y<sub>t</sub> − ȳ)²</div>
+      <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.6">Коэффициент автокорреляции порядка τ. Набор r<sub>1</sub>, r<sub>2</sub>, … — автокорреляционная функция (коррелограмма): высокий r<sub>1</sub> указывает на тренд, всплеск при τ = 4 (кварталы) — на сезонность. Стационарный ряд имеет постоянные среднее и дисперсию; нестационарный приводят к стационарному взятием разностей Δy<sub>t</sub> = y<sub>t</sub> − y<sub>t−1</sub>.</div>
+    </div>
+
+    <div style="background:var(--color-accent-100);padding:20px 22px;margin:26px 0 34px;border-top:2px solid var(--color-accent)">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:12px">Разобранный пример: тренд и сезонность по квартальным данным</div>
+      <p style="font-size:14.5px;margin-bottom:12px">Объём продаж, млн сум, 12 кварталов (2022–2024). Строим аддитивную модель y<sub>t</sub> = T<sub>t</sub> + S<sub>t</sub> + E<sub>t</sub>.</p>
+      <table class="table" style="width:100%;margin:0 0 14px;font-size:13px">
+        <thead><tr><th>t</th><th>Период</th><th>y<sub>t</sub></th><th>T<sub>t</sub> = 23,0 + 1,231t</th><th>y<sub>t</sub> − T<sub>t</sub></th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>2022 I</td><td>20</td><td>24,23</td><td>−4,23</td></tr>
+          <tr><td>2</td><td>2022 II</td><td>26</td><td>25,46</td><td>0,54</td></tr>
+          <tr><td>3</td><td>2022 III</td><td>34</td><td>26,69</td><td>7,31</td></tr>
+          <tr><td>4</td><td>2022 IV</td><td>28</td><td>27,92</td><td>0,08</td></tr>
+          <tr><td>5</td><td>2023 I</td><td>24</td><td>29,15</td><td>−5,15</td></tr>
+          <tr><td>6</td><td>2023 II</td><td>30</td><td>30,38</td><td>−0,38</td></tr>
+          <tr><td>7</td><td>2023 III</td><td>38</td><td>31,62</td><td>6,38</td></tr>
+          <tr><td>8</td><td>2023 IV</td><td>32</td><td>32,85</td><td>−0,85</td></tr>
+          <tr><td>9</td><td>2024 I</td><td>28</td><td>34,08</td><td>−6,08</td></tr>
+          <tr><td>10</td><td>2024 II</td><td>34</td><td>35,31</td><td>−1,31</td></tr>
+          <tr><td>11</td><td>2024 III</td><td>42</td><td>36,54</td><td>5,46</td></tr>
+          <tr><td>12</td><td>2024 IV</td><td>36</td><td>37,77</td><td>−1,77</td></tr>
+        </tbody>
+      </table>
+      <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.8">
+        <li>Σy = 372, ȳ = 31; t̄ = 6,5; Σ(t − t̄)² = 143; Σ(t − t̄)(y − ȳ) = 176.</li>
+        <li>b = 176 / 143 = <strong>1,231</strong>; a = 31 − 1,231·6,5 = <strong>23,0</strong> → тренд <em>T<sub>t</sub> = 23,0 + 1,231t</em>: продажи растут на 1,23 млн за квартал.</li>
+        <li>Сезонные отклонения по кварталам: S<sub>I</sub> = (−4,23 − 5,15 − 6,08)/3 = <strong>−5,15</strong>; S<sub>II</sub> = <strong>−0,38</strong>; S<sub>III</sub> = <strong>+6,38</strong>; S<sub>IV</sub> = <strong>−0,85</strong>.</li>
+        <li>Контроль: сумма индексов −5,15 − 0,38 + 6,38 − 0,85 = 0,00. ✓</li>
+        <li>Прогноз на 2025 I (t = 13): T = 23,0 + 1,231·13 = 39,0; ŷ = 39,0 − 5,15 = <strong>33,9 млн сум</strong>.</li>
+        <li>Прогноз на 2025 III (t = 15): T = 41,5; ŷ = 41,5 + 6,38 = <strong>47,9 млн сум</strong>.</li>
+      </ul>
+    </div>
+
+    <sc-if value="{{ showSelfCheck }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:1px solid var(--color-neutral-300);padding-top:18px;margin-top:30px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:10px">Вопросы для самопроверки</div>
+      <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.7;display:flex;flex-direction:column;gap:5px">
+        <li>Как по графику ряда выбрать между аддитивной и мультипликативной моделью?</li>
+        <li>Почему при чётном числе периодов скользящую среднюю центрируют?</li>
+        <li>Что означает высокий коэффициент автокорреляции первого порядка?</li>
+      </ul>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ showPractice }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:2px solid var(--color-divider);padding-top:22px;margin-top:36px">
+      <h4 style="margin-bottom:14px">Практическое занятие</h4>
+      <ol style="margin:0;padding-left:22px;font-size:14.5px;line-height:1.7;display:flex;flex-direction:column;gap:8px">
+        <li>По ряду 45; 48; 52; 57; 61; 66 рассчитайте цепные абсолютные приросты, темпы роста и средний темп роста.</li>
+        <li>Постройте трёхчленную скользящую среднюю для этого ряда и сравните её с линейным трендом по МНК.</li>
+        <li>По данным разобранного примера постройте прогноз на все четыре квартала 2025 года и опишите годовой итог.</li>
+        <li>В EViews/Excel постройте линейный и параболический тренд для одного ряда и выберите лучший по R²<sub>adj</sub> и Ā.</li>
+      </ol>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ showSources }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:1px solid var(--color-neutral-300);margin-top:34px;padding-top:14px;font-size:12.5px;color:var(--color-neutral-700)">
+      Литература: Wooldridge, гл. 10—11; Stock &amp; Watson, гл. 14—15.
+    </div>
+    </sc-if>
+
+    <button onClick="{{ go9 }}" class="btn btn-primary" style="margin-top:34px">Занятие 09 →</button>
+  </article>
+  </sc-if>
+
+  <sc-if value="{{ isL9 }}" hint-placeholder-val="{{ true }}">
+  <article data-screen-label="Занятие 09" style="max-width:860px;padding:48px 56px 96px">
+    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
+      <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">09</div>
+      <div style="flex:1 1 320px;min-width:0">
+        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 3 · Лекция 2 ч + практика 2 ч</div>
+        <h1 style="font-size:38px;margin:0">Динамические эконометрические модели</h1>
+      </div>
+    </div>
+
+    <p style="font-size:17px;line-height:1.6;max-width:66ch">Экономика реагирует на изменения не мгновенно: инвестиции дают отдачу через годы, потребление подстраивается под новый доход постепенно. Модель, где сегодняшнее значение y зависит от прошлых значений факторов или самого y, называется динамической.</p>
+
+    <div style="background:var(--color-surface);border-top:2px solid var(--color-divider);padding:20px 22px;margin:28px 0 36px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:10px">Цель занятия</div>
+      <ul style="margin:0;padding-left:20px;font-size:14.5px;line-height:1.6;display:flex;flex-direction:column;gap:6px">
+        <li>записывать модели с распределёнными лагами и авторегрессионные модели;</li>
+        <li>считать краткосрочный, промежуточные и долгосрочный мультипликаторы;</li>
+        <li>определять средний и медианный лаг;</li>
+        <li>понимать преобразование Койка и проблемы оценивания динамических моделей.</li>
+      </ul>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">9.1</h6>
+    <h3>Типы динамических моделей</h3>
+    <table class="table" style="width:100%;margin:16px 0 30px">
+      <thead><tr><th style="width:34%">Модель</th><th>Уравнение</th><th style="width:24%">Пример</th></tr></thead>
+      <tbody>
+        <tr><td>Распределённых лагов (DL)</td><td>y<sub>t</sub> = a + b<sub>0</sub>x<sub>t</sub> + b<sub>1</sub>x<sub>t−1</sub> + … + b<sub>p</sub>x<sub>t−p</sub> + u<sub>t</sub></td><td>инвестиции → выпуск</td></tr>
+        <tr><td>Авторегрессия (AR)</td><td>y<sub>t</sub> = a + c·y<sub>t−1</sub> + u<sub>t</sub></td><td>инерция инфляции</td></tr>
+        <tr><td>Авторегрессионная с лагами (ADL)</td><td>y<sub>t</sub> = a + b<sub>0</sub>x<sub>t</sub> + c·y<sub>t−1</sub> + u<sub>t</sub></td><td>потребление, спрос на деньги</td></tr>
+        <tr><td>Частичной корректировки</td><td>y<sub>t</sub> − y<sub>t−1</sub> = λ(y*<sub>t</sub> − y<sub>t−1</sub>)</td><td>подстройка запаса капитала</td></tr>
+      </tbody>
+    </table>
+
+    <h6 style="color:var(--color-neutral-700)">9.2</h6>
+    <h3>Мультипликаторы и структура лага</h3>
+    <div style="border-top:2px solid var(--color-divider);border-bottom:1px solid var(--color-neutral-300);padding:18px 0;margin:16px 0 26px;display:flex;flex-direction:column;gap:12px">
+      <div style="font-style:italic;font-size:19px">Краткосрочный: b<sub>0</sub>  ·  Промежуточный: b<sub>0</sub> + b<sub>1</sub> + … + b<sub>j</sub>  ·  Долгосрочный: B = Σ b<sub>j</sub></div>
+      <div style="font-style:italic;font-size:19px">β<sub>j</sub> = b<sub>j</sub> / B  ·  Средний лаг: L̄ = Σ j·β<sub>j</sub>  ·  Медианный лаг: j, при котором накопленная доля достигает 0,5</div>
+      <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.6">Краткосрочный мультипликатор — реакция y в тот же период; долгосрочный — полный накопленный эффект. Средний лаг показывает, через сколько периодов в среднем проявляется влияние фактора.</div>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">9.3</h6>
+    <h3>Преобразование Койка</h3>
+    <p style="max-width:66ch">Если лагов много, число параметров растёт, а факторы x<sub>t</sub>, x<sub>t−1</sub>, … сильно коррелированы между собой. Койк предположил геометрическое убывание весов: b<sub>j</sub> = b<sub>0</sub>·λ<sup>j</sup>, 0 &lt; λ &lt; 1. Тогда бесконечная модель сворачивается в компактную авторегрессионную:</p>
+    <div style="border-top:2px solid var(--color-divider);border-bottom:1px solid var(--color-neutral-300);padding:18px 0;margin:20px 0 26px;display:flex;flex-direction:column;gap:10px">
+      <div style="font-style:italic;font-size:19px">y<sub>t</sub> = a(1 − λ) + b<sub>0</sub>x<sub>t</sub> + λ·y<sub>t−1</sub> + v<sub>t</sub></div>
+      <div style="font-style:italic;font-size:19px">Долгосрочный мультипликатор: B = b<sub>0</sub> / (1 − λ)  ·  Средний лаг: L̄ = λ / (1 − λ)</div>
+      <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.6">Вместо десятка лаговых факторов оценивается всего три параметра. Плата — лаговая зависимая переменная в правой части.</div>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">9.4</h6>
+    <h3>Проблемы оценивания</h3>
+    <ul style="margin:0 0 26px;padding-left:22px;font-size:14.5px;line-height:1.7;max-width:70ch">
+      <li><strong>Лаговая зависимая переменная коррелирует с ошибкой</strong> — обычный МНК даёт смещённые и несостоятельные оценки; применяют метод инструментальных переменных (инструмент — x<sub>t−1</sub>) или обобщённый метод моментов.</li>
+      <li><strong>Автокорреляция остатков</strong> — критерий Дарбина—Уотсона в этих моделях неприменим, используют h-статистику Дарбина или тест Бреуша—Годфри.</li>
+      <li><strong>Мультиколлинеарность лагов</strong> — решается схемами Койка, Алмон (полиномиальные лаги) или сокращением глубины лага.</li>
+      <li><strong>Выбор длины лага</strong> — по информационным критериям Акаике (AIC) и Шварца (SC): меньше значение — лучше модель.</li>
+    </ul>
+
+    <div style="background:var(--color-accent-100);padding:20px 22px;margin:26px 0 34px;border-top:2px solid var(--color-accent)">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:12px">Разобранный пример: два способа описать одну и ту же динамику</div>
+      <p style="font-size:14.5px;margin-bottom:10px"><strong>А. Модель с конечными лагами.</strong> Потребление зависит от текущего и двух прошлых доходов:</p>
+      <div style="font-style:italic;font-size:18px;margin:0 0 12px">C<sub>t</sub> = 40 + 0,35·Y<sub>t</sub> + 0,25·Y<sub>t−1</sub> + 0,15·Y<sub>t−2</sub></div>
+      <ul style="margin:0 0 14px;padding-left:20px;font-size:14px;line-height:1.8">
+        <li>Краткосрочный мультипликатор = <strong>0,35</strong>: рост дохода на 1 млн повышает потребление сразу на 0,35 млн.</li>
+        <li>Промежуточный за два периода = 0,35 + 0,25 = <strong>0,60</strong>.</li>
+        <li>Долгосрочный B = 0,35 + 0,25 + 0,15 = <strong>0,75</strong> — предельная склонность к потреблению в долгом периоде.</li>
+        <li>Относительные веса: β<sub>0</sub> = 0,467; β<sub>1</sub> = 0,333; β<sub>2</sub> = 0,200.</li>
+        <li>Средний лаг L̄ = 0·0,467 + 1·0,333 + 2·0,200 = <strong>0,73 периода</strong>; медианный лаг наступает уже на нулевом шаге (накоплено 0,467) — фактически на первом (0,80 &gt; 0,5).</li>
+      </ul>
+      <p style="font-size:14.5px;margin-bottom:10px"><strong>Б. Форма Койка.</strong> Та же зависимость, оценённая как авторегрессия:</p>
+      <div style="font-style:italic;font-size:18px;margin:0 0 12px">C<sub>t</sub> = 12 + 0,30·Y<sub>t</sub> + 0,60·C<sub>t−1</sub></div>
+      <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.8">
+        <li>λ = 0,60 — скорость затухания влияния прошлого дохода.</li>
+        <li>Долгосрочный мультипликатор B = 0,30 / (1 − 0,60) = <strong>0,75</strong> — совпал с моделью А.</li>
+        <li>Средний лаг L̄ = 0,60 / 0,40 = <strong>1,5 периода</strong> — реакция растянута сильнее.</li>
+        <li>Свободный член долгосрочного уравнения: 12 / (1 − 0,6) = 30, то есть <em>C = 30 + 0,75Y</em>.</li>
+      </ul>
+    </div>
+
+    <sc-if value="{{ showSelfCheck }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:1px solid var(--color-neutral-300);padding-top:18px;margin-top:30px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:10px">Вопросы для самопроверки</div>
+      <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.7;display:flex;flex-direction:column;gap:5px">
+        <li>Чем краткосрочный мультипликатор отличается от долгосрочного экономически?</li>
+        <li>Почему в модели с y<sub>t−1</sub> нельзя пользоваться критерием Дарбина—Уотсона?</li>
+        <li>Что означает λ, близкое к единице, для скорости подстройки экономики?</li>
+      </ul>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ showPractice }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:2px solid var(--color-divider);padding-top:22px;margin-top:36px">
+      <h4 style="margin-bottom:14px">Практическое занятие</h4>
+      <ol style="margin:0;padding-left:22px;font-size:14.5px;line-height:1.7;display:flex;flex-direction:column;gap:8px">
+        <li>Дано: y<sub>t</sub> = 5 + 0,4x<sub>t</sub> + 0,3x<sub>t−1</sub> + 0,2x<sub>t−2</sub> + 0,1x<sub>t−3</sub>. Найдите все мультипликаторы, относительные веса, средний и медианный лаг.</li>
+        <li>Модель Койка: y<sub>t</sub> = 8 + 0,25x<sub>t</sub> + 0,75y<sub>t−1</sub>. Рассчитайте долгосрочный мультипликатор и средний лаг; запишите долгосрочное уравнение.</li>
+        <li>Объясните, какой инструмент вы предложите для x, если y<sub>t−1</sub> коррелирует с ошибкой.</li>
+        <li>В EViews оцените ADL-модель по ряду инфляции Узбекистана и сравните AIC для лагов 1, 2 и 3.</li>
+      </ol>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ showSources }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:1px solid var(--color-neutral-300);margin-top:34px;padding-top:14px;font-size:12.5px;color:var(--color-neutral-700)">
+      Литература: Wooldridge, гл. 10 и разд. 18.1—18.2; Stock &amp; Watson, гл. 15 «Dynamic Causal Effects».
+    </div>
+    </sc-if>
+
+    <button onClick="{{ go10 }}" class="btn btn-primary" style="margin-top:34px">Занятие 10 →</button>
+  </article>
+  </sc-if>
+
+  <sc-if value="{{ isL10 }}" hint-placeholder-val="{{ true }}">
+  <article data-screen-label="Занятие 10" style="max-width:860px;padding:48px 56px 96px">
+    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
+      <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">10</div>
+      <div style="flex:1 1 320px;min-width:0">
+        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 3 · Лекция 2 ч + практика 2 ч</div>
+        <h1 style="font-size:38px;margin:0">Системы одновременных уравнений</h1>
+      </div>
+    </div>
+
+    <p style="font-size:17px;line-height:1.6;max-width:66ch">В экономике переменные определяются совместно: цена зависит от объёма, а объём — от цены; доход зависит от потребления, а потребление — от дохода. Одним уравнением такую взаимозависимость описать нельзя, а обычный МНК даёт смещённые оценки.</p>
+
+    <div style="background:var(--color-surface);border-top:2px solid var(--color-divider);padding:20px 22px;margin:28px 0 36px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:10px">Цель занятия</div>
+      <ul style="margin:0;padding-left:20px;font-size:14.5px;line-height:1.6;display:flex;flex-direction:column;gap:6px">
+        <li>различать независимые, рекурсивные и взаимозависимые системы;</li>
+        <li>переходить от структурной формы к приведённой;</li>
+        <li>проверять идентифицируемость по порядковому и ранговому условию;</li>
+        <li>выбирать метод оценивания: КМНК, ДМНК, трёхшаговый МНК.</li>
+      </ul>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">10.1</h6>
+    <h3>Виды систем</h3>
+    <table class="table" style="width:100%;margin:16px 0 30px">
+      <thead><tr><th style="width:28%">Тип системы</th><th>Признак</th><th style="width:26%">Метод оценки</th></tr></thead>
+      <tbody>
+        <tr><td>Независимых уравнений</td><td>каждая y зависит только от экзогенных переменных</td><td>обычный МНК по уравнениям</td></tr>
+        <tr><td>Рекурсивная</td><td>y<sub>1</sub> входит в уравнение y<sub>2</sub>, но не наоборот</td><td>последовательный МНК</td></tr>
+        <tr><td>Взаимозависимая (одновременная)</td><td>эндогенные переменные объясняют друг друга</td><td>КМНК, ДМНК, 3МНК</td></tr>
+      </tbody>
+    </table>
+
+    <h6 style="color:var(--color-neutral-700)">10.2</h6>
+    <h3>Структурная и приведённая форма</h3>
+    <p style="max-width:66ch">Структурная форма отражает экономическую теорию: в ней эндогенные переменные стоят и слева, и справа. Приведённая форма — результат алгебраического решения системы: каждая эндогенная переменная выражена только через предопределённые.</p>
+    <div style="border-top:2px solid var(--color-divider);border-bottom:1px solid var(--color-neutral-300);padding:18px 0;margin:20px 0 26px;display:flex;flex-direction:column;gap:10px">
+      <div style="font-style:italic;font-size:19px">Структурная: y<sub>1</sub> = a<sub>1</sub> + b<sub>12</sub>y<sub>2</sub> + c<sub>11</sub>x<sub>1</sub> + u<sub>1</sub>;  y<sub>2</sub> = a<sub>2</sub> + b<sub>21</sub>y<sub>1</sub> + c<sub>22</sub>x<sub>2</sub> + u<sub>2</sub></div>
+      <div style="font-style:italic;font-size:19px">Приведённая: y<sub>1</sub> = δ<sub>10</sub> + δ<sub>11</sub>x<sub>1</sub> + δ<sub>12</sub>x<sub>2</sub> + v<sub>1</sub>;  y<sub>2</sub> = δ<sub>20</sub> + δ<sub>21</sub>x<sub>1</sub> + δ<sub>22</sub>x<sub>2</sub> + v<sub>2</sub></div>
+      <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.6">Коэффициенты δ оцениваются обычным МНК без смещения; задача идентификации — восстановить по ним структурные параметры b и c.</div>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">10.3</h6>
+    <h3>Проблема идентификации</h3>
+    <div style="border-top:2px solid var(--color-divider);border-bottom:1px solid var(--color-neutral-300);padding:18px 0;margin:16px 0 24px;display:flex;flex-direction:column;gap:10px">
+      <div style="font-style:italic;font-size:19px">Порядковое условие: D + 1 = H — уравнение точно идентифицируемо; D + 1 &gt; H — сверхидентифицируемо; D + 1 &lt; H — неидентифицируемо</div>
+      <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.6">H — число эндогенных переменных в данном уравнении; D — число предопределённых переменных системы, отсутствующих в этом уравнении. Ранговое условие: определитель матрицы коэффициентов при переменных, не входящих в уравнение, должен быть отличен от нуля.</div>
+    </div>
+    <table class="table" style="width:100%;margin:16px 0 30px">
+      <thead><tr><th style="width:32%">Случай</th><th>Что можно сделать</th></tr></thead>
+      <tbody>
+        <tr><td>Точно идентифицируемо</td><td>структурные параметры восстанавливаются однозначно — косвенный МНК (КМНК)</td></tr>
+        <tr><td>Сверхидентифицируемо</td><td>решений несколько, применяется двухшаговый МНК (ДМНК)</td></tr>
+        <tr><td>Неидентифицируемо</td><td>оценить нельзя; нужно менять спецификацию — добавить экзогенную переменную</td></tr>
+      </tbody>
+    </table>
+
+    <h6 style="color:var(--color-neutral-700)">10.4</h6>
+    <h3>Двухшаговый МНК</h3>
+    <ol style="margin:0 0 26px;padding-left:22px;font-size:14.5px;line-height:1.7;max-width:70ch;display:flex;flex-direction:column;gap:6px">
+      <li>Шаг 1. Каждая эндогенная переменная из правой части регрессируется на все предопределённые переменные системы; получают расчётные значения ŷ.</li>
+      <li>Шаг 2. В структурное уравнение вместо фактических y подставляют ŷ и оценивают его обычным МНК.</li>
+    </ol>
+    <p style="max-width:70ch;font-size:14.5px;margin-bottom:26px">Замена «очищает» регрессор от корреляции со случайной ошибкой, что и устраняет смещение. Трёхшаговый МНК добавляет учёт корреляции ошибок между уравнениями и оценивает систему целиком.</p>
+
+    <div style="background:var(--color-accent-100);padding:20px 22px;margin:26px 0 34px;border-top:2px solid var(--color-accent)">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:12px">Разобранный пример: простейшая кейнсианская модель</div>
+      <div style="font-style:italic;font-size:18px;margin:0 0 12px">C<sub>t</sub> = a + b·Y<sub>t</sub> + u<sub>t</sub>;  Y<sub>t</sub> = C<sub>t</sub> + I<sub>t</sub></div>
+      <ul style="margin:0 0 14px;padding-left:20px;font-size:14px;line-height:1.8">
+        <li>Эндогенные: C и Y. Экзогенная: I. В первом уравнении H = 2 (C, Y), D = 1 (отсутствует I) → D + 1 = 2 = H: уравнение <strong>точно идентифицируемо</strong>, применим КМНК.</li>
+        <li>Приведённая форма: подставляем C в тождество: Y = a + bY + I ⇒ Y(1 − b) = a + I ⇒ <em>Y = a/(1 − b) + I/(1 − b)</em>.</li>
+        <li>Соответственно <em>C = a/(1 − b) + b·I/(1 − b)</em>.</li>
+      </ul>
+      <p style="font-size:14.5px;margin-bottom:10px">Пусть оценки дали a = 25, b = 0,7 (предельная склонность к потреблению), инвестиции I = 30 млрд.</p>
+      <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.8">
+        <li>Мультипликатор 1/(1 − b) = 1/0,3 = <strong>3,33</strong>.</li>
+        <li>Y = 25/0,3 + 30/0,3 = 83,3 + 100 = <strong>183,3 млрд</strong>.</li>
+        <li>C = 25 + 0,7·183,3 = <strong>153,3 млрд</strong>; проверка: 153,3 + 30 = 183,3. ✓</li>
+        <li>Рост инвестиций на 10 млрд даёт ΔY = 3,33·10 = <strong>33,3 млрд</strong> — эффект больше исходного импульса.</li>
+        <li>Если оценивать первое уравнение обычным МНК, оценка b будет завышена: Y коррелирует с u через тождество — это и есть смещение одновременности.</li>
+      </ul>
+    </div>
+
+    <sc-if value="{{ showSelfCheck }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:1px solid var(--color-neutral-300);padding-top:18px;margin-top:30px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:10px">Вопросы для самопроверки</div>
+      <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.7;display:flex;flex-direction:column;gap:5px">
+        <li>Почему приведённую форму можно оценивать обычным МНК, а структурную — нет?</li>
+        <li>Что изменится в идентификации уравнения спроса, если в уравнение предложения добавить погодный фактор?</li>
+        <li>Когда КМНК и ДМНК дают одинаковый результат?</li>
+      </ul>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ showPractice }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:2px solid var(--color-divider);padding-top:22px;margin-top:36px">
+      <h4 style="margin-bottom:14px">Практическое занятие</h4>
+      <ol style="margin:0;padding-left:22px;font-size:14.5px;line-height:1.7;display:flex;flex-direction:column;gap:8px">
+        <li>Система: Q<sup>d</sup> = a<sub>0</sub> + a<sub>1</sub>P + a<sub>2</sub>I + u<sub>1</sub>; Q<sup>s</sup> = b<sub>0</sub> + b<sub>1</sub>P + b<sub>2</sub>W + u<sub>2</sub>; Q<sup>d</sup> = Q<sup>s</sup>. Проверьте идентифицируемость каждого уравнения.</li>
+        <li>Выведите приведённую форму этой системы и объясните, какие сдвиги позволяют «увидеть» кривую спроса.</li>
+        <li>Для кейнсианской модели при b = 0,8 и I = 40 рассчитайте Y, C и мультипликатор; сравните с примером в лекции.</li>
+        <li>Опишите последовательность шагов ДМНК для уравнения потребления в EViews (TSLS, список инструментов).</li>
+      </ol>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ showSources }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:1px solid var(--color-neutral-300);margin-top:34px;padding-top:14px;font-size:12.5px;color:var(--color-neutral-700)">
+      Литература: Wooldridge, гл. 16 «Simultaneous Equations Models»; Stock &amp; Watson, гл. 12 «Instrumental Variables Regression».
+    </div>
+    </sc-if>
+
+    <button onClick="{{ go11 }}" class="btn btn-primary" style="margin-top:34px">Занятие 11 →</button>
+  </article>
+  </sc-if>
+
+  <sc-if value="{{ isL11 }}" hint-placeholder-val="{{ true }}">
+  <article data-screen-label="Занятие 11" style="max-width:860px;padding:48px 56px 96px">
+    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
+      <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">11</div>
+      <div style="flex:1 1 320px;min-width:0">
+        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 4 · Лекция 2 ч + практика 2 ч</div>
+        <h1 style="font-size:38px;margin:0">Производственные функции и экономический рост</h1>
+      </div>
+    </div>
+
+    <p style="font-size:17px;line-height:1.6;max-width:66ch">Производственная функция связывает выпуск с затратами ресурсов. Оценённая по данным, она показывает вклад капитала и труда в рост, отдачу от масштаба и влияние технического прогресса.</p>
+
+    <div style="background:var(--color-surface);border-top:2px solid var(--color-divider);padding:20px 22px;margin:28px 0 36px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:10px">Цель занятия</div>
+      <ul style="margin:0;padding-left:20px;font-size:14.5px;line-height:1.6;display:flex;flex-direction:column;gap:6px">
+        <li>записывать и линеаризовать функцию Кобба—Дугласа;</li>
+        <li>интерпретировать α и β как эластичности выпуска;</li>
+        <li>определять тип отдачи от масштаба и считать предельные продукты;</li>
+        <li>учитывать технический прогресс и раскладывать рост по источникам.</li>
+      </ul>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">11.1</h6>
+    <h3>Функция Кобба—Дугласа</h3>
+    <div style="border-top:2px solid var(--color-divider);border-bottom:1px solid var(--color-neutral-300);padding:18px 0;margin:16px 0 26px;display:flex;flex-direction:column;gap:12px">
+      <div style="font-style:italic;font-size:20px">Y = A·K<sup>α</sup>·L<sup>β</sup>·e<sup>u</sup>   ⇒   ln Y = ln A + α·ln K + β·ln L + u</div>
+      <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.6">После логарифмирования модель линейна по параметрам и оценивается обычным МНК. α — эластичность выпуска по капиталу, β — по труду: рост K на 1 % даёт α процентов прироста Y при неизменном труде. A — уровень технологии.</div>
+    </div>
+    <table class="table" style="width:100%;margin:16px 0 30px">
+      <thead><tr><th style="width:30%">Сумма α + β</th><th>Отдача от масштаба</th><th style="width:30%">Экономический смысл</th></tr></thead>
+      <tbody>
+        <tr><td>α + β = 1</td><td>постоянная</td><td>удвоение ресурсов удваивает выпуск</td></tr>
+        <tr><td>α + β &gt; 1</td><td>возрастающая</td><td>эффект масштаба, укрупнение выгодно</td></tr>
+        <tr><td>α + β &lt; 1</td><td>убывающая</td><td>ресурсы теряют отдачу при расширении</td></tr>
+      </tbody>
+    </table>
+
+    <h6 style="color:var(--color-neutral-700)">11.2</h6>
+    <h3>Средние и предельные продукты</h3>
+    <div style="border-top:2px solid var(--color-divider);border-bottom:1px solid var(--color-neutral-300);padding:18px 0;margin:16px 0 26px;display:flex;flex-direction:column;gap:10px">
+      <div style="font-style:italic;font-size:19px">AP<sub>L</sub> = Y / L  ·  MP<sub>L</sub> = ∂Y/∂L = β·Y/L  ·  MP<sub>K</sub> = α·Y/K  ·  MRTS = MP<sub>L</sub> / MP<sub>K</sub></div>
+      <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.6">В функции Кобба—Дугласа предельный продукт всегда пропорционален средней производительности с коэффициентом эластичности. Предельная норма замещения показывает, сколько единиц капитала заменяет одна единица труда при неизменном выпуске.</div>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">11.3</h6>
+    <h3>Технический прогресс и источники роста</h3>
+    <div style="border-top:2px solid var(--color-divider);border-bottom:1px solid var(--color-neutral-300);padding:18px 0;margin:16px 0 26px;display:flex;flex-direction:column;gap:10px">
+      <div style="font-style:italic;font-size:19px">Y<sub>t</sub> = A·e<sup>γt</sup>·K<sub>t</sub><sup>α</sup>·L<sub>t</sub><sup>β</sup>  ⇒  ln Y = ln A + γt + α·ln K + β·ln L + u</div>
+      <div style="font-style:italic;font-size:19px">Разложение роста: ΔY/Y = γ + α·ΔK/K + β·ΔL/L</div>
+      <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.6">γ — темп нейтрального технического прогресса (остаток Солоу): часть роста, не объяснённая приростом ресурсов.</div>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">11.4</h6>
+    <h3>Практические трудности оценивания</h3>
+    <ul style="margin:0 0 26px;padding-left:22px;font-size:14.5px;line-height:1.7;max-width:70ch">
+      <li><strong>Мультиколлинеарность</strong> K и L: капитал и труд растут вместе — оценки α и β неустойчивы; помогает переход к удельным величинам (Y/L и K/L) при гипотезе α + β = 1.</li>
+      <li><strong>Измерение капитала</strong>: нужна оценка запаса основных фондов в сопоставимых ценах, а не инвестиций за год.</li>
+      <li><strong>Проверка гипотезы</strong> α + β = 1 выполняется F-критерием на линейное ограничение.</li>
+      <li><strong>Альтернативы</strong>: CES-функция с постоянной эластичностью замещения, транслог-функция при переменной эластичности.</li>
+    </ul>
+
+    <div style="background:var(--color-accent-100);padding:20px 22px;margin:26px 0 34px;border-top:2px solid var(--color-accent)">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:12px">Разобранный пример</div>
+      <p style="font-size:14.5px;margin-bottom:10px">По данным 20 предприятий отрасли оценено уравнение в логарифмах:</p>
+      <div style="font-style:italic;font-size:18px;margin:0 0 12px">ln Y = 0,92 + 0,33·ln K + 0,71·ln L,  R² = 0,88</div>
+      <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.8">
+        <li>A = e<sup>0,92</sup> = <strong>2,51</strong> — уровень технологии.</li>
+        <li>α = 0,33: рост капитала на 10 % увеличивает выпуск на <strong>3,3 %</strong>.</li>
+        <li>β = 0,71: рост занятости на 10 % даёт <strong>7,1 %</strong> прироста выпуска — труд влияет сильнее.</li>
+        <li>α + β = 1,04 &gt; 1 — слабо возрастающая отдача от масштаба; отличие от единицы нужно проверить F-критерием.</li>
+        <li>При K = 100 и L = 400: Y = 2,51·100<sup>0,33</sup>·400<sup>0,71</sup> = 2,51·4,57·70,7 ≈ <strong>811</strong> усл. ед.</li>
+        <li>AP<sub>L</sub> = 811/400 = <strong>2,03</strong>; MP<sub>L</sub> = 0,71·2,03 = <strong>1,44</strong>; MP<sub>K</sub> = 0,33·811/100 = <strong>2,68</strong>.</li>
+        <li>Если K растёт на 5 %, L — на 2 %, а γ = 0,01, то ΔY/Y = 1 % + 0,33·5 % + 0,71·2 % = <strong>4,07 %</strong>, из них 1 п.п. — вклад технологий.</li>
+      </ul>
+    </div>
+
+    <sc-if value="{{ showSelfCheck }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:1px solid var(--color-neutral-300);padding-top:18px;margin-top:30px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:10px">Вопросы для самопроверки</div>
+      <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.7;display:flex;flex-direction:column;gap:5px">
+        <li>Почему коэффициенты Кобба—Дугласа читаются как эластичности без дополнительных пересчётов?</li>
+        <li>Как проверить гипотезу о постоянной отдаче от масштаба?</li>
+        <li>Что показывает остаток Солоу и почему его называют «мерой нашего незнания»?</li>
+      </ul>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ showPractice }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:2px solid var(--color-divider);padding-top:22px;margin-top:36px">
+      <h4 style="margin-bottom:14px">Практическое занятие</h4>
+      <ol style="margin:0;padding-left:22px;font-size:14.5px;line-height:1.7;display:flex;flex-direction:column;gap:8px">
+        <li>Дано: Y = 1,8·K<sup>0,4</sup>·L<sup>0,6</sup>, K = 250, L = 500. Найдите Y, AP<sub>L</sub>, MP<sub>L</sub>, MP<sub>K</sub> и тип отдачи от масштаба.</li>
+        <li>Логарифмируйте функцию из задания 1 и объясните, какие переменные вы подадите на вход МНК.</li>
+        <li>Разложите рост выпуска на вклад капитала, труда и технологий при ΔK/K = 8 %, ΔL/L = 3 %, γ = 0,015.</li>
+        <li>В EViews оцените ln(Y) на ln(K), ln(L) по данным отрасли и проверьте ограничение α + β = 1 (Wald test).</li>
+      </ol>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ showSources }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:1px solid var(--color-neutral-300);margin-top:34px;padding-top:14px;font-size:12.5px;color:var(--color-neutral-700)">
+      Литература: Wooldridge, разд. 6.2 и гл. 4 (проверка линейных ограничений); Stock &amp; Watson, гл. 8 «Nonlinear Regression Functions».
+    </div>
+    </sc-if>
+
+    <button onClick="{{ go12 }}" class="btn btn-primary" style="margin-top:34px">Занятие 12 →</button>
+  </article>
+  </sc-if>
+
+  <sc-if value="{{ isL12 }}" hint-placeholder-val="{{ true }}">
+  <article data-screen-label="Занятие 12" style="max-width:860px;padding:48px 56px 96px">
+    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
+      <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">12</div>
+      <div style="flex:1 1 320px;min-width:0">
+        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 4 · Лекция 2 ч + практика 2 ч</div>
+        <h1 style="font-size:38px;margin:0">Модели спроса, предложения и макромодели</h1>
+      </div>
+    </div>
+
+    <p style="font-size:17px;line-height:1.6;max-width:66ch">Спрос и предложение — классический пример одновременности: наблюдаемая пара «цена — количество» есть точка их пересечения. Умение оценивать такие модели превращает статистику продаж в инструмент ценовой и налоговой политики.</p>
+
+    <div style="background:var(--color-surface);border-top:2px solid var(--color-divider);padding:20px 22px;margin:28px 0 36px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:10px">Цель занятия</div>
+      <ul style="margin:0;padding-left:20px;font-size:14.5px;line-height:1.6;display:flex;flex-direction:column;gap:6px">
+        <li>строить эконометрические функции спроса и предложения;</li>
+        <li>считать ценовую, доходную и перекрёстную эластичности и классифицировать товар;</li>
+        <li>находить равновесие и оценивать эффект налога или субсидии;</li>
+        <li>представлять устройство макроэконометрических моделей.</li>
+      </ul>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">12.1</h6>
+    <h3>Функции спроса и предложения</h3>
+    <div style="border-top:2px solid var(--color-divider);border-bottom:1px solid var(--color-neutral-300);padding:18px 0;margin:16px 0 26px;display:flex;flex-direction:column;gap:10px">
+      <div style="font-style:italic;font-size:19px">Q<sup>d</sup> = a<sub>0</sub> + a<sub>1</sub>P + a<sub>2</sub>I + a<sub>3</sub>P<sup>sub</sup> + u<sub>1</sub>  ·  Q<sup>s</sup> = b<sub>0</sub> + b<sub>1</sub>P + b<sub>2</sub>W + u<sub>2</sub>  ·  Q<sup>d</sup> = Q<sup>s</sup></div>
+      <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.6">Ожидаемые знаки: a<sub>1</sub> &lt; 0, a<sub>2</sub> &gt; 0 для нормального товара, b<sub>1</sub> &gt; 0. W — издержки (сырьё, погода, зарплата) — сдвигают предложение и потому служат инструментом для идентификации спроса.</div>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">12.2</h6>
+    <h3>Эластичности и классификация товаров</h3>
+    <table class="table" style="width:100%;margin:16px 0 30px">
+      <thead><tr><th style="width:32%">Эластичность</th><th>Формула</th><th style="width:32%">Чтение</th></tr></thead>
+      <tbody>
+        <tr><td>По цене E<sub>p</sub></td><td>a<sub>1</sub>·P̄/Q̄</td><td>|E<sub>p</sub>| &gt; 1 — эластичный спрос; &lt; 1 — неэластичный</td></tr>
+        <tr><td>По доходу E<sub>I</sub></td><td>a<sub>2</sub>·Ī/Q̄</td><td>&gt; 1 — предмет роскоши; 0…1 — необходимости; &lt; 0 — низший товар</td></tr>
+        <tr><td>Перекрёстная E<sub>c</sub></td><td>a<sub>3</sub>·P̄<sup>sub</sup>/Q̄</td><td>&gt; 0 — заменители; &lt; 0 — дополняющие товары</td></tr>
+      </tbody>
+    </table>
+    <p style="max-width:70ch;font-size:14.5px">В логарифмической спецификации ln Q = c<sub>0</sub> + c<sub>1</sub>ln P + c<sub>2</sub>ln I коэффициенты сразу равны эластичностям — поэтому такая форма чаще всего и используется в прикладных работах.</p>
+
+    <h6 style="color:var(--color-neutral-700)">12.3</h6>
+    <h3>Кривая Энгеля и функция потребления</h3>
+    <ul style="margin:0 0 26px;padding-left:22px;font-size:14.5px;line-height:1.7;max-width:70ch">
+      <li>Кривая Энгеля связывает расходы на товар с доходом домохозяйства; по её наклону судят о характере блага.</li>
+      <li>Кейнсианская функция потребления C = a + bY: b — предельная склонность к потреблению, a — автономное потребление.</li>
+      <li>Средняя склонность C/Y убывает с ростом дохода — это подтверждается на данных бюджетных обследований.</li>
+    </ul>
+
+    <h6 style="color:var(--color-neutral-700)">12.4</h6>
+    <h3>Макроэконометрические модели</h3>
+    <table class="table" style="width:100%;margin:16px 0 30px">
+      <thead><tr><th style="width:30%">Класс</th><th>Состав</th><th style="width:28%">Назначение</th></tr></thead>
+      <tbody>
+        <tr><td>Малые кейнсианские</td><td>потребление, инвестиции, тождество дохода</td><td>учебный анализ мультипликаторов</td></tr>
+        <tr><td>Структурные (типа Клейна)</td><td>потребление, инвестиции, зарплата, тождества</td><td>анализ политики, сценарии</td></tr>
+        <tr><td>VAR-модели</td><td>система уравнений по лагам всех переменных</td><td>прогноз и реакция на шоки</td></tr>
+        <tr><td>Модели межотраслевого баланса</td><td>матрица затрат—выпуска</td><td>отраслевые эффекты спроса</td></tr>
+      </tbody>
+    </table>
+
+    <div style="background:var(--color-accent-100);padding:20px 22px;margin:26px 0 34px;border-top:2px solid var(--color-accent)">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:12px">Разобранный пример: равновесие и эффект налога</div>
+      <p style="font-size:14.5px;margin-bottom:10px">Оценены функции рынка (тыс. ед., тыс. сум): Q<sup>d</sup> = 120 − 2P + 0,5I; Q<sup>s</sup> = −20 + 3P. Доход I = 40.</p>
+      <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.8">
+        <li>Спрос при I = 40: Q<sup>d</sup> = 140 − 2P.</li>
+        <li>Равновесие: 140 − 2P = −20 + 3P ⇒ 160 = 5P ⇒ <strong>P* = 32</strong>; Q* = −20 + 96 = <strong>76</strong>.</li>
+        <li>E<sub>p</sub> = −2·32/76 = <strong>−0,84</strong> — спрос неэластичен: рост цены на 1 % снижает объём на 0,84 %, выручка растёт.</li>
+        <li>E<sub>I</sub> = 0,5·40/76 = <strong>0,26</strong> — нормальный товар первой необходимости.</li>
+        <li>Введён налог 5 на единицу (сдвиг предложения): Q<sup>s</sup> = −20 + 3(P − 5) = −35 + 3P. Тогда 140 − 2P = −35 + 3P ⇒ <strong>P* = 35</strong>, Q* = <strong>70</strong>.</li>
+        <li>Цена выросла на 3 из 5 — <strong>60 % налога</strong> легло на покупателя: при неэластичном спросе бремя смещается к потребителю.</li>
+        <li>Сборы бюджета: 5·70 = <strong>350</strong>; потери объёма — 6 тыс. ед.</li>
+      </ul>
+    </div>
+
+    <sc-if value="{{ showSelfCheck }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:1px solid var(--color-neutral-300);padding-top:18px;margin-top:30px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:10px">Вопросы для самопроверки</div>
+      <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.7;display:flex;flex-direction:column;gap:5px">
+        <li>Почему по одним лишь наблюдениям P и Q нельзя отличить кривую спроса от кривой предложения?</li>
+        <li>Какой инструмент подойдёт для идентификации функции предложения?</li>
+        <li>Как знак перекрёстной эластичности помогает определить конкурентов товара?</li>
+      </ul>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ showPractice }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:2px solid var(--color-divider);padding-top:22px;margin-top:36px">
+      <h4 style="margin-bottom:14px">Практическое занятие</h4>
+      <ol style="margin:0;padding-left:22px;font-size:14.5px;line-height:1.7;display:flex;flex-direction:column;gap:8px">
+        <li>Q<sup>d</sup> = 200 − 4P + 0,8I, Q<sup>s</sup> = −40 + 6P, I = 50. Найдите равновесие, обе эластичности и охарактеризуйте товар.</li>
+        <li>Введите субсидию 4 на единицу и рассчитайте, как разделится выигрыш между продавцом и покупателем.</li>
+        <li>Оцените логарифмическую функцию спроса по данным о продажах и объясните смысл каждого коэффициента.</li>
+        <li>Постройте мини-макромодель из трёх уравнений для условной экономики и найдите мультипликатор госрасходов.</li>
+      </ol>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ showSources }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:1px solid var(--color-neutral-300);margin-top:34px;padding-top:14px;font-size:12.5px;color:var(--color-neutral-700)">
+      Литература: Wooldridge, гл. 16 (спрос и предложение), разд. 6.2; Stock &amp; Watson, гл. 12.
+    </div>
+    </sc-if>
+
+    <button onClick="{{ go13 }}" class="btn btn-primary" style="margin-top:34px">Занятие 13 →</button>
+  </article>
+  </sc-if>
+
+  <sc-if value="{{ isL13 }}" hint-placeholder-val="{{ true }}">
+  <article data-screen-label="Занятие 13" style="max-width:860px;padding:48px 56px 96px">
+    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
+      <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">13</div>
+      <div style="flex:1 1 320px;min-width:0">
+        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 4 · Лекция 2 ч + практика 2 ч</div>
+        <h1 style="font-size:38px;margin:0">Прогнозирование: основы и методы</h1>
+      </div>
+    </div>
+
+    <p style="font-size:17px;line-height:1.6;max-width:66ch">Прогноз — это обоснованное суждение о будущем значении показателя с указанием точности. Эконометрика даёт не одно число, а интервал и меру доверия к нему.</p>
+
+    <div style="background:var(--color-surface);border-top:2px solid var(--color-divider);padding:20px 22px;margin:28px 0 36px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:10px">Цель занятия</div>
+      <ul style="margin:0;padding-left:20px;font-size:14.5px;line-height:1.6;display:flex;flex-direction:column;gap:6px">
+        <li>классифицировать прогнозы по горизонту и методу;</li>
+        <li>строить точечный и интервальный прогноз по регрессии;</li>
+        <li>оценивать качество прогноза (MAE, RMSE, MAPE, коэффициент Тейла);</li>
+        <li>различать условный и безусловный прогноз, работать со сценариями.</li>
+      </ul>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">13.1</h6>
+    <h3>Виды прогнозов и методы</h3>
+    <table class="table" style="width:100%;margin:16px 0 30px">
+      <thead><tr><th style="width:28%">Группа методов</th><th>Содержание</th><th style="width:26%">Когда применяют</th></tr></thead>
+      <tbody>
+        <tr><td>Экспертные</td><td>опрос специалистов, метод Дельфи, сценарные сессии</td><td>нет данных или новый рынок</td></tr>
+        <tr><td>Экстраполяция</td><td>продление тренда, скользящие средние, экспоненциальное сглаживание</td><td>устойчивая динамика</td></tr>
+        <tr><td>Регрессионные</td><td>прогноз y по заданным значениям факторов</td><td>известна структура связи</td></tr>
+        <tr><td>Системы уравнений</td><td>согласованный прогноз группы показателей</td><td>макроуровень (тема 14)</td></tr>
+      </tbody>
+    </table>
+    <p style="max-width:70ch;font-size:14.5px">По горизонту различают оперативный (до месяца), краткосрочный (до года), среднесрочный (1–5 лет) и долгосрочный прогноз. Чем длиннее горизонт, тем шире интервал и тем важнее сценарный подход.</p>
+
+    <h6 style="color:var(--color-neutral-700)">13.2</h6>
+    <h3>Точечный и интервальный прогноз по регрессии</h3>
+    <div style="border-top:2px solid var(--color-divider);border-bottom:1px solid var(--color-neutral-300);padding:18px 0;margin:16px 0 26px;display:flex;flex-direction:column;gap:12px">
+      <div style="font-style:italic;font-size:19px">ŷ<sub>p</sub> = b<sub>0</sub> + b<sub>1</sub>x<sub>p</sub></div>
+      <div style="font-style:italic;font-size:19px">se(ŷ<sub>p</sub>) = s<sub>e</sub>·√(1 + 1/n + (x<sub>p</sub> − x̄)² / Σ(x<sub>i</sub> − x̄)²)  ·  ŷ<sub>p</sub> ± t<sub>крит</sub>·se(ŷ<sub>p</sub>)</div>
+      <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.6">Единица под корнем отвечает за случайную ошибку самого будущего наблюдения, 1/n — за неточность средней, третье слагаемое растёт по мере удаления x<sub>p</sub> от среднего. Отсюда правило: не экстраполировать далеко за пределы наблюдавшегося диапазона факторов.</div>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">13.3</h6>
+    <h3>Измерители качества прогноза</h3>
+    <div style="border-top:2px solid var(--color-divider);border-bottom:1px solid var(--color-neutral-300);padding:18px 0;margin:16px 0 26px;display:flex;flex-direction:column;gap:10px">
+      <div style="font-style:italic;font-size:19px">MAE = (1/m)Σ|y − ŷ|  ·  RMSE = √((1/m)Σ(y − ŷ)²)  ·  MAPE = (100/m)Σ|(y − ŷ)/y|</div>
+      <div style="font-style:italic;font-size:19px">Коэффициент Тейла: U = RMSE / (√((1/m)Σy²) + √((1/m)Σŷ²))</div>
+      <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.6">U = 0 — идеальный прогноз, U = 1 — прогноз не лучше наивного. MAPE до 10 % считается высокой точностью, 10–20 % — хорошей, свыше 50 % — неудовлетворительной.</div>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">13.4</h6>
+    <h3>Условный прогноз и сценарии</h3>
+    <p style="max-width:70ch">Безусловный прогноз возможен, когда будущие значения факторов известны (например, календарные переменные). Чаще они сами неизвестны — тогда строят условный прогноз: «если инвестиции вырастут на 8 %, выпуск составит …». Практика требует минимум трёх сценариев — базового, оптимистического и пессимистического — с явно выписанными допущениями по каждому фактору.</p>
+
+    <div style="background:var(--color-accent-100);padding:20px 22px;margin:26px 0 34px;border-top:2px solid var(--color-accent)">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:12px">Разобранный пример: интервальный прогноз</div>
+      <p style="font-size:14.5px;margin-bottom:12px">Модель занятия 05: ŷ = 18,86 + 5,19x; n = 6, x̄ = 6, Σ(x − x̄)² = 42, s<sub>e</sub> = 1,27. Прогноз продаж при расходах на рекламу x<sub>p</sub> = 9 млн сум.</p>
+      <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.8">
+        <li>Точечный прогноз: ŷ<sub>p</sub> = 18,86 + 5,19·9 = <strong>65,6 млн сум</strong>.</li>
+        <li>(x<sub>p</sub> − x̄)² / Σ(x − x̄)² = 9 / 42 = 0,214; 1/n = 0,167.</li>
+        <li>se(ŷ<sub>p</sub>) = 1,27·√(1 + 0,167 + 0,214) = 1,27·√1,381 = 1,27·1,175 = <strong>1,49</strong>.</li>
+        <li>t<sub>крит</sub>(0,05; 4) = 2,776 → интервал 65,6 ± 2,776·1,49 = 65,6 ± 4,14.</li>
+        <li>Прогнозный интервал: <strong>от 61,5 до 69,7 млн сум</strong> с вероятностью 95 %.</li>
+        <li>При x<sub>p</sub> = 14 (далеко за пределами выборки) слагаемое (14 − 6)²/42 = 1,52 удвоило бы ширину интервала — прогноз потерял бы практический смысл.</li>
+      </ul>
+    </div>
+
+    <sc-if value="{{ showSelfCheck }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:1px solid var(--color-neutral-300);padding-top:18px;margin-top:30px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:10px">Вопросы для самопроверки</div>
+      <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.7;display:flex;flex-direction:column;gap:5px">
+        <li>Почему интервал прогноза шире интервала для среднего значения y?</li>
+        <li>Чем MAPE удобнее RMSE при сравнении прогнозов разных показателей?</li>
+        <li>Что означает коэффициент Тейла, близкий к единице?</li>
+      </ul>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ showPractice }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:2px solid var(--color-divider);padding-top:22px;margin-top:36px">
+      <h4 style="margin-bottom:14px">Практическое занятие</h4>
+      <ol style="margin:0;padding-left:22px;font-size:14.5px;line-height:1.7;display:flex;flex-direction:column;gap:8px">
+        <li>По модели ŷ = 12,4 + 3,6x (n = 10, x̄ = 5, Σ(x − x̄)² = 60, s<sub>e</sub> = 2,1) постройте прогноз и 95 %-й интервал при x<sub>p</sub> = 7.</li>
+        <li>Для пяти прогнозов и фактов рассчитайте MAE, RMSE и MAPE; сделайте вывод о точности.</li>
+        <li>Постройте три сценария продаж на 2026 год, задав разные значения фактора, и оформите их таблицей.</li>
+        <li>В EViews выполните Forecast по оценённому уравнению и объясните графики ± 2 S.E.</li>
+      </ol>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ showSources }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:1px solid var(--color-neutral-300);margin-top:34px;padding-top:14px;font-size:12.5px;color:var(--color-neutral-700)">
+      Литература: Wooldridge, разд. 6.4 и гл. 18.5; Stock &amp; Watson, гл. 14 «Introduction to Time Series Regression and Forecasting».
+    </div>
+    </sc-if>
+
+    <button onClick="{{ go14 }}" class="btn btn-primary" style="margin-top:34px">Занятие 14 →</button>
+  </article>
+  </sc-if>
+
+  <sc-if value="{{ isL14 }}" hint-placeholder-val="{{ true }}">
+  <article data-screen-label="Занятие 14" style="max-width:860px;padding:48px 56px 96px">
+    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
+      <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">14</div>
+      <div style="flex:1 1 320px;min-width:0">
+        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 4 · Лекция 2 ч + практика 2 ч</div>
+        <h1 style="font-size:38px;margin:0">Прогнозирование по системе уравнений</h1>
+      </div>
+    </div>
+
+    <p style="font-size:17px;line-height:1.6;max-width:66ch">Отдельные прогнозы потребления, инвестиций и дохода, сделанные независимо, обычно противоречат друг другу. Система уравнений даёт согласованный прогноз: все показатели удовлетворяют одним и тем же тождествам.</p>
+
+    <div style="background:var(--color-surface);border-top:2px solid var(--color-divider);padding:20px 22px;margin:28px 0 36px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:10px">Цель занятия</div>
+      <ul style="margin:0;padding-left:20px;font-size:14.5px;line-height:1.6;display:flex;flex-direction:column;gap:6px">
+        <li>использовать приведённую форму как прогнозную;</li>
+        <li>различать статический и динамический прогноз;</li>
+        <li>считать мультипликаторы политики и строить сценарии;</li>
+        <li>проверять прогнозную силу модели вне выборки.</li>
+      </ul>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">14.1</h6>
+    <h3>Приведённая форма как прогнозный инструмент</h3>
+    <p style="max-width:70ch">Прогноз строится по приведённой форме: в неё подставляются заданные значения экзогенных и лаговых переменных, и все эндогенные показатели рассчитываются одновременно. Тождества системы выполняются автоматически — прогноз внутренне согласован.</p>
+
+    <h6 style="color:var(--color-neutral-700)">14.2</h6>
+    <h3>Статический и динамический прогноз</h3>
+    <table class="table" style="width:100%;margin:16px 0 30px">
+      <thead><tr><th style="width:26%">Тип</th><th>Что подставляется в лаги</th><th style="width:30%">Свойства</th></tr></thead>
+      <tbody>
+        <tr><td>Статический (ex post)</td><td>фактические значения y<sub>t−1</sub></td><td>оценивает качество модели на известном периоде</td></tr>
+        <tr><td>Динамический (ex ante)</td><td>ранее спрогнозированные ŷ<sub>t−1</sub></td><td>реальный прогноз; ошибка накапливается с горизонтом</td></tr>
+      </tbody>
+    </table>
+
+    <h6 style="color:var(--color-neutral-700)">14.3</h6>
+    <h3>Мультипликаторы и сценарный анализ</h3>
+    <div style="border-top:2px solid var(--color-divider);border-bottom:1px solid var(--color-neutral-300);padding:18px 0;margin:16px 0 26px;display:flex;flex-direction:column;gap:10px">
+      <div style="font-style:italic;font-size:19px">Мультипликатор воздействия: ∂y<sub>t</sub>/∂x<sub>t</sub>  ·  Долгосрочный: ∂y/∂x при полной подстройке системы</div>
+      <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.6">Мультипликаторы читаются прямо по коэффициентам приведённой формы и служат основной формой ответа на вопрос «что будет, если государство изменит расходы, ставку или налог».</div>
+    </div>
+
+    <h6 style="color:var(--color-neutral-700)">14.4</h6>
+    <h3>Проверка прогнозной силы</h3>
+    <ul style="margin:0 0 26px;padding-left:22px;font-size:14.5px;line-height:1.7;max-width:70ch">
+      <li>Выборка делится на обучающую и контрольную; модель оценивается на первой, проверяется на второй.</li>
+      <li>Сравниваются RMSE и MAPE на контрольном участке, а также коэффициент Тейла.</li>
+      <li>Устойчивость коэффициентов проверяется тестом Чоу на структурный сдвиг.</li>
+      <li>Ориентир: модель полезна, если она устойчиво точнее наивного прогноза «завтра как сегодня».</li>
+    </ul>
+
+    <div style="background:var(--color-accent-100);padding:20px 22px;margin:26px 0 34px;border-top:2px solid var(--color-accent)">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:12px">Разобранный пример: прогноз по мини-макромодели</div>
+      <div style="font-style:italic;font-size:18px;margin:0 0 12px">C<sub>t</sub> = 30 + 0,65·Y<sub>t</sub>;  I<sub>t</sub> = 10 + 0,20·Y<sub>t−1</sub>;  Y<sub>t</sub> = C<sub>t</sub> + I<sub>t</sub> + G<sub>t</sub></div>
+      <p style="font-size:14.5px;margin-bottom:10px">Известно: Y<sub>t−1</sub> = 200, государственные расходы G = 40.</p>
+      <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.8">
+        <li>Инвестиции: I = 10 + 0,20·200 = <strong>50</strong>.</li>
+        <li>Приведённая форма: Y = (30 + I + G)/(1 − 0,65) = (30 + 50 + 40)/0,35 = <strong>342,9</strong>.</li>
+        <li>Потребление: C = 30 + 0,65·342,9 = <strong>252,9</strong>; проверка тождества: 252,9 + 50 + 40 = 342,9. ✓</li>
+        <li>Сценарий: G увеличивается до 50. Тогда Y = 130/0,35·… = (30 + 50 + 50)/0,35 = <strong>371,4</strong>.</li>
+        <li>Мультипликатор госрасходов: ΔY/ΔG = 28,6/10 = <strong>2,86</strong> = 1/(1 − 0,65). ✓</li>
+        <li>Динамический прогноз на следующий период (базовый сценарий): I<sub>t+1</sub> = 10 + 0,20·342,9 = 78,6; Y<sub>t+1</sub> = (30 + 78,6 + 40)/0,35 = <strong>424,6</strong>.</li>
+        <li>Вывод: рост дохода тянет за собой инвестиции, а те — новый доход; при неизменных G система выходит на растущую траекторию.</li>
+      </ul>
+    </div>
+
+    <sc-if value="{{ showSelfCheck }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:1px solid var(--color-neutral-300);padding-top:18px;margin-top:30px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:10px">Вопросы для самопроверки</div>
+      <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.7;display:flex;flex-direction:column;gap:5px">
+        <li>Почему динамический прогноз менее точен, чем статический?</li>
+        <li>Как мультипликатор связан с предельной склонностью к потреблению?</li>
+        <li>Что показывает тест Чоу и когда его обязательно применять?</li>
+      </ul>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ showPractice }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:2px solid var(--color-divider);padding-top:22px;margin-top:36px">
+      <h4 style="margin-bottom:14px">Практическое занятие</h4>
+      <ol style="margin:0;padding-left:22px;font-size:14.5px;line-height:1.7;display:flex;flex-direction:column;gap:8px">
+        <li>Постройте прогноз по модели лекции на два периода вперёд при G = 45 и сравните с базовым сценарием.</li>
+        <li>Измените предельную склонность к потреблению на 0,75 и покажите, как меняется мультипликатор.</li>
+        <li>Разделите ряд из 20 наблюдений на 16 + 4, оцените модель и рассчитайте MAPE на контрольном участке.</li>
+        <li>Итоговое задание курса: соберите данные по теме самостоятельной работы, оцените модель, проверьте её и постройте прогноз с интервалом; оформите отчёт по этапам занятия 02.</li>
+      </ol>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ showSources }}" hint-placeholder-val="{{ true }}">
+    <div style="border-top:1px solid var(--color-neutral-300);margin-top:34px;padding-top:14px;font-size:12.5px;color:var(--color-neutral-700)">
+      Литература: Wooldridge, гл. 16 и 18; Stock &amp; Watson, гл. 14—15.
+    </div>
+    </sc-if>
+
+    <div style="border-top:2px solid var(--color-divider);margin-top:38px;padding-top:20px">
+      <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:8px">Курс завершён</div>
+      <p style="font-size:14.5px;max-width:66ch;margin-bottom:16px">Пройдены все 14 тем: от постановки задачи и подготовки данных до систем уравнений и прогноза. К итоговому экзамену вернитесь к разобранным примерам занятий 05, 07 и 13 — на них построены типовые задачи билета.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button onClick="{{ goPlan }}" class="btn btn-primary">Обзор курса и оценивание</button>
+        <button onClick="{{ go1 }}" class="btn btn-secondary">← К занятию 01</button>
+      </div>
     </div>
   </article>
   </sc-if>
 
   </main>
 </div></x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;startLesson&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:1,&quot;min&quot;:1,&quot;max&quot;:6,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Курс&quot;},&quot;showPractice&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Содержание&quot;},&quot;showSources&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Содержание&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;startLesson&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:1,&quot;min&quot;:0,&quot;max&quot;:14,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Курс&quot;},&quot;showPractice&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Содержание&quot;},&quot;showSources&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Содержание&quot;},&quot;showSelfCheck&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Содержание&quot;}}">
 class Component extends DCLogic {
-  state = { active: Math.min(6, Math.max(1, this.props.startLesson ?? 1)) };
+  state = { active: Math.min(14, Math.max(0, this.props.startLesson ?? 1)) };
   go(n) {
     this.setState({ active: n });
     const el = document.getElementById('lesson-scroll');
@@ -723,9 +1940,13 @@ class Component extends DCLogic {
     const a = this.state.active;
     const v = {
       showPractice: this.props.showPractice ?? true,
-      showSources: this.props.showSources ?? true
+      showSources: this.props.showSources ?? true,
+      showSelfCheck: this.props.showSelfCheck ?? true,
+      isPlan: a === 0,
+      bgPlan: a === 0 ? 'var(--color-accent-100)' : 'transparent',
+      goPlan: () => this.go(0)
     };
-    for (let i = 1; i <= 6; i++) {
+    for (let i = 1; i <= 14; i++) {
       v['isL' + i] = a === i;
       v['bg' + i] = a === i ? 'var(--color-accent-100)' : 'transparent';
       v['go' + i] = () => this.go(i);
