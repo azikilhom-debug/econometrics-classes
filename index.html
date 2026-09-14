@@ -31,23 +31,201 @@
 body{margin:0;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body)}
 a{color:var(--color-accent-700);text-decoration:none;border-bottom:1px solid var(--color-accent-300)}
 a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
+
+
+/* Mobile compatibility patch — keeps the desktop layout unchanged. */
+* { box-sizing: border-box; }
+.lesson-article { width: 100%; }
+.lesson-article table.table { max-width: 100%; }
+.lesson-article [style*="font-style:italic"] { overflow-wrap: anywhere; word-break: normal; }
+
+@media (max-width: 760px) {
+  html, body, #dc-root, #dc-root > .sc-host {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+  }
+  body { overflow-x: hidden !important; }
+
+  .course-shell {
+    display: block !important;
+    min-height: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Turn the large left sidebar into a compact swipeable top navigation. */
+  .course-nav {
+    display: flex !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 50 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    border-right: 0 !important;
+    border-bottom: 2px solid var(--color-divider) !important;
+    background: var(--color-bg) !important;
+  }
+  .course-nav .course-brand {
+    flex: 0 0 132px !important;
+    min-width: 132px !important;
+    padding: 10px 12px !important;
+    border-bottom: 0 !important;
+    border-right: 1px solid var(--color-neutral-300) !important;
+  }
+  .course-nav .course-brand > div:first-child {
+    font-size: 9px !important;
+    margin-bottom: 5px !important;
+    letter-spacing: .08em !important;
+  }
+  .course-nav .course-brand > div:nth-child(2) {
+    font-size: 18px !important;
+    line-height: 1.05 !important;
+  }
+  .course-brand-desc,
+  .course-module-label,
+  .course-nav-footer {
+    display: none !important;
+  }
+  .course-nav > button {
+    flex: 0 0 142px !important;
+    min-width: 142px !important;
+    min-height: 64px !important;
+    padding: 10px 11px !important;
+    gap: 8px !important;
+    border-top: 0 !important;
+    border-left: 1px solid var(--color-neutral-300) !important;
+    scroll-snap-align: start;
+  }
+  .course-nav > button span:first-child {
+    font-size: 11px !important;
+  }
+  .course-nav > button span:last-child {
+    font-size: 11.5px !important;
+    line-height: 1.25 !important;
+  }
+  .course-nav { scroll-snap-type: x proximity; }
+
+  .course-main {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .lesson-article {
+    max-width: none !important;
+    width: 100% !important;
+    padding: 24px 17px 72px !important;
+    overflow: hidden !important;
+  }
+  .lesson-article > div:first-child {
+    gap: 12px !important;
+    align-items: flex-start !important;
+    margin-bottom: 28px !important;
+  }
+  .lesson-article > div:first-child > div:first-child {
+    font-size: 42px !important;
+    line-height: .92 !important;
+    flex: 0 0 auto;
+  }
+  .lesson-article h1 {
+    font-size: clamp(27px, 8vw, 34px) !important;
+    line-height: 1.04 !important;
+    overflow-wrap: anywhere;
+  }
+  .lesson-article h2 {
+    font-size: clamp(21px, 6vw, 28px) !important;
+    line-height: 1.1 !important;
+  }
+  .lesson-article h3 { line-height: 1.2 !important; }
+  .lesson-article p,
+  .lesson-article li {
+    overflow-wrap: anywhere;
+  }
+
+  /* Let cards and auto-fit grids collapse to a single phone-width column. */
+  .lesson-article [style*="grid-template-columns"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .lesson-article [style*="flex:1 1 320px"] {
+    flex-basis: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Tables remain readable instead of forcing the whole page wider than the phone. */
+  .lesson-article table.table {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    white-space: normal;
+    font-size: 12px !important;
+  }
+  .lesson-article table.table th,
+  .lesson-article table.table td {
+    min-width: 105px;
+    padding: 9px 10px !important;
+    vertical-align: top;
+  }
+  .lesson-article table.table th:first-child,
+  .lesson-article table.table td:first-child {
+    min-width: 78px;
+  }
+
+  /* Long formulas should wrap or scroll locally, never expand the page. */
+  .lesson-article [style*="font-style:italic"] {
+    max-width: 100% !important;
+    font-size: 17px !important;
+    line-height: 1.45 !important;
+    overflow-x: auto !important;
+    overflow-wrap: anywhere !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  .lesson-article [style*="white-space:nowrap"] {
+    white-space: normal !important;
+  }
+
+  .lesson-article a,
+  .lesson-article button {
+    max-width: 100% !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .course-nav .course-brand { flex-basis: 118px !important; min-width: 118px !important; }
+  .course-nav > button { flex-basis: 132px !important; min-width: 132px !important; }
+  .lesson-article { padding-left: 14px !important; padding-right: 14px !important; }
+  .lesson-article > div:first-child > div:first-child { font-size: 36px !important; }
+  .lesson-article h1 { font-size: 26px !important; }
+}
+
 </style>
 </helmet>
 
-<div style="display:flex;flex-wrap:wrap;align-items:flex-start;min-height:100vh;background:var(--color-bg)">
+<div class="course-shell" style="display:flex;flex-wrap:wrap;align-items:flex-start;min-height:100vh;background:var(--color-bg)">
 
-  <nav style="flex:0 0 300px;min-width:260px;align-self:stretch;border-right:2px solid var(--color-divider);background:var(--color-bg);position:sticky;top:0;max-height:100vh;overflow:auto">
-    <div style="padding:28px 24px 20px;border-bottom:2px solid var(--color-divider)">
+  <nav class="course-nav" aria-label="Навигация по курсу" style="flex:0 0 300px;min-width:260px;align-self:stretch;border-right:2px solid var(--color-divider);background:var(--color-bg);position:sticky;top:0;max-height:100vh;overflow:auto">
+    <div class="course-brand" style="padding:28px 24px 20px;border-bottom:2px solid var(--color-divider)">
       <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:10px">DAT301 · 5 семестр</div>
       <div style="font-family:var(--font-heading);font-weight:800;font-size:30px;line-height:1.05;letter-spacing:-.02em">Эконометрика</div>
-      <div style="font-size:12.5px;color:var(--color-neutral-700);margin-top:10px;line-height:1.45">Полный курс: 14 тем, 60 аудиторных и 90 самостоятельных часов. Лекция и практикум в каждой теме.</div>
+      <div class="course-brand-desc" style="font-size:12.5px;color:var(--color-neutral-700);margin-top:10px;line-height:1.45">Полный курс: 14 тем, 60 аудиторных и 90 самостоятельных часов. Лекция и практикум в каждой теме.</div>
     </div>
 
         <button onClick="{{ goPlan }}" style="display:flex;gap:12px;width:100%;text-align:left;align-items:flex-start;background:{{ bgPlan }};border:0;border-top:1px solid var(--color-neutral-300);padding:13px 24px;font-family:var(--font-body);color:var(--color-text);cursor:pointer" style-hover="background:var(--color-accent-100)">
       <span style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent-700);padding-top:2px">00</span>
       <span style="font-size:13.5px;line-height:1.35">Обзор курса, часы и оценивание</span>
     </button>
-    <div style="padding:20px 24px 8px;border-top:2px solid var(--color-divider);font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700)">Модуль 1 · Основы и данные</div>
+    <div class="course-module-label" style="padding:20px 24px 8px;border-top:2px solid var(--color-divider);font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700)">Модуль 1 · Основы и данные</div>
     <button onClick="{{ go1 }}" style="display:flex;gap:12px;width:100%;text-align:left;align-items:flex-start;background:{{ bg1 }};border:0;border-top:1px solid var(--color-neutral-300);padding:13px 24px;font-family:var(--font-body);color:var(--color-text);cursor:pointer" style-hover="background:var(--color-accent-100)">
       <span style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent-700);padding-top:2px">01</span>
       <span style="font-size:13.5px;line-height:1.35">Основы эконометрического моделирования</span>
@@ -64,7 +242,7 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
       <span style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent-700);padding-top:2px">04</span>
       <span style="font-size:13.5px;line-height:1.35">Вероятность и математическая статистика</span>
     </button>
-    <div style="padding:20px 24px 8px;border-top:2px solid var(--color-divider);font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700)">Модуль 2 · Регрессионный анализ</div>
+    <div class="course-module-label" style="padding:20px 24px 8px;border-top:2px solid var(--color-divider);font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700)">Модуль 2 · Регрессионный анализ</div>
     <button onClick="{{ go5 }}" style="display:flex;gap:12px;width:100%;text-align:left;align-items:flex-start;background:{{ bg5 }};border:0;border-top:1px solid var(--color-neutral-300);padding:13px 24px;font-family:var(--font-body);color:var(--color-text);cursor:pointer" style-hover="background:var(--color-accent-100)">
       <span style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent-700);padding-top:2px">05</span>
       <span style="font-size:13.5px;line-height:1.35">Корреляционно-регрессионный анализ</span>
@@ -77,7 +255,7 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
       <span style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent-700);padding-top:2px">07</span>
       <span style="font-size:13.5px;line-height:1.35">Оценка качества и верификация модели</span>
     </button>
-    <div style="padding:20px 24px 8px;border-top:2px solid var(--color-divider);font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700)">Модуль 3 · Динамика и системы</div>
+    <div class="course-module-label" style="padding:20px 24px 8px;border-top:2px solid var(--color-divider);font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700)">Модуль 3 · Динамика и системы</div>
     <button onClick="{{ go8 }}" style="display:flex;gap:12px;width:100%;text-align:left;align-items:flex-start;background:{{ bg8 }};border:0;border-top:1px solid var(--color-neutral-300);padding:13px 24px;font-family:var(--font-body);color:var(--color-text);cursor:pointer" style-hover="background:var(--color-accent-100)">
       <span style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent-700);padding-top:2px">08</span>
       <span style="font-size:13.5px;line-height:1.35">Временные ряды</span>
@@ -90,7 +268,7 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
       <span style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent-700);padding-top:2px">10</span>
       <span style="font-size:13.5px;line-height:1.35">Системы одновременных уравнений</span>
     </button>
-    <div style="padding:20px 24px 8px;border-top:2px solid var(--color-divider);font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700)">Модуль 4 · Прикладные модели и прогноз</div>
+    <div class="course-module-label" style="padding:20px 24px 8px;border-top:2px solid var(--color-divider);font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700)">Модуль 4 · Прикладные модели и прогноз</div>
     <button onClick="{{ go11 }}" style="display:flex;gap:12px;width:100%;text-align:left;align-items:flex-start;background:{{ bg11 }};border:0;border-top:1px solid var(--color-neutral-300);padding:13px 24px;font-family:var(--font-body);color:var(--color-text);cursor:pointer" style-hover="background:var(--color-accent-100)">
       <span style="font-family:var(--font-heading);font-weight:800;font-size:12px;color:var(--color-accent-700);padding-top:2px">11</span>
       <span style="font-size:13.5px;line-height:1.35">Производственные функции и экономический рост</span>
@@ -108,15 +286,15 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
       <span style="font-size:13.5px;line-height:1.35">Прогнозирование по системе уравнений</span>
     </button>
 
-    <div style="padding:20px 24px 32px;font-size:11.5px;color:var(--color-neutral-700);line-height:1.5">
+    <div class="course-nav-footer" style="padding:20px 24px 32px;font-size:11.5px;color:var(--color-neutral-700);line-height:1.5">
       Литература курса: Wooldridge, «Econometrics: A Modern Approach» (5 изд.); Stock &amp; Watson, «Introduction to Econometrics» (4 изд.).
     </div>
   </nav>
 
-  <main id="lesson-scroll" style="flex:1 1 560px;min-width:0;max-height:100vh;overflow:auto;padding:0">
+  <main id="lesson-scroll" class="course-main" style="flex:1 1 560px;min-width:0;max-height:100vh;overflow:auto;padding:0">
 
   <sc-if value="{{ isPlan }}" hint-placeholder-val="{{ true }}">
-  <article data-screen-label="Обзор курса" style="max-width:920px;padding:48px 56px 96px">
+  <article class="lesson-article" data-screen-label="Обзор курса" style="max-width:920px;padding:48px 56px 96px">
     <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
       <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">00</div>
       <div style="flex:1 1 320px;min-width:0">
@@ -233,11 +411,11 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
   </sc-if>
 
   <sc-if value="{{ isL1 }}" hint-placeholder-val="{{ true }}">
-  <article data-screen-label="Занятие 01" style="max-width:860px;padding:48px 56px 96px">
+  <article class="lesson-article" data-screen-label="Занятие 01" style="max-width:860px;padding:48px 56px 96px">
     <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
       <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">01</div>
       <div style="flex:1 1 320px;min-width:0">
-        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 1 · Лекция 2 ч + практика 2 ч</div>
+        <div class="course-module-label" style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 1 · Лекция 2 ч + практика 2 ч</div>
         <h1 style="font-size:38px;margin:0">Основы эконометрического моделирования</h1>
       </div>
     </div>
@@ -356,11 +534,11 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
   </sc-if>
 
   <sc-if value="{{ isL2 }}" hint-placeholder-val="{{ true }}">
-  <article data-screen-label="Занятие 02" style="max-width:860px;padding:48px 56px 96px">
+  <article class="lesson-article" data-screen-label="Занятие 02" style="max-width:860px;padding:48px 56px 96px">
     <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
       <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">02</div>
       <div style="flex:1 1 320px;min-width:0">
-        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 1 · Лекция 2 ч + практика 2 ч</div>
+        <div class="course-module-label" style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 1 · Лекция 2 ч + практика 2 ч</div>
         <h1 style="font-size:38px;margin:0">Эконометрическая модель и этапы моделирования</h1>
       </div>
     </div>
@@ -488,11 +666,11 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
   </sc-if>
 
   <sc-if value="{{ isL3 }}" hint-placeholder-val="{{ true }}">
-  <article data-screen-label="Занятие 03" style="max-width:860px;padding:48px 56px 96px">
+  <article class="lesson-article" data-screen-label="Занятие 03" style="max-width:860px;padding:48px 56px 96px">
     <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
       <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">03</div>
       <div style="flex:1 1 320px;min-width:0">
-        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 1 · Лекция 2 ч + практика 2 ч</div>
+        <div class="course-module-label" style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 1 · Лекция 2 ч + практика 2 ч</div>
         <h1 style="font-size:38px;margin:0">Информационное обеспечение эконометрических моделей</h1>
       </div>
     </div>
@@ -616,11 +794,11 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
   </sc-if>
 
   <sc-if value="{{ isL4 }}" hint-placeholder-val="{{ true }}">
-  <article data-screen-label="Занятие 04" style="max-width:860px;padding:48px 56px 96px">
+  <article class="lesson-article" data-screen-label="Занятие 04" style="max-width:860px;padding:48px 56px 96px">
     <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
       <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">04</div>
       <div style="flex:1 1 320px;min-width:0">
-        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 1 · Лекция 2 ч + практика 2 ч</div>
+        <div class="course-module-label" style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 1 · Лекция 2 ч + практика 2 ч</div>
         <h1 style="font-size:38px;margin:0">Вероятность и математическая статистика в эконометрике</h1>
       </div>
     </div>
@@ -735,11 +913,11 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
   </sc-if>
 
   <sc-if value="{{ isL5 }}" hint-placeholder-val="{{ true }}">
-  <article data-screen-label="Занятие 05" style="max-width:860px;padding:48px 56px 96px">
+  <article class="lesson-article" data-screen-label="Занятие 05" style="max-width:860px;padding:48px 56px 96px">
     <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
       <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">05</div>
       <div style="flex:1 1 320px;min-width:0">
-        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 2 · Лекция 2 ч + практика 2 ч</div>
+        <div class="course-module-label" style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 2 · Лекция 2 ч + практика 2 ч</div>
         <h1 style="font-size:38px;margin:0">Корреляционно-регрессионный анализ</h1>
       </div>
     </div>
@@ -871,11 +1049,11 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
   </sc-if>
 
   <sc-if value="{{ isL6 }}" hint-placeholder-val="{{ true }}">
-  <article data-screen-label="Занятие 06" style="max-width:860px;padding:48px 56px 96px">
+  <article class="lesson-article" data-screen-label="Занятие 06" style="max-width:860px;padding:48px 56px 96px">
     <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
       <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">06</div>
       <div style="flex:1 1 320px;min-width:0">
-        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 2 · Лекция 2 ч + практика 2 ч</div>
+        <div class="course-module-label" style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 2 · Лекция 2 ч + практика 2 ч</div>
         <h1 style="font-size:38px;margin:0">Частное уравнение регрессии</h1>
       </div>
     </div>
@@ -986,11 +1164,11 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
   </sc-if>
 
   <sc-if value="{{ isL7 }}" hint-placeholder-val="{{ true }}">
-  <article data-screen-label="Занятие 07" style="max-width:860px;padding:48px 56px 96px">
+  <article class="lesson-article" data-screen-label="Занятие 07" style="max-width:860px;padding:48px 56px 96px">
     <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
       <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">07</div>
       <div style="flex:1 1 320px;min-width:0">
-        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 2 · Лекция 2 ч + практика 2 ч</div>
+        <div class="course-module-label" style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 2 · Лекция 2 ч + практика 2 ч</div>
         <h1 style="font-size:38px;margin:0">Оценка качества и верификация модели</h1>
       </div>
     </div>
@@ -1125,11 +1303,11 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
   </sc-if>
 
   <sc-if value="{{ isL8 }}" hint-placeholder-val="{{ true }}">
-  <article data-screen-label="Занятие 08" style="max-width:860px;padding:48px 56px 96px">
+  <article class="lesson-article" data-screen-label="Занятие 08" style="max-width:860px;padding:48px 56px 96px">
     <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
       <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">08</div>
       <div style="flex:1 1 320px;min-width:0">
-        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 3 · Лекция 4 ч + практика 4 ч</div>
+        <div class="course-module-label" style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 3 · Лекция 4 ч + практика 4 ч</div>
         <h1 style="font-size:38px;margin:0">Временные ряды</h1>
       </div>
     </div>
@@ -1272,11 +1450,11 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
   </sc-if>
 
   <sc-if value="{{ isL9 }}" hint-placeholder-val="{{ true }}">
-  <article data-screen-label="Занятие 09" style="max-width:860px;padding:48px 56px 96px">
+  <article class="lesson-article" data-screen-label="Занятие 09" style="max-width:860px;padding:48px 56px 96px">
     <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
       <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">09</div>
       <div style="flex:1 1 320px;min-width:0">
-        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 3 · Лекция 2 ч + практика 2 ч</div>
+        <div class="course-module-label" style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 3 · Лекция 2 ч + практика 2 ч</div>
         <h1 style="font-size:38px;margin:0">Динамические эконометрические модели</h1>
       </div>
     </div>
@@ -1386,11 +1564,11 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
   </sc-if>
 
   <sc-if value="{{ isL10 }}" hint-placeholder-val="{{ true }}">
-  <article data-screen-label="Занятие 10" style="max-width:860px;padding:48px 56px 96px">
+  <article class="lesson-article" data-screen-label="Занятие 10" style="max-width:860px;padding:48px 56px 96px">
     <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
       <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">10</div>
       <div style="flex:1 1 320px;min-width:0">
-        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 3 · Лекция 2 ч + практика 2 ч</div>
+        <div class="course-module-label" style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 3 · Лекция 2 ч + практика 2 ч</div>
         <h1 style="font-size:38px;margin:0">Системы одновременных уравнений</h1>
       </div>
     </div>
@@ -1502,11 +1680,11 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
   </sc-if>
 
   <sc-if value="{{ isL11 }}" hint-placeholder-val="{{ true }}">
-  <article data-screen-label="Занятие 11" style="max-width:860px;padding:48px 56px 96px">
+  <article class="lesson-article" data-screen-label="Занятие 11" style="max-width:860px;padding:48px 56px 96px">
     <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
       <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">11</div>
       <div style="flex:1 1 320px;min-width:0">
-        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 4 · Лекция 2 ч + практика 2 ч</div>
+        <div class="course-module-label" style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 4 · Лекция 2 ч + практика 2 ч</div>
         <h1 style="font-size:38px;margin:0">Производственные функции и экономический рост</h1>
       </div>
     </div>
@@ -1611,11 +1789,11 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
   </sc-if>
 
   <sc-if value="{{ isL12 }}" hint-placeholder-val="{{ true }}">
-  <article data-screen-label="Занятие 12" style="max-width:860px;padding:48px 56px 96px">
+  <article class="lesson-article" data-screen-label="Занятие 12" style="max-width:860px;padding:48px 56px 96px">
     <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
       <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">12</div>
       <div style="flex:1 1 320px;min-width:0">
-        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 4 · Лекция 2 ч + практика 2 ч</div>
+        <div class="course-module-label" style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 4 · Лекция 2 ч + практика 2 ч</div>
         <h1 style="font-size:38px;margin:0">Модели спроса, предложения и макромодели</h1>
       </div>
     </div>
@@ -1719,11 +1897,11 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
   </sc-if>
 
   <sc-if value="{{ isL13 }}" hint-placeholder-val="{{ true }}">
-  <article data-screen-label="Занятие 13" style="max-width:860px;padding:48px 56px 96px">
+  <article class="lesson-article" data-screen-label="Занятие 13" style="max-width:860px;padding:48px 56px 96px">
     <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
       <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">13</div>
       <div style="flex:1 1 320px;min-width:0">
-        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 4 · Лекция 2 ч + практика 2 ч</div>
+        <div class="course-module-label" style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 4 · Лекция 2 ч + практика 2 ч</div>
         <h1 style="font-size:38px;margin:0">Прогнозирование: основы и методы</h1>
       </div>
     </div>
@@ -1820,11 +1998,11 @@ a:hover{color:var(--color-accent);border-bottom-color:var(--color-accent)}
   </sc-if>
 
   <sc-if value="{{ isL14 }}" hint-placeholder-val="{{ true }}">
-  <article data-screen-label="Занятие 14" style="max-width:860px;padding:48px 56px 96px">
+  <article class="lesson-article" data-screen-label="Занятие 14" style="max-width:860px;padding:48px 56px 96px">
     <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;border-bottom:2px solid var(--color-divider);padding-bottom:18px;margin-bottom:32px">
       <div style="font-family:var(--font-heading);font-weight:800;font-size:64px;line-height:.9;color:var(--color-accent)">14</div>
       <div style="flex:1 1 320px;min-width:0">
-        <div style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 4 · Лекция 2 ч + практика 2 ч</div>
+        <div class="course-module-label" style="font-family:var(--font-heading);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Модуль 4 · Лекция 2 ч + практика 2 ч</div>
         <h1 style="font-size:38px;margin:0">Прогнозирование по системе уравнений</h1>
       </div>
     </div>
