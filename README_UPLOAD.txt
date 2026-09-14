@@ -1,1 +1,1 @@
-Upload index.html, support.js, the _ds folder, and the uzbek/russian/english folders to the repository root. No PPTX, PDF or DOCX files are included. The lecture interface preserves the original blue Econometrics course design; only the root language selector follows the Statistics selector pattern.
+Upload index.html plus the english, russian and uzbek folders. No PPT, PDF or DOCX source files are included. This package uses the exact Statistics deck-stage runtime/design assets.
