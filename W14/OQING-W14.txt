@@ -1,0 +1,37 @@
+STAT201 · 14-HAFTA · TALABA PAKETI
+Koʻpolam tahlili, takrorlanuvchanlik va oʻz loyihangizni tekshirish
+Toshkent Xalqaro Universiteti · Iqtisodiyot fakulteti · 2026/2027
+
+UCHTA QOIDA
+1. ZIP ni TOʻLIQ oching (Extract All) — fayllarni ZIP ichidan alohida ochmang.
+   Laboratoriya kodi «data» papkasini oʻzi yonida kutadi.
+2. CSV fayllarni Excel da OCHMANG. Ochsangiz — SAQLAMANG. Excel oʻzbekcha «ʻ»
+   belgisini buzadi va kod jimgina notoʻgʻri natija beradi.
+3. .Rmd faylni faqat RStudio da oching (File > Open File). Ochgach:
+   Session > Set Working Directory > To Source File Location.
+
+PAKET TARKIBI
+  W14-slaydlar.pdf                           — maʼruza slaydlari
+  W14-talaba-tarqatmasi.pdf                  — talaba tarqatmasi (asosiy konspekt)
+  W14-oqish-royxati.pdf                      — oʻqish roʻyxati
+  W14-keys.pdf                               — keys-stadi (talaba nusxasi)
+  W14-individual-topshiriq.pdf               — individual topshiriq + rubrika
+  W14-uy-vazifasi.pdf                        — uy vazifasi
+  W14-refleksiya.pdf                         — refleksiya mashqi
+  W14-si-topshiriqlari.pdf                   — sunʼiy intellekt bilan ishlash topshiriqlari
+  W14-loyiha-13-bosqich.pdf                  — semestr loyihasi, 13-bosqich
+  W14-muddatlar.pdf                          — muddatlar jadvali
+  laboratoriya/
+     W14-lab.pdf              — laboratoriya topshiriqlari (bosma)
+     W14-lab-R.Rmd            — R daftari (RStudio)
+     W14-lab-Python.ipynb     — Python varianti (ixtiyoriy, bir xil natija)
+     data/                    — ikkala maʼlumot toʻplami
+
+LABORATORIYADAN KEYIN TOPSHIRILADI
+  RStudio da Knit tugmasi → hosil boʻlgan W14-lab-R.html fayli.
+  Fayl nomi:  W14-Familiya-Ism.html   (kanalda eʼlon qilingan tartibda).
+  Har topshiriqning «Qaror» boʻlimi oʻz soʻzingiz bilan toʻldirilgan boʻlishi shart —
+  faqat kod ishga tushirilgan daftar «bajarilmagan» hisoblanadi.
+
+Bu paketdagi hujjatlar talaba nusxasi: oʻqituvchi uchun yechim va kalit boʻlimlari
+olib tashlangan. Kalitlar dars muhokamasidan keyin alohida eʼlon qilinadi.

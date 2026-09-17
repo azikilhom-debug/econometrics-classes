@@ -1,0 +1,1032 @@
+---
+title: "STAT201 · 13-hafta · Kompyuter laboratoriyasi (R)"
+subtitle: "Qiyalik uchun xulosa, ikki oraliq va chalgʻituvchi omil tekshiruvi"
+author: "Toshkent Xalqaro Universiteti · Iqtisodiyot fakulteti"
+date: "2025/2026 oʻquv yili"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    df_print: kable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 7, fig.height = 4.2, dpi = 110,
+  dev = "png", dev.args = list(type = "cairo")
+)
+options(digits = 7)
+```
+
+<!--
+  ==================================================================
+  STAT201 · 13-hafta · Kompyuter laboratoriyasi · R versiyasi
+  Davomiyligi: 2 akademik soat (120 daqiqa)
+  CLO7 — qiyalik uchun xulosa chiqarish va uni toʻgʻri talqin qilish
+  CLO8 — kuzatuv maʼlumotidan sababiy xulosa chiqarishning
+         chegaralarini tushuntirish
+         (Blum: Qoʻllash–Tahlil–Baholash)
+  Maʼlumot: data/markaziy-osiyo-hosildorlik.csv (5 mamlakat x 27 yil)
+            data/kinolar-byudjet.csv (2 467 film)
+  Har bir topshiriq bitta zanjirga boʻysunadi:
+  savol -> maʼlumot -> kod -> natija -> SHART TEKSHIRUVI -> talqin ->
+  QAYSI ORALIQ -> nima ISBOTLANMADI
+  Izohlar va oʻzgaruvchi nomlari — oʻzbekcha; funksiya nomlari — inglizcha.
+  R va Python daftarlari BELGI-MA-BELGI bir xil matn chiqaradi; buni
+  gen/11_lab_check_daftarlar_w13.py avtomatik tekshiradi.
+  ==================================================================
+-->
+
+$$
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\SD}{\operatorname{SD}}
+\newcommand{\SE}{\operatorname{SE}}
+\newcommand{\xbar}{\bar{x}}
+\newcommand{\ybar}{\bar{y}}
+$$
+
+# Laboratoriya haqida
+
+12-haftada siz chiziq qurdingiz va $b_1=0{,}588033$ t/ga sonini oldingiz.
+Bugun **ikkita boshqa-boshqa savol** beriladi:
+
+> **1.** «Bu songa **qanchalik** ishonaman?»
+> **2.** «Bu son **nimani** anglatadi — sabab haqida biror narsa aytadimi?»
+
+Ikkinchisi birinchisining ogʻirroq varianti **emas**. U butunlay boshqa
+savol, va unga statistika yolgʻiz javob bera olmaydi. Laboratoriyaning
+birinchi yarmi birinchi savolga, ikkinchi yarmi ikkinchisiga bagʻishlangan.
+
+Bugun **oltita** narsa oʻlchanadi:
+
+1. **Qiyalik uchun toʻliq xulosa.** $\SE(b_1)$, $t$, df, $p$, $95\,\%$
+   ishonch oraligʻi — va $\SE(b_1)$ bogʻliq boʻlgan **uchinchi** omil:
+   $x$ ning tarqoqligi. Uni siqsak $\SE$ **3,8730 marta** oshadi.
+2. **Ikki oraliq — va ular bir xil emas.** Oʻrtacha javob uchun ishonch
+   oraligʻi va bashorat oraligʻi. $x^{*}=\xbar$ da nisbat **3,162278**.
+3. **Xatoni toping.** Sizga tayyor tahlil beriladi; unda ishonch oraligʻi
+   keltirilgan, ammo savol **bashorat** oraligʻini talab qilar edi. Siz
+   xatoni topasiz va oqibatini son bilan oʻlchaysiz.
+4. **Butstrep $t$-oraliqni tekshiradi.** $20\,000$ takror; butstrep $\SE$
+   formula $\SE$ dan **1,3081 marta** katta chiqadi — va bu ham natija.
+5. **Shart buzilsa xulosa buziladi.** Oʻzbekiston bugʻdoy qatorida
+   $27$ yil **3,172590** ta bogʻliqsiz kuzatuvga teng.
+6. **Chalgʻituvchi omil — tekshiriladi, faraz qilinmaydi.** Ikkita ishonarli
+   nomzoddan **biri** shartni bajaradi, ikkinchisi **bajarmaydi**.
+
+**Ish zanjiri.** Har bir topshiriqda quyidagi ketma-ketlikni **yozma**
+ravishda bajarasiz:
+
+> **savol → maʼlumot → kod → natija → shart tekshiruvi → talqin →
+> qaysi oraliq → nima isbotlanmadi**
+
+**Bu haftaning ikkita yangi qoidasi.**
+**(a)** Hech qanday bashorat «oraliq» deb yozilmaydi — u yo *oʻrtacha
+javob uchun ishonch oraligʻi*, yo *bashorat oraligʻi*.
+**(b)** Har bir kuzatuv natijasi ortidan **«nima isbotlanmadi va nega»**
+xatboshisi keladi.
+
+**Vaqt va ball taqsimoti (120 daqiqa, 120 ball + 5 bonus).**
+
+| # | Mazmun | Daqiqa | Blum | Qiyinlik | Ball |
+|---|---|---|---|---|---|
+| 0 | Muhitni sozlash va maʼlumot | 5 | — | — | — |
+| 1 | Qiyalik uchun **toʻliq** xulosa va uchta test | 18 | Qoʻllash | 3 (Amaliy) | 20 |
+| 2 | **Ikki oraliq**, ikki tasma va $n\to\infty$ | 18 | Tahlil | 4 (Analitik) | 20 |
+| 3 | **Xatoni toping:** IO keltirilgan, BO kerak edi | 12 | Baholash | 5 (Ilgʻor) | 15 |
+| 4 | Butstrep qiyaligi va $t$-oraliq bilan taqqoslash | 16 | Tahlil | 4 (Analitik) | 18 |
+| 5 | **I sharti buzilgan:** $n_{\text{eff}}$ va tuzatilgan xulosa | 16 | Baholash | 5 (Ilgʻor) | 17 |
+| 6 | **Chalgʻituvchi omil:** uchta shart, ikki nomzod, qatlamlash | 30 | Baholash | 5 (Ilgʻor) | 30 |
+| 7 | AI yordamida: sababiy daʼvoni tanqid qilish | uyda | Yaratish | 6 (Tadqiqot) | +5 |
+
+**Oldingi bilim.** Chiziqli model, $R^2$ va $s_e$, L-I-N-E shartlari
+(12-hafta); $t$-taqsimot va ishonch oraligʻi (9-hafta); butstrep va
+randomizatsiya (9–10-haftalar); $\chi^2$ bogʻliqsizlik testi (11-hafta).
+
+**Bu hafta nimani qilmaymiz.** Koʻp omilli regressiya, instrumental
+oʻzgaruvchilar, moslashtirish (matching), moyillik ballari, farqlar
+farqi va rasmiy *do*-hisob. Ularni **nomlaymiz**, oʻrgatmaymiz.
+Vaznlangan qatlamlash (F197) — bu kursdagi tuzatishning eng chekkasi.
+
+---
+
+# 0-bosqich. Muhitni sozlash
+
+```{r lokal}
+# --- MUHIM: UTF-8 muhitini kafolatlash --------------------------------
+# Oʻzbekcha nomlarda tutuq belgisi «ʻ» (U+02BB) bor. Agar R UTF-8
+# boʻlmagan lokalda ishga tushsa, kod ichidagi oʻzbekcha satr va CSV dan
+# oʻqilgan qiymat TENG DEB HISOBLANMAYDI: filtr BOʻSH jadval qaytaradi.
+# QOIDA (2-haftadan): oʻzbekcha nomlarni kod ichida LITERAL yozmang —
+# ularni unique(...) orqali FAYLDAN oling va POZITSIYA boʻyicha tanlang.
+if (!grepl("UTF-8", Sys.getlocale("LC_CTYPE"), ignore.case = TRUE)) {
+  for (lokal in c("C.UTF-8", "en_US.UTF-8", "uz_UZ.UTF-8",
+                  "Uzbek_Uzbekistan.utf8", "English_United States.utf8")) {
+    if (suppressWarnings(Sys.setlocale("LC_CTYPE", lokal)) != "") break
+  }
+}
+cat(sprintf("MUHIT: R %s.%s | LC_CTYPE = %s\n",
+            R.version$major, R.version$minor, Sys.getlocale("LC_CTYPE")))
+```
+
+```{r paketlar}
+# --- Kerakli kutubxonalar ---------------------------------------------
+suppressPackageStartupMessages({
+  library(readr)      # CSV oʻqish
+  library(dplyr)      # jadval bilan ishlash
+  library(ggplot2)    # grafiklar
+})
+
+# Okabe–Ito palitrasi: rang koʻrmaslikka moslashgan (2-haftadan beri).
+oiBlue <- "#0072B2"; oiOrange <- "#E69F00"; oiGreen <- "#009E73"
+oiPink <- "#CC79A7"; oiVerm   <- "#D55E00"; oiSky   <- "#56B4E9"
+oiYell <- "#F0E442"; oiGrey   <- "#5A6470"
+
+theme_set(theme_minimal(base_size = 11) +
+          theme(panel.grid.minor = element_blank(),
+                plot.title = element_text(face = "bold")))
+
+# QOIDA (2-haftadan): grafik yorliqlarida faqat ASCII harflar.
+cat(sprintf("MUHIT: ggplot2 %s\n", as.character(packageVersion("ggplot2"))))
+```
+
+```{r yordamchi}
+# --- IKKI DAFTAR BIR XIL MATN CHIQARISHI UCHUN YORDAMCHILAR -----------
+# (1) ha(): R «TRUE», Python «True» yozadi — mantiqiy qiymatni
+#     OʻZIMIZ formatlaymiz.
+ha <- function(b) if (isTRUE(as.logical(b))) "HA" else "YOʻQ"
+
+# (2) pad()/padl(): R BAYT boʻyicha, Python BELGI boʻyicha toʻldiradi.
+pad  <- function(s, n) {
+  s <- enc2utf8(s); k <- n - nchar(s, type = "chars")
+  if (k > 0) paste0(s, strrep(" ", k)) else s
+}
+padl <- function(s, n) {
+  s <- enc2utf8(s); k <- n - nchar(s, type = "chars")
+  if (k > 0) paste0(strrep(" ", k), s) else s
+}
+P_ <- function(...) cat(sprintf(...), "\n", sep = "")
+
+# (3) Dispersiya va korrelyatsiya: MAXRAJ HAR DOIM OSHKORA.
+varS <- function(x) sum((x - mean(x))^2) / (length(x) - 1)
+sdS  <- function(x) sqrt(varS(x))
+korr <- function(x, y) {
+  dx <- x - mean(x); dy <- y - mean(y)
+  sum(dx * dy) / sqrt(sum(dx^2) * sum(dy^2))
+}
+
+# (4) ENG KICHIK KVADRATLAR + XULOSA. 12-haftadagi ols() ga bu hafta
+#     TOʻRTTA yangi maydon qoʻshildi: seb1 (F184), seb0 (F187),
+#     t1 (F185) va p1. QOIDA: qiyalik hech qachon SE va oraliqsiz
+#     keltirilmaydi.
+ols <- function(x, y) {
+  n <- length(x); xb <- mean(x); yb <- mean(y)
+  sxx <- sum((x - xb)^2); syy <- sum((y - yb)^2)
+  sxy <- sum((x - xb) * (y - yb))
+  b1 <- sxy / sxx; b0 <- yb - b1 * xb
+  yh <- b0 + b1 * x; e <- y - yh
+  sse <- sum(e^2); ssr <- syy - sse
+  se <- sqrt(sse / (n - 2))
+  seb1 <- se / sqrt(sxx)                       # F184
+  seb0 <- se * sqrt(1 / n + xb^2 / sxx)        # F187
+  t1 <- b1 / seb1                              # F185
+  list(n = n, xb = xb, yb = yb, sxx = sxx, syy = syy, sxy = sxy,
+       b1 = b1, b0 = b0, yh = yh, e = e, sse = sse, ssr = ssr,
+       sst = syy, r2 = ssr / syy, se = se, r = sxy / sqrt(sxx * syy),
+       seb1 = seb1, seb0 = seb0, t1 = t1, p1 = 2 * pt(-abs(t1), n - 2))
+}
+
+# (5) t-taqsimot: kvantil va ikki tomonlama p-qiymat.
+tq  <- function(pp, df) qt(pp, df)
+tp2 <- function(tt, df) 2 * pt(-abs(tt), df)
+
+# (6) IKKI ORALIQ (F190--F193). MAJBURIY ARGUMENT `tur`: hech qachon
+#     «oraliq» deb yozilmaydi, har doim QAYSI oraliq ekani aytiladi.
+oraliq <- function(o, xs, tur, konf = 0.95) {
+  yh <- o$b0 + o$b1 * xs
+  ich <- 1 / o$n + (xs - o$xb)^2 / o$sxx
+  sef <- if (tur == "ortacha") o$se * sqrt(ich) else o$se * sqrt(1 + ich)
+  tc <- tq(1 - (1 - konf) / 2, o$n - 2)
+  list(yh = yh, se = sef, lo = yh - tc * sef, hi = yh + tc * sef,
+       kenglik = 2 * tc * sef, tur = tur)
+}
+
+# (7) MINSTD LCG: x <- 48271 x mod 2147483647. Ikki tilda AYNAN bir xil
+#     ketma-ketlik beradi — shuning uchun butstrep natijasi ham bir xil.
+lcgNew <- function(seed) { e <- new.env(); e$x <- seed %% 2147483647; e }
+lcgUv  <- function(g, n) {
+  o <- numeric(n); x <- g$x
+  for (i in seq_len(n)) { x <- (48271 * x) %% 2147483647
+                          o[i] <- x / 2147483647 }
+  g$x <- x; o
+}
+lcgIdx <- function(g, n, hi) as.integer(lcgUv(g, n) * hi)   # 0 dan boshlanadi
+
+# (8) Ayniyatlar raqam bilan emas, CHEGARA bilan tekshiriladi.
+nolmi <- function(v, eps = 1e-9) ha(abs(v) < eps)
+
+# (9) Kvantil: R type = 7 --- Python np.quantile (linear) bilan AYNAN bir xil.
+kv <- function(x, pp) as.numeric(quantile(x, pp, type = 7))
+
+# (10) chi^2 bogʻliqsizlik testi (11-haftadan) --- formulani oshkora yozamiz.
+chi2 <- function(a, b) {
+  ta <- sort(unique(a), method = "radix"); tb <- sort(unique(b), method = "radix")
+  O <- matrix(0, length(ta), length(tb))
+  for (i in seq_along(ta)) for (j in seq_along(tb))
+    O[i, j] <- sum(a == ta[i] & b == tb[j])
+  nn <- sum(O); E <- outer(rowSums(O), colSums(O)) / nn
+  st <- sum((O - E)^2 / E); df <- (nrow(O) - 1) * (ncol(O) - 1)
+  list(stat = st, df = df, p = pchisq(st, df, lower.tail = FALSE))
+}
+```
+
+```{r malumot}
+# --- Ikkita HAQIQIY maʼlumot toʻplami ---------------------------------
+# A. markaziy-osiyo-hosildorlik.csv — 5 mamlakat x 27 yil (1992–2018),
+#    hosildorlik t/ga. Manba: FAOSTAT / Our World in Data (OWID).
+# B. kinolar-byudjet.csv — 2 467 film. Manba: The Numbers / Kaggle.
+DATA  <- "data"
+hosil <- read_csv(file.path(DATA, "markaziy-osiyo-hosildorlik.csv"),
+                  locale = locale(encoding = "UTF-8"), show_col_types = FALSE)
+kino  <- read_csv(file.path(DATA, "kinolar-byudjet.csv"),
+                  locale = locale(encoding = "UTF-8"), show_col_types = FALSE)
+
+# QOIDA: oʻzbekcha mamlakat nomini LITERAL yozmaymiz — fayldan olamiz.
+mamlar <- unique(hosil$mamlakat)
+UZ <- mamlar[1]; KG <- mamlar[2]; KZ <- mamlar[3]
+TJ <- mamlar[4]; TM <- mamlar[5]
+uzq <- hosil[hosil$mamlakat == UZ, ]
+kzq <- hosil[hosil$mamlakat == KZ, ]
+
+# 12-haftadagi model AYNAN qaytadi: Qozogʻiston kartoshka 2010-2018.
+kzp <- kzq[kzq$yil >= 2010 & kzq$yil <= 2018, ]
+x1  <- as.numeric(kzp$yil - 2010)        # x = yil - 2010
+y1  <- as.numeric(kzp$kartoshka)         # t/ga
+o1  <- ols(x1, y1)
+
+P_("")
+P_("=== 0-BOSQICH: MAʼLUMOT ===")
+P_("A. hosildorlik fayli: %d qator, %d mamlakat, %d-%d yillar",
+   nrow(hosil), length(mamlar), min(hosil$yil), max(hosil$yil))
+P_("   pozitsiyalar: 1 = %s · 3 = %s", UZ, KZ)
+P_("B. kinolar fayli: %d film", nrow(kino))
+P_("")
+P_("Bugungi asosiy model (12-haftadan): kartoshka ~ (yil - 2010),")
+P_("n = %d, x oraligʻi [%d; %d]", o1$n, min(x1), max(x1))
+P_("MANBA: OWID/FAOSTAT (hosildorlik) · The Numbers/Kaggle (kinolar).")
+P_("Ikkalasi ham HAQIQIY maʼlumot --- hech qanday simulyatsiya yoʻq.")
+```
+
+---
+
+# 1-topshiriq. Qiyalik uchun **toʻliq** xulosa {#t1}
+
+> **Blum:** Qoʻllash · **Qiyinlik:** 3 (Amaliy) · **Ball:** 20 ·
+> **Vaqt:** 18 daqiqa
+
+**Savol.** $b_1=0{,}588033$ t/ga — bu *tanlanma* bahosi. Boshqa toʻqqiz
+yil olsak, boshqa son chiqardi. **Qanchalik boshqa?**
+
+$$
+\SE(b_1)=\frac{s_e}{\sqrt{S_{xx}}}\tag{F184}\qquad
+t=\frac{b_1-\beta_1^{(0)}}{\SE(b_1)},\ \mathrm{df}=n-2\tag{F185}
+$$
+$$
+b_1\pm t^{*}\SE(b_1)\tag{F186}\qquad
+\SE(b_0)=s_e\sqrt{\tfrac1n+\tfrac{\xbar^{2}}{S_{xx}}}\tag{F187}
+$$
+
+```{r t1a}
+# --- Qiyalik uchun xulosa: SE, t, df, p, ishonch oraligʻi -------------
+df1 <- o1$n - 2
+tc1 <- tq(0.975, df1)
+lo1 <- o1$b1 - tc1 * o1$seb1
+hi1 <- o1$b1 + tc1 * o1$seb1
+
+P_("=== 1-TOPSHIRIQ: QIYALIK UCHUN TOʻLIQ XULOSA ===")
+P_("Model: kartoshka ~ (yil - 2010), n = %d", o1$n)
+P_("b1 = %.6f t/ga har yilda   b0 = %.6f t/ga", o1$b1, o1$b0)
+P_("R^2 = %.6f   s_e = %.6f t/ga   S_xx = %.6f", o1$r2, o1$se, o1$sxx)
+P_("")
+P_("F184: SE(b1) = s_e/sqrt(S_xx) = %.6f/sqrt(%.6f) = %.6f",
+   o1$se, o1$sxx, o1$seb1)
+P_("F187: SE(b0) = s_e*sqrt(1/n + xbar^2/S_xx)      = %.6f", o1$seb0)
+P_("F185: t = b1/SE(b1) = %.6f/%.6f = %.6f   df = n-2 = %d",
+   o1$b1, o1$seb1, o1$t1, df1)
+P_("      p = %.8f  ->  %s", o1$p1,
+   if (o1$p1 < 0.05) "H0 RAD ETILADI" else "H0 rad etilmaydi")
+P_("      t_(0,975)(%d) = %.6f", df1, tc1)
+P_("F186: 95 foiz IO = %.6f +- %.6f*%.6f = [%.6f; %.6f]",
+   o1$b1, tc1, o1$seb1, lo1, hi1)
+P_("      nol oraliq ICHIDAMI? %s  -> test va oraliq %s",
+   ha(lo1 <= 0 && 0 <= hi1),
+   if ((o1$p1 < 0.05) == !(lo1 <= 0 && 0 <= hi1)) "MOS" else "ZID")
+P_("")
+P_("TALQIN (birliklar bilan). 2010-2018 yillarda Qozogʻistonda kartoshka")
+P_("hosildorligi har yili oʻrtacha %.4f t/ga oshgan; aniqlik %.4f t/ga.",
+   o1$b1, tc1 * o1$seb1)
+```
+
+```{r t1b}
+# --- UCHTA TEST, BITTA SAVOL: qiyalik = korrelyatsiya = ANOVA F -------
+tr1 <- o1$r * sqrt(o1$n - 2) / sqrt(1 - o1$r^2)        # F188
+MSR <- o1$ssr / 1
+MSE <- o1$sse / (o1$n - 2)
+Fst <- MSR / MSE                                        # F189
+pF  <- pf(Fst, 1, o1$n - 2, lower.tail = FALSE)
+
+P_("")
+P_("-- Uchta test, bitta savol ----------------------------------------")
+P_("1) Qiyalik testi : t = %.8f   p = %.8f", o1$t1, o1$p1)
+P_("2) Korrelyatsiya : t = r*sqrt(n-2)/sqrt(1-r^2) = %.8f   p = %.8f",
+   tr1, tp2(tr1, o1$n - 2))
+P_("3) ANOVA         : F = MSR/MSE = %.6f/%.6f = %.8f   p = %.8f",
+   MSR, MSE, Fst, pF)
+P_("t^2 = %.8f ; F ga tengmi (< 1e-9)? %s", o1$t1^2, nolmi(o1$t1^2 - Fst))
+P_("t(qiyalik) = t(korrelyatsiya) (< 1e-9)? %s", nolmi(o1$t1 - tr1))
+P_("")
+P_("-- ANOVA jadvali --------------------------------------------------")
+P_("%s%s%s%s%s", pad("Manba", 12), padl("SS", 14), padl("df", 5),
+   padl("MS", 14), padl("F", 12))
+P_("%s%s%s%s%s", pad("Model", 12), padl(sprintf("%.6f", o1$ssr), 14),
+   padl("1", 5), padl(sprintf("%.6f", MSR), 14),
+   padl(sprintf("%.6f", Fst), 12))
+P_("%s%s%s%s", pad("Qoldiq", 12), padl(sprintf("%.6f", o1$sse), 14),
+   padl(sprintf("%d", o1$n - 2), 5), padl(sprintf("%.6f", MSE), 14))
+P_("%s%s%s", pad("Jami", 12), padl(sprintf("%.6f", o1$sst), 14),
+   padl(sprintf("%d", o1$n - 1), 5))
+P_("Tekshiruv: SSR/SST = %.6f = R^2 = %.6f", o1$ssr / o1$sst, o1$r2)
+P_("")
+P_("DIQQAT: bu ayniyat faqat BITTA tushuntiruvchi oʻzgaruvchili modelda")
+P_("oʻrinli. Koʻp omilli regressiyada F butun modelni, t esa bitta")
+P_("koeffitsiyentni tekshiradi va ular zid natija berishi mumkin.")
+```
+
+```{r t1c}
+# --- SE(b1) UCHTA narsaga bogʻliq: s_e, n va x ning TARQOQLIGI --------
+# Uchinchisi deyarli har doim unutiladi. Uni oʻlchaymiz: bir xil n = 9,
+# bir xil s_e, faqat x ning joylashuvi oʻzgaradi.
+xdiz <- list(
+  list("0..8 (bizning misol)", as.numeric(0:8)),
+  list("faqat 3..5 (siqilgan)", c(3, 3, 4, 4, 4, 4, 4, 5, 5)),
+  list("faqat 0 va 8 (chekkalar)", c(0, 0, 0, 0, 4, 8, 8, 8, 8)))
+P_("")
+P_("-- Uchinchi omil: bir xil n, bir xil s_e, turli x tarqoqligi ------")
+P_("%s%s%s", pad("x qiymatlari", 28), padl("S_xx", 12),
+   padl("SE(b1) nisbati", 16))
+baza <- NA
+for (d in xdiz) {
+  xs <- d[[2]]; sx <- sum((xs - mean(xs))^2); rel <- sqrt(1 / sx)
+  if (is.na(baza)) baza <- rel
+  P_("%s%s%s", pad(d[[1]], 28), padl(sprintf("%.4f", sx), 12),
+     padl(sprintf("%.4f", rel / baza), 16))
+}
+P_("")
+P_("x ni SIQISH standart xatoni bir necha marta OSHIRADI; chekkalarga")
+P_("toʻplash esa KAMAYTIRADI --- bir xil n va bir xil s_e bilan.")
+P_("Bu DIZAYN masalasi, hisoblash masalasi emas. Ikkita chegara bor:")
+P_("(a) x ni kengaytirish ekstrapolyatsiyaga olib bormasin (12-hafta);")
+P_("(b) faqat chekkalardan olsangiz, chiziqlilikni TEKSHIRIB boʻlmaydi.")
+P_("")
+P_("SHART TEKSHIRUVI (12-haftadan). Bu model uchun L bajarilgan,")
+P_("N bajarilgan (Shapiro-Wilk p = 0.741843), E da yelpigʻich yoʻq;")
+P_("I --- n = 9 juda kichik, xulosa ehtiyotkor. Demak yuqoridagi")
+P_("IO va p-qiymat OʻRINLI. 5-topshiriqda shart BUZILGAN holatni")
+P_("koʻramiz va oʻsha yerda xulosa oʻzgaradi.")
+```
+
+```{r p1}
+# --- Qiyalik uchun ishonch oraligʻi: nol qayerda? ---------------------
+dGr <- data.frame(x = c(lo1, o1$b1, hi1), lab = c("lo", "b1", "hi"))
+gg1 <- ggplot(dGr, aes(x, 0)) +
+  geom_vline(xintercept = 0, colour = oiVerm, linetype = "dashed") +
+  geom_segment(x = lo1, xend = hi1, y = 0, yend = 0,
+               colour = oiBlue, linewidth = 1.6) +
+  geom_point(size = 2.6, colour = oiBlue) +
+  annotate("text", x = 0, y = 0.02, label = "H0: slope = 0",
+           colour = oiVerm, size = 3, hjust = -0.05) +
+  scale_y_continuous(limits = c(-0.06, 0.06), breaks = NULL, name = NULL) +
+  labs(title = "95% CI for the slope (t/ha per year)",
+       x = "slope b1 (t/ha per year)")
+print(gg1)
+```
+
+**Topshiriq (yozma).** *(a)* $b_1$ ni bir jumlada, **birliklari bilan**
+talqin qiling va ishonch oraligʻini ham shu jumlaga qoʻshing.
+*(b)* $\SE(b_1)$ ni ikki barobar kichraytirish uchun uchta yoʻldan
+qaysi biri sizning ixtiyoringizda? *(c)* $t^2=F$ ayniyati nima uchun
+koʻp omilli regressiyada buziladi?
+
+---
+
+# 2-topshiriq. **Ikki oraliq**: chiziq qayerda va keyingi kuzatuv qayerda {#t2}
+
+> **Blum:** Tahlil · **Qiyinlik:** 4 (Analitik) · **Ball:** 20 ·
+> **Vaqt:** 18 daqiqa
+
+$$
+\SE_{\text{oʻrtacha}}=s_e\sqrt{\tfrac1n+\tfrac{(x^{*}-\xbar)^2}{S_{xx}}}
+\tag{F190}\qquad
+\SE_{\text{bashorat}}=s_e\sqrt{1+\tfrac1n+\tfrac{(x^{*}-\xbar)^2}{S_{xx}}}
+\tag{F192}
+$$
+
+Qoʻshimcha $\mathbf{1}$ — **yangi kuzatuvning oʻz tasodifi**. Chiziqni
+mukammal bilish uni yoʻqotmaydi.
+
+```{r t2a}
+# --- Ikki oraliq, beshta x* uchun ------------------------------------
+# DIQQAT: oraliq() funksiyasi `tur` argumentisiz ishlamaydi. Bu ataylab
+# shunday: bu haftaning eng koʻp uchraydigan xatosi --- qaysi oraliq
+# ekanini aytmaslik.
+P_("=== 2-TOPSHIRIQ: IKKI ORALIQ ===")
+P_("%s%s%s%s%s%s", padl("x*", 5), padl("yhat", 10), padl("SE(ort)", 10),
+   padl("IO(ort)", 22), padl("SE(bash)", 10), padl("BO(bash)", 22))
+for (xs in c(0, 2, 4, 6, 8)) {
+  a <- oraliq(o1, xs, "ortacha"); b <- oraliq(o1, xs, "bashorat")
+  P_("%s%s%s%s%s%s", padl(sprintf("%.1f", xs), 5),
+     padl(sprintf("%.4f", a$yh), 10), padl(sprintf("%.4f", a$se), 10),
+     padl(sprintf("[%.4f; %.4f]", a$lo, a$hi), 22),
+     padl(sprintf("%.4f", b$se), 10),
+     padl(sprintf("[%.4f; %.4f]", b$lo, b$hi), 22))
+}
+am <- oraliq(o1, o1$xb, "ortacha"); bm <- oraliq(o1, o1$xb, "bashorat")
+P_("")
+P_("x* = xbar da eng tor: SE(oʻrtacha) = %.6f, SE(bashorat) = %.6f",
+   am$se, bm$se)
+P_("Nisbat = %.6f marta. Kenglik nisbati ham AYNAN shu: %.6f",
+   bm$se / am$se, bm$kenglik / am$kenglik)
+P_("Ikkala oraliq ham x* xbar dan uzoqlashgani sari kengayadi ---")
+P_("shuning uchun ular chiziq atrofida SOAT SHAKLINI hosil qiladi.")
+```
+
+```{r t2b}
+# --- n oshsa: biri nolga intiladi, ikkinchisi INTILMAYDI --------------
+# Faraziy hisob: s_e va x tarqoqligi oʻzgarmaydi, faqat n oshadi.
+P_("")
+P_("-- FARAZIY hisob: n oshsa nima boʻladi (x* = xbar) ----------------")
+P_("%s%s%s", padl("n", 6), padl("SE(oʻrtacha)", 22), padl("SE(bashorat)", 22))
+for (k in c(1, 2, 5, 20, 100, 1000)) {
+  nn <- 9 * k
+  P_("%s%s%s", padl(sprintf("%d", nn), 6),
+     padl(sprintf("%.6f", o1$se * sqrt(1 / nn)), 22),
+     padl(sprintf("%.6f", o1$se * sqrt(1 + 1 / nn)), 22))
+}
+P_("SE(oʻrtacha) nolga intiladi. SE(bashorat) esa s_e = %.6f ga", o1$se)
+P_("intiladi va undan PASTGA TUSHMAYDI.")
+P_("")
+P_("MAʼNOSI: cheksiz maʼlumot bilan CHIZIQNI mukammal bilamiz, lekin")
+P_("KEYINGI YILNING hosilini baribir aniq ayta olmaymiz. Bu modelning")
+P_("kamchiligi emas --- dunyoning xossasi. s_e model xatosi emas,")
+P_("ob-havo, bozor va siyosatning tasodifi; ular x da yoʻq.")
+```
+
+```{r p2}
+# --- Ikki tasma bitta rasmda: soat shakli -----------------------------
+xg <- seq(-0.5, 8.5, length.out = 121)
+dB <- data.frame(
+  x   = xg,
+  yh  = o1$b0 + o1$b1 * xg,
+  cLo = sapply(xg, function(v) oraliq(o1, v, "ortacha")$lo),
+  cHi = sapply(xg, function(v) oraliq(o1, v, "ortacha")$hi),
+  pLo = sapply(xg, function(v) oraliq(o1, v, "bashorat")$lo),
+  pHi = sapply(xg, function(v) oraliq(o1, v, "bashorat")$hi))
+gg2 <- ggplot(dB, aes(x)) +
+  geom_ribbon(aes(ymin = pLo, ymax = pHi), fill = oiOrange, alpha = 0.22) +
+  geom_ribbon(aes(ymin = cLo, ymax = cHi), fill = oiBlue, alpha = 0.30) +
+  geom_line(aes(y = yh), colour = "#14314F", linewidth = 0.9) +
+  geom_point(data = data.frame(x = x1, y = y1), aes(x, y),
+             colour = "#14314F", size = 2.1) +
+  annotate("text", x = 0.1, y = 22.4, hjust = 0, size = 3, colour = oiOrange,
+           label = "outer band = prediction interval") +
+  annotate("text", x = 0.1, y = 13.4, hjust = 0, size = 3, colour = oiBlue,
+           label = "inner band = CI for the mean response") +
+  labs(title = "Two bands are not one band",
+       x = "x = year - 2010", y = "potato yield (t/ha)")
+print(gg2)
+```
+
+**Topshiriq (yozma).** *(a)* Ikkala tasmaning **soat shakli** nima uchun
+paydo boʻladi? *(b)* Vazirlik «$2018$-yilda **butun mamlakat boʻyicha
+oʻrtacha** hosildorlik qancha edi?» deb soʻrasa qaysi oraliqni berasiz?
+«**Falon viloyatda** kelasi yil qancha boʻladi?» deb soʻrasa-chi?
+*(c)* $n$ ni $9$ dan $9\,000$ ga oshirsak bashorat oraligʻi necha
+foizga torayadi? Bu javob sizni hayratda qoldirdimi?
+
+---
+
+# 3-topshiriq. **Xatoni toping**: ishonch oraligʻi keltirilgan, bashorat oraligʻi kerak edi {#t3}
+
+> **Blum:** Baholash · **Qiyinlik:** 5 (Ilgʻor) · **Ball:** 15 ·
+> **Vaqt:** 12 daqiqa
+
+**Vaziyat.** Konsalting kompaniyasi sizga quyidagi xulosani yubordi.
+Unda **bitta** jiddiy xato bor — sonlar toʻgʻri hisoblangan, lekin
+**notoʻgʻri savolga** javob berilgan.
+
+> «Qozogʻiston kartoshka modeli boʻyicha $2018$-yil uchun bashorat
+> $\hat y=20{,}2416$ t/ga. $95\,\%$ ishonch oraligʻi
+> $[19{,}2708;\ 21{,}2124]$ t/ga. Demak **alohida bir xoʻjalikning**
+> $2018$-yildagi hosili $95\,\%$ ehtimol bilan shu oraliqda boʻladi.»
+
+**Sizning vazifangiz:** xatoni nomlang, toʻgʻri oraliqni hisoblang va
+xatoning **narxini** son bilan koʻrsating.
+
+```{r t3a}
+# --- Berilgan tahlilni QAYTA hisoblaymiz ------------------------------
+xstar <- 8                                  # 2018-yil, x = yil - 2010
+aI <- oraliq(o1, xstar, "ortacha")          # konsalting KELTIRGAN oraliq
+aB <- oraliq(o1, xstar, "bashorat")         # savol TALAB QILGAN oraliq
+
+P_("=== 3-TOPSHIRIQ: XATONI TOPING ===")
+P_("x* = %d (2018-yil), yhat = %.4f t/ga", xstar, aI$yh)
+P_("")
+P_("%s%s%s%s", pad("oraliq turi", 30), padl("SE", 10),
+   padl("chegaralar", 24), padl("kenglik", 11))
+P_("%s%s%s%s", pad("oʻrtacha javob uchun IO", 30),
+   padl(sprintf("%.6f", aI$se), 10),
+   padl(sprintf("[%.4f; %.4f]", aI$lo, aI$hi), 24),
+   padl(sprintf("%.6f", aI$kenglik), 11))
+P_("%s%s%s%s", pad("bashorat oraligʻi (BO)", 30),
+   padl(sprintf("%.6f", aB$se), 10),
+   padl(sprintf("[%.4f; %.4f]", aB$lo, aB$hi), 24),
+   padl(sprintf("%.6f", aB$kenglik), 11))
+P_("")
+P_("Kenglik nisbati BO/IO = %.6f", aB$kenglik / aI$kenglik)
+P_("Yaʼni keltirilgan oraliq kerakli oraligʻdan %.4f marta TOR ---",
+   aB$kenglik / aI$kenglik)
+P_("demak u %.4f marta ISHONCHLIROQ koʻrinadi.", aB$kenglik / aI$kenglik)
+```
+
+```{r t3b}
+# --- Xatoning oqibati: qamrov (coverage) ------------------------------
+# Keltirilgan oraliqqa AMALDA nechta kuzatuv tushadi? Toʻgʻri BO ga-chi?
+ichIO <- sum(y1 >= sapply(x1, function(v) oraliq(o1, v, "ortacha")$lo) &
+             y1 <= sapply(x1, function(v) oraliq(o1, v, "ortacha")$hi))
+ichBO <- sum(y1 >= sapply(x1, function(v) oraliq(o1, v, "bashorat")$lo) &
+             y1 <= sapply(x1, function(v) oraliq(o1, v, "bashorat")$hi))
+P_("")
+P_("-- Qamrov tekshiruvi: kuzatilgan 9 nuqta oraliqlarga tushadimi? ---")
+P_("Oʻrtacha javob uchun IO ichida: %d / %d  (%.4f)",
+   ichIO, o1$n, ichIO / o1$n)
+P_("Bashorat oraligʻi ichida      : %d / %d  (%.4f)",
+   ichBO, o1$n, ichBO / o1$n)
+P_("")
+P_("XULOSA. Oʻrtacha javob uchun IO alohida kuzatuvlarni QAMRAB")
+P_("OLISHGA MOʻLJALLANMAGAN --- u faqat CHIZIQ qayerda ekanini aytadi.")
+P_("Uni alohida kuzatuv uchun keltirish --- bu haftaning eng koʻp")
+P_("uchraydigan texnik xatosi.")
+P_("")
+P_("NIMA ISBOTLANMADI. Toʻgʻri oraliq ham 'xoʻjalik darajasidagi'")
+P_("bashorat emas: model VILOYAT emas, MAMLAKAT oʻrtachasi boʻyicha")
+P_("qurilgan. Xoʻjalik darajasidagi tarqoqlik bu maʼlumotda YOʻQ,")
+P_("shuning uchun uni hech qanday oraliq bilan bera olmaymiz.")
+```
+
+**Topshiriq (yozma) — tuzatish xati (100–150 soʻz).** Konsalting
+kompaniyasiga xat yozing: *(1)* xato nima edi (aniq nom bilan);
+*(2)* toʻgʻri oraliq qanday va nima uchun kengroq; *(3)* qaysi savol
+uchun ularning oraligʻi **toʻgʻri** javob boʻlar edi; *(4)* modelning
+obyekt darajasi (mamlakat oʻrtachasi) haqidagi ogohlantirish.
+
+---
+
+# 4-topshiriq. Butstrep qiyaligi va $t$-oraliq {#t4}
+
+> **Blum:** Tahlil · **Qiyinlik:** 4 (Analitik) · **Ball:** 18 ·
+> **Vaqt:** 16 daqiqa
+
+**Savol.** $t$-oraliq **formuladan** keladi va formula shartlarga
+tayanadi. Butstrep esa maʼlumotning oʻzidan keladi. **Ikkalasi bir
+xil javob beradimi?**
+
+```{r t4a}
+# --- Butstrep: n ta juftlikni QAYTARIB tanlaymiz (F194) ---------------
+# MINSTD LCG, urugʻ 20261301, 20000 takror. Ikki tilda AYNAN bir xil.
+M <- 20000
+g <- lcgNew(20261301)
+bs <- numeric(M); yaroqsiz <- 0
+for (i in seq_len(M)) {
+  ii <- lcgIdx(g, o1$n, o1$n) + 1
+  xx <- x1[ii]; yy <- y1[ii]
+  sx <- sum((xx - mean(xx))^2)
+  if (sx < 1e-12) { bs[i] <- NA; yaroqsiz <- yaroqsiz + 1 }
+  else bs[i] <- sum((xx - mean(xx)) * (yy - mean(yy))) / sx
+}
+bsv <- bs[!is.na(bs)]
+qb  <- kv(bsv, c(0.025, 0.975))
+
+P_("=== 4-TOPSHIRIQ: BUTSTREP ===")
+P_("Takrorlar: %d · urugʻ 20261301 · MINSTD LCG (48271, 2147483647)", M)
+P_("Yaroqsiz takrorlar (barcha x teng): %d", yaroqsiz)
+P_("Butstrep oʻrtachasi = %.6f   (kuzatilgan b1 = %.6f)",
+   mean(bsv), o1$b1)
+P_("Butstrep SE         = %.6f   (formula SE   = %.6f)",
+   sdS(bsv), o1$seb1)
+P_("Butstrep SE / formula SE = %.4f", sdS(bsv) / o1$seb1)
+P_("")
+P_("%s%s%s", pad("oraliq", 22), padl("chegaralar", 24), padl("kenglik", 11))
+P_("%s%s%s", pad("persentil (butstrep)", 22),
+   padl(sprintf("[%.6f; %.6f]", qb[1], qb[2]), 24),
+   padl(sprintf("%.6f", qb[2] - qb[1]), 11))
+P_("%s%s%s", pad("t-oraliq (formula)", 22),
+   padl(sprintf("[%.6f; %.6f]", lo1, hi1), 24),
+   padl(sprintf("%.6f", hi1 - lo1), 11))
+P_("Kenglik nisbati (butstrep / t) = %.4f", (qb[2] - qb[1]) / (hi1 - lo1))
+```
+
+```{r t4b}
+# --- Talqin: butstrep bu yerda MUQOBIL emas, TEKSHIRUVCHI -------------
+P_("")
+P_("-- Ikkala oraliq ham nolni oʻz ichiga oladimi? --------------------")
+P_("t-oraliq nolni oʻz ichiga oladimi?    %s", ha(lo1 <= 0 && 0 <= hi1))
+P_("persentil oraligʻi nolni oladimi?     %s", ha(qb[1] <= 0 && 0 <= qb[2]))
+P_("Ikkalasi ham BIR XIL xulosaga keladi: qiyalik noldan farq qiladi.")
+P_("")
+P_("HALOL XULOSA. n = %d juda kichik. Butstrep SE formula SE dan", o1$n)
+P_("%.4f marta KATTA chiqdi --- yaʼni ikkala usul aynan bir xil emas.",
+   sdS(bsv) / o1$seb1)
+P_("Sabab: n = 9 da butstrep tanlanmasi asl tanlanmaning kichik")
+P_("nusxasi, va u chetlashgan nuqtalarga juda sezgir.")
+P_("Demak bu yerda butstrep t-oraliqqa MUQOBIL emas --- u TEKSHIRUVCHI")
+P_("vosita: ikkita butunlay boshqa yoʻl bir xil XULOSAGA kelsa, xulosa")
+P_("formulaning tanlovidan kelib chiqmagan boʻladi.")
+P_("")
+P_("QAYSI ORALIQNI HISOBOTGA YOZAMIZ? t-oraliqni --- chunki shartlar")
+P_("tekshirilgan va bajarilgan (1-topshiriq). Butstrep esa qoʻshimcha")
+P_("dalil sifatida keltiriladi.")
+```
+
+```{r p3}
+# --- Butstrep taqsimoti va ikkala oraliq ------------------------------
+dBo <- data.frame(b = bsv)
+gg3 <- ggplot(dBo, aes(b)) +
+  geom_histogram(bins = 60, fill = oiBlue, alpha = 0.55, colour = NA) +
+  geom_vline(xintercept = o1$b1, colour = "#14314F", linewidth = 0.9) +
+  geom_vline(xintercept = qb, colour = oiVerm, linetype = "dashed") +
+  geom_vline(xintercept = c(lo1, hi1), colour = oiGreen, linetype = "dotted") +
+  labs(title = "Bootstrap slopes: percentile CI (dashed) vs t CI (dotted)",
+       x = "bootstrap slope b1* (t/ha per year)", y = "count")
+print(gg3)
+```
+
+**Topshiriq (yozma).** *(a)* Ikki oraliqning kengligi qanchalik farq
+qiladi va bu farq nimani anglatadi? *(b)* Agar butstrep oraligʻi nolni
+**oʻz ichiga olganda**, siz qaysi xulosani yozardingiz? *(c)* Butstrep
+**qaysi** shartga tayanmaydi va **qaysi** shartga baribir tayanadi?
+
+---
+
+# 5-topshiriq. **I sharti buzilgan**: samarali tanlanma hajmi {#t5}
+
+> **Blum:** Baholash · **Qiyinlik:** 5 (Ilgʻor) · **Ball:** 17 ·
+> **Vaqt:** 16 daqiqa
+
+$$
+n_{\text{eff}}=n\,\frac{1-\rho}{1+\rho}\tag{F199}\qquad
+\SE_{\text{tuzatilgan}}\approx\SE\cdot\sqrt{\frac{1+\rho}{1-\rho}}
+$$
+
+```{r t5a}
+# --- Oʻzbekiston bugʻdoy ~ yil: 12-haftada I sharti BUZILGAN edi ------
+oE  <- ols(as.numeric(uzq$yil), as.numeric(uzq$bugdoy))
+er  <- oE$e
+rho <- korr(er[-length(er)], er[-1])           # lag-1 korrelyatsiya
+lim <- 1.959964 / sqrt(oE$n)                   # z_(0,975)/sqrt(n)
+dfE <- oE$n - 2
+tcE <- tq(0.975, dfE)
+
+P_("=== 5-TOPSHIRIQ: SHART BUZILGANDA XULOSA ===")
+P_("Model: bugʻdoy ~ yil, n = %d", oE$n)
+P_("b1 = %.6f t/ga har yilda   s_e = %.6f t/ga   S_xx = %.6f",
+   oE$b1, oE$se, oE$sxx)
+P_("")
+P_("-- SODDA (shart bajarilgan deb faraz qilib) -----------------------")
+P_("SE(b1) = %.6f   t = %.6f   df = %d   p = %.3e",
+   oE$seb1, oE$t1, dfE, oE$p1)
+P_("95 foiz IO: [%.6f; %.6f]  ->  %s",
+   oE$b1 - tcE * oE$seb1, oE$b1 + tcE * oE$seb1,
+   if (oE$p1 < 0.05) "H0 RAD ETILADI" else "H0 rad etilmaydi")
+P_("")
+P_("-- SHART TEKSHIRUVI: I (bogʻliqsizlik) ---------------------------")
+P_("Qoldiqlar lag-1 = %.6f   chegara z_(0,975)/sqrt(n) = %.6f",
+   rho, lim)
+P_("|lag-1| > chegara?  %s  ->  %s", ha(abs(rho) > lim),
+   if (abs(rho) > lim) "I SHARTI BUZILGAN" else "shart bajarilgan")
+```
+
+```{r t5b}
+# --- Samarali tanlanma hajmi va TUZATILGAN xulosa (F199) -------------
+neff <- oE$n * (1 - rho) / (1 + rho)
+infl <- sqrt((1 + rho) / (1 - rho))
+seT  <- oE$seb1 * infl
+tT   <- oE$b1 / seT
+dfT  <- max(neff - 2, 1)
+pT   <- tp2(tT, dfT)
+
+P_("")
+P_("-- TUZATILGAN xulosa ---------------------------------------------")
+P_("1-rho = %.6f   1+rho = %.6f", 1 - rho, 1 + rho)
+P_("F199: n_eff = n(1-rho)/(1+rho) = %d*%.6f/%.6f = %.6f",
+   oE$n, 1 - rho, 1 + rho, neff)
+P_("Yaʼni %d ta yil taxminan %.2f ta bogʻliqsiz kuzatuvga teng.",
+   oE$n, neff)
+P_("SE tuzatish koeffitsiyenti sqrt((1+rho)/(1-rho)) = %.6f", infl)
+P_("Tuzatilgan SE = %.6f * %.6f = %.6f", oE$seb1, infl, seT)
+P_("Tuzatilgan t  = %.6f   df ~ %.4f   p ~ %.6f", tT, dfT, pT)
+P_("")
+P_("%s%s%s", pad("usul", 16), padl("SE(b1)", 12), padl("p", 14))
+P_("%s%s%s", pad("sodda", 16), padl(sprintf("%.6f", oE$seb1), 12),
+   padl(sprintf("%.3e", oE$p1), 14))
+P_("%s%s%s", pad("tuzatilgan", 16), padl(sprintf("%.6f", seT), 12),
+   padl(sprintf("%.6f", pT), 14))
+P_("Xulosa oʻzgardimi? %s", ha((oE$p1 < 0.05) != (pT < 0.05)))
+P_("")
+P_("QOIDA. Buzilgan shart b1 ni EMAS, unga boʻlgan ISHONCHNI buzadi.")
+P_("b1 = %.6f baribir toʻgʻri hisoblangan; oʻzgargani --- uning", oE$b1)
+P_("atrofidagi oraliq va p-qiymat.")
+P_("")
+P_("NIMA ISBOTLANMADI. n_eff --- QOʻPOL tuzatish: u AR(1) tuzilmasini")
+P_("faraz qiladi va qoldiqlardagi toʻlqin CHIZIQLILIK buzilishidan")
+P_("kelib chiqmaganini TEKSHIRMAYDI. x = yil boʻlgani uchun L va I ni")
+P_("bu maʼlumot bilan ajratib boʻlmaydi (12-hafta). Shuning uchun")
+P_("hisobotda IKKALA talqin ham koʻrsatiladi.")
+```
+
+**Topshiriq (yozma).** *(a)* $p$-qiymat necha marta oshdi? Bu xulosani
+oʻzgartirdimi? *(b)* Agar sodda $p=0{,}03$ boʻlganida nima boʻlardi?
+*(c)* $n_{\text{eff}}\approx3$ boʻlgan qatorda $95\,\%$ ishonch
+oraligʻiga tayangan **siyosat qarori** qabul qilish mumkinmi?
+
+---
+
+# 6-topshiriq. **Chalgʻituvchi omil**: uchta shart, ikkita nomzod {#t6}
+
+> **Blum:** Baholash · **Qiyinlik:** 5 (Ilgʻor) · **Ball:** 30 ·
+> **Vaqt:** 30 daqiqa
+
+**Savol.** PG-13 va R reytingli filmlar **foydalilik** boʻyicha farq
+qiladimi? («Foydali» $=$ jahon daromadi $>2{,}5\times$ byudjet.)
+
+**Uchinchi oʻzgaruvchi $z$ chalgʻituvchi omil boʻlishi uchun (F196):**
+
+1. $z$ **$x$ bilan** bogʻliq boʻlishi kerak;
+2. $z$ **$y$ bilan** bogʻliq boʻlishi kerak;
+3. $z$ **$x$ ning oqibati boʻlmasligi** kerak.
+
+Bugun **ikkita ishonarli nomzod** tekshiriladi. **Ulardan biri
+shartlarni bajaradi, ikkinchisi bajarmaydi** — va buni faqat
+**tekshirish** orqali bilish mumkin.
+
+```{r t6a}
+# --- Xom farq ---------------------------------------------------------
+kk <- kino[kino$byudjet > 0 & kino$jahon_daromadi > 0, ]
+kk$b  <- kk$byudjet / 1e6
+kk$gr <- kk$jahon_daromadi / 1e6
+kk$foyda <- kk$gr > 2.5 * kk$b                 # IKKALA oʻzgaruvchining oqibati!
+sel <- kk[kk$reyting %in% c("PG-13", "R"), ]
+reytlar <- c("PG-13", "R")
+
+P_("=== 6-TOPSHIRIQ: CHALGʻITUVCHI OMIL ===")
+P_("Savol: PG-13 va R filmlari foydalilik boʻyicha farq qiladimi?")
+P_("'Foydali' = jahon daromadi > 2,5 x byudjet")
+P_("")
+P_("%s%s%s%s", pad("reyting", 10), padl("foydali", 10), padl("jami", 8),
+   padl("ulush", 12))
+ul <- numeric(2)
+for (i in 1:2) {
+  d <- sel[sel$reyting == reytlar[i], ]
+  ul[i] <- mean(d$foyda)
+  P_("%s%s%s%s", pad(reytlar[i], 10), padl(sprintf("%d", sum(d$foyda)), 10),
+     padl(sprintf("%d", nrow(d)), 8), padl(sprintf("%.6f", ul[i]), 12))
+}
+dXom <- ul[1] - ul[2]
+P_("Xom farq = %.6f (PG-13 foydasiga)", dXom)
+P_("")
+P_("SHART TEKSHIRUVI. Bu regressiya emas, ikkita ulushning farqi;")
+P_("shuning uchun L-I-N-E emas, 11-haftadagi shartlar amal qiladi:")
+P_("kuzatuvlar bogʻliqsiz (davomli filmlar --- eng zaif joyi),")
+P_("har bir katakda kutilgan son 10 dan katta (n = %d).", nrow(sel))
+```
+
+```{r t6b}
+# --- NOMZOD 1: byudjet ------------------------------------------------
+# Ishonarli koʻrinadi: PG-13 filmlari qimmatroq, qimmat filmlar
+# koʻproq daromad keltiradi. Shartlarni TEKSHIRAMIZ.
+pg <- as.numeric(sel$reyting == "PG-13")
+fy <- as.numeric(sel$foyda)
+nS <- nrow(sel)
+r_bx <- korr(sel$b, pg)          # (1) z ~ x
+r_by <- korr(sel$b, fy)          # (2) z ~ y
+t_bx <- r_bx * sqrt(nS - 2) / sqrt(1 - r_bx^2)
+t_by <- r_by * sqrt(nS - 2) / sqrt(1 - r_by^2)
+p_bx <- tp2(t_bx, nS - 2); p_by <- tp2(t_by, nS - 2)
+bm1 <- mean(sel$b[sel$reyting == "PG-13"]); bm2 <- mean(sel$b[sel$reyting == "R"])
+
+P_("")
+P_("-- NOMZOD 1: BYUDJET ---------------------------------------------")
+P_("Oʻrtacha byudjet: PG-13 %.6f mln $ · R %.6f mln $", bm1, bm2)
+P_("farq = %.6f mln $ (%.4f foiz)", bm1 - bm2, (bm1 - bm2) / bm2 * 100)
+P_("(1) byudjet ~ reyting   : r = %.6f  p = %.4e  -> %s",
+   r_bx, p_bx, if (p_bx < 0.05) "BOGʻLIQ" else "BOGʻLIQ EMAS")
+P_("(2) byudjet ~ foydalilik: r = %.6f  p = %.4e  -> %s",
+   r_by, p_by, if (p_by < 0.05) "BOGʻLIQ" else "BOGʻLIQ EMAS")
+P_("(3) byudjet reytingning oqibatimi? Yoʻq --- byudjet ssenariy")
+P_("    bosqichida belgilanadi, reyting film tayyor boʻlgach beriladi.")
+P_("XULOSA: byudjet chalgʻituvchi omil %s --- %d-shart bajarilmadi.",
+   if (p_bx < 0.05 && p_by < 0.05) "HISOBLANADI" else "HISOBLANMAYDI", 2L)
+P_("")
+P_("Baribir qatlamlab koʻramiz (byudjet boʻyicha uchdan bir qatlamlar):")
+qb3 <- kv(sel$b, c(1/3, 2/3))
+qat <- ifelse(sel$b <= qb3[1], 1L, ifelse(sel$b <= qb3[2], 2L, 3L))
+nomq <- c("past", "oʻrta", "yuqori")
+P_("%s%s%s%s%s%s", pad("qatlam", 10), padl("PG-13", 10), padl("n", 6),
+   padl("R", 10), padl("n", 6), padl("farq", 11))
+dw <- 0; ww <- 0
+for (k in 1:3) {
+  a <- sel$foyda[qat == k & sel$reyting == "PG-13"]
+  b <- sel$foyda[qat == k & sel$reyting == "R"]
+  dw <- dw + (mean(a) - mean(b)) * (length(a) + length(b))
+  ww <- ww + length(a) + length(b)
+  P_("%s%s%s%s%s%s", pad(nomq[k], 10), padl(sprintf("%.6f", mean(a)), 10),
+     padl(sprintf("%d", length(a)), 6), padl(sprintf("%.6f", mean(b)), 10),
+     padl(sprintf("%d", length(b)), 6),
+     padl(sprintf("%+.6f", mean(a) - mean(b)), 11))
+}
+dBud <- dw / ww
+P_("Vaznlangan farq = %.6f (xom %.6f, oʻzgarish %+.2f foiz)",
+   dBud, dXom, (dBud - dXom) / abs(dXom) * 100)
+P_("KUTILGANIDEK: shart bajarilmagan boʻlsa, tuzatish ham kam narsani")
+P_("oʻzgartiradi.")
+```
+
+```{r t6c}
+# --- NOMZOD 2: janr ---------------------------------------------------
+c1 <- chi2(sel$janr, sel$reyting)      # (1) z ~ x
+c2 <- chi2(sel$janr, sel$foyda)        # (2) z ~ y
+janrlar <- sort(unique(sel$janr), method = "radix")
+
+P_("")
+P_("-- NOMZOD 2: JANR ------------------------------------------------")
+P_("(1) janr ~ reyting   : chi^2 = %.4f  df = %d  p = %.4e  -> %s",
+   c1$stat, c1$df, c1$p, if (c1$p < 0.05) "BOGʻLIQ" else "BOGʻLIQ EMAS")
+P_("(2) janr ~ foydalilik: chi^2 = %.4f  df = %d  p = %.4e  -> %s",
+   c2$stat, c2$df, c2$p, if (c2$p < 0.05) "BOGʻLIQ" else "BOGʻLIQ EMAS")
+P_("(3) janr reytingning oqibatimi? Yoʻq --- janr ssenariy bosqichida,")
+P_("    reyting esa film tayyor boʻlgach beriladi. Vaqt tartibi toʻgʻri.")
+P_("XULOSA: janr chalgʻituvchi omil %s.",
+   if (c1$p < 0.05 && c2$p < 0.05) "HISOBLANADI" else "hisoblanmaydi")
+P_("")
+P_("-- Janr boʻyicha qatlamlash (F197) -------------------------------")
+P_("%s%s%s%s%s%s", pad("janr", 12), padl("PG-13", 10), padl("n", 6),
+   padl("R", 10), padl("n", 6), padl("farq", 11))
+dg <- 0; wg <- 0; ishoralar <- c()
+for (gn in janrlar) {
+  a <- sel$foyda[sel$janr == gn & sel$reyting == "PG-13"]
+  b <- sel$foyda[sel$janr == gn & sel$reyting == "R"]
+  if (length(a) < 10 || length(b) < 10) next
+  dd <- mean(a) - mean(b); ishoralar <- c(ishoralar, dd)
+  dg <- dg + dd * (length(a) + length(b)); wg <- wg + length(a) + length(b)
+  P_("%s%s%s%s%s%s", pad(gn, 12), padl(sprintf("%.6f", mean(a)), 10),
+     padl(sprintf("%d", length(a)), 6), padl(sprintf("%.6f", mean(b)), 10),
+     padl(sprintf("%d", length(b)), 6), padl(sprintf("%+.6f", dd), 11))
+}
+dAdj <- dg / wg
+P_("Vaznlangan (janrga tuzatilgan) farq = %.6f", dAdj)
+P_("Xom farq                            = %.6f", dXom)
+P_("Oʻzgarish = %+.6f (%+.2f foiz)", dAdj - dXom,
+   (dAdj - dXom) / abs(dXom) * 100)
+P_("Barcha janrlarda ishora bir xilmi? %s",
+   ha(all(ishoralar > 0) || all(ishoralar < 0)))
+P_("Ishora oʻzgardimi? %s ; kattaligi oʻsdimi? %s",
+   ha((dAdj > 0) != (dXom > 0)), ha(abs(dAdj) > abs(dXom)))
+P_("")
+P_("DIQQAT --- KUTILMAGAN YOʻNALISH. Odatda chalgʻituvchi omilni")
+P_("tuzatish farqni KICHRAYTIRADI. Bu yerda esa u farqni OSHIRDI.")
+P_("Sabab: R filmlari foydaliligi PAST janrda koʻproq, PG-13 esa")
+P_("foydaliligi YUQORI janrlarda. Janr farqni YASHIRAYOTGAN edi ---")
+P_("bu 'salbiy chalgʻitish' deyiladi va u xuddi shunday real.")
+P_("")
+P_("NIMA ISBOTLANMADI (F201). Janrga tuzatilgan farq 'PG-13 reytingi")
+P_("foydalilikni oshiradi' degani EMAS. Beshta izohdan faqat BITTASI")
+P_("(tasodif) yoʻqotildi. Ochiq qolganlari: (a) teskari sababiyat ---")
+P_("studiya kutilgan daromadga qarab montajni reytingga moslashi;")
+P_("(b) OʻLCHANMAGAN chalgʻituvchi omillar --- rejissyor, yulduz,")
+P_("chiqish sanasi, davomli film ekani; (c) tanlash siljishi --- faylda")
+P_("faqat prokatga chiqqan filmlar bor. Bularni yoʻqotish uchun")
+P_("DIZAYN kerak, hisoblash emas --- va reytingni tasodifiy tayinlab")
+P_("boʻlmaydi.")
+```
+
+```{r p4}
+# --- Qatlamlash rasmi: janrlar boʻyicha farq --------------------------
+dP <- do.call(rbind, lapply(janrlar, function(gn) {
+  a <- sel$foyda[sel$janr == gn & sel$reyting == "PG-13"]
+  b <- sel$foyda[sel$janr == gn & sel$reyting == "R"]
+  if (length(a) < 10 || length(b) < 10) return(NULL)
+  data.frame(janr = c(gn, gn), reyting = c("PG-13", "R"),
+             ulush = c(mean(a), mean(b)))
+}))
+gg4 <- ggplot(dP, aes(janr, ulush, fill = reyting)) +
+  geom_col(position = position_dodge(width = 0.75), width = 0.68) +
+  geom_hline(yintercept = ul[1], colour = oiBlue, linetype = "dashed") +
+  geom_hline(yintercept = ul[2], colour = oiOrange, linetype = "dotted") +
+  scale_fill_manual(values = c("PG-13" = oiBlue, "R" = oiOrange),
+                    name = NULL) +
+  labs(title = "Profitable share by genre: the gap is wider inside strata",
+       x = "genre", y = "share profitable")
+print(gg4)
+```
+
+**Topshiriq (yozma).** *(a)* Uchta shartni ikkala nomzod uchun jadval
+qilib toʻldiring: shart, dalil (son), qaror. *(b)* Nima uchun
+byudjetga «baribir tuzatish» qilish **xato** boʻlishi mumkin edi?
+*(c)* «Foydali» oʻzgaruvchisi **kollayder** ekanini tushuntiring va
+byudjet–daromad bogʻlanishini «foydali» boʻyicha qatlamlash nima
+uchun **zararli** ekanini ayting.
+
+---
+
+# 7-topshiriq (uyda, bonus $+5$). AI yordamida: sababiy daʼvoni tanqid qilish
+
+> **Blum:** Yaratish · **Qiyinlik:** 6 (Tadqiqotga yoʻnaltirilgan)
+
+**Vazifa.** Sunʼiy intellekt vositasidan quyidagi soʻrov bilan
+foydalaning:
+
+> «Men $1\,989$ ta film boʻyicha tahlil qildim. PG-13 filmlarining
+> $40{,}1\,\%$ i foydali, R filmlarining $37{,}3\,\%$ i.
+> $p<0{,}05$. Demak studiyalar PG-13 reytingini tanlashi kerakmi?»
+
+**Sizning ishingiz — javobni tanqid qilish**, unga ishonish emas.
+Yozma hisobot (1 sahifa):
+
+1. AI **beshta muqobil izohdan** (F201) nechtasini eslatdi?
+2. AI **chalgʻituvchi omil** haqida gapirdimi — va uning **uchta
+   shartini** aytdimi?
+3. AI **kollayder** tuzogʻini sezdimi? («foydali» — ikkala
+   oʻzgaruvchining oqibati.)
+4. AI javobida **sababiy feʼl** nechta marta ishlatilgan? Har birini
+   koʻchiring va toʻgʻri shaklga oʻzgartiring.
+5. Xulosa: javobning qaysi qismi foydali, qaysi qismi **xavfli** edi?
+
+**Akademik halollik.** AI javobini koʻchirib qoʻyish **taqiqlanadi**.
+Hisobotda vosita nomi, sana, aniq soʻrov matni va javobning toʻliq
+koʻchirmasi **ilova** qilinadi; tahlil esa **sizniki** boʻlishi shart.
+
+---
+
+# Yakuniy tekshiruv roʻyxati
+
+Topshirishdan oldin har bir band uchun «ha» deb javob bera olishingiz
+kerak:
+
+- [ ] Har bir qiyalik **$\SE$, $95\,\%$ IO, $t$, df va $p$** bilan
+      birga keltirilgan.
+- [ ] Har bir modelda $R^2$ **va** $s_e$ ham bor (12-haftadan).
+- [ ] Har bir bashorat **qaysi oraliq** ekani aytilgan holda berilgan.
+- [ ] Har bir model ortidan **shart tekshiruvi** yozilgan.
+- [ ] I sharti buzilgan joyda **$n_{\text{eff}}$** hisoblangan va
+      tuzatilgan xulosa keltirilgan.
+- [ ] Chalgʻituvchi omilning **uchta sharti** ham tekshirilgan —
+      faraz qilinmagan.
+- [ ] Har bir kuzatuv natijasi ortidan **«nima isbotlanmadi va nega»**
+      xatboshisi bor.
+- [ ] Sababiy feʼl **faqat** dizayn ruxsat bergan joyda ishlatilgan
+      (bu laboratoriyada — hech qayerda).
+- [ ] Grafik yorliqlari ASCII, ranglar Okabe–Ito, maʼno faqat rang
+      bilan berilmagan.
+
+# Baholash mezonlari
+
+| Mezon | Ball | Nima kutiladi |
+|---|---|---|
+| Kod ishlaydi va natija toʻgʻri | 25 | Barcha sonlar qoʻllanmadagi bilan mos |
+| **Toʻliq xulosa hisoboti** | 20 | $\SE$, IO, $t$, df, $p$, $R^2$, $s_e$ — hammasi |
+| **Qaysi oraliq** | 20 | Har bir bashorat nomlangan; 3-topshiriq xati |
+| **Shart tekshiruvi va $n_{\text{eff}}$** | 20 | Vosita, son, qaror; tuzatilgan xulosa |
+| **Chalgʻituvchi omil: uchta shart** | 25 | Ikkala nomzod tekshirilgan, biri rad etilgan |
+| **«Nima isbotlanmadi»** | 10 | Har bir natijadan keyin, F201 ga havola bilan |
+| **Jami** | **120** | |
+| Bonus: AI tanqidi | $+5$ | Halol, manbali, mustaqil tahlil |
+
+# Fikr yuritish savollari
+
+1. Bugun ikki marta «son toʻgʻri, lekin javob notoʻgʻri» holati
+   uchradi (3- va 5-topshiriqlar). Ularni taqqoslang: xato qayerdan
+   kelib chiqdi?
+2. $n\to\infty$ da bashorat oraligʻi $s_e$ da toʻxtaydi. Bu sizning
+   «koʻproq maʼlumot yaxshiroq» haqidagi tasavvuringizni qanday
+   oʻzgartirdi?
+3. Byudjet chalgʻituvchi omil boʻlib **chiqmadi**. Agar biz uni
+   tekshirmasdan «tuzatgan» boʻlsak, nima yoʻqotardik?
+4. Janrga tuzatish farqni **oshirdi**. Bu «tuzatish har doim effektni
+   kichraytiradi» degan tasavvurni buzadi. Yana qanday holatlarda
+   tuzatish effektni oshirishi mumkin?
+5. Bugungi hech bir natija sababiy emas. Ularning qaysi biri
+   **eng koʻp** amaliy qiymatga ega va nima uchun?

@@ -1,0 +1,1040 @@
+---
+title: "STAT201 · 14-hafta · Kompyuter laboratoriyasi (R)"
+subtitle: "Koʻpolam tahlili, takrorlanuvchanlik va oʻz loyihangizni tekshirish"
+author: "Toshkent Xalqaro Universiteti · Iqtisodiyot fakulteti"
+date: "2025/2026 oʻquv yili"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    df_print: kable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 7, fig.height = 4.2, dpi = 110,
+  dev = "png", dev.args = list(type = "cairo")
+)
+options(digits = 7)
+```
+
+<!--
+  ==================================================================
+  STAT201 · 14-hafta · Kompyuter laboratoriyasi · R versiyasi
+  Davomiyligi: 90 daqiqa (80 daqiqalik mazmun byudjeti)
+  CLO9  --- tahlilni takrorlanuvchi qilib rasmiylashtirish
+            (Blum: Tahlil--Baholash--Yaratish)
+  Maʼlumot: data/markaziy-osiyo-hosildorlik.csv (5 mamlakat x 27 yil)
+            data/kinolar-byudjet.csv (2467 film)
+  Bu hafta YANGI usul yoʻq. Bugun 1--13-haftalarda oʻrganilgan narsa
+  BITTA ISHONCHLI HISOBOTGA aylantiriladi --- va buning nechogʻlik oson
+  buzilishi OʻLCHANADI.
+  Izohlar va oʻzgaruvchi nomlari --- oʻzbekcha; funksiya nomlari ---
+  inglizcha.
+  R va Python daftarlari BELGI-MA-BELGI bir xil matn chiqaradi; buni
+  gen/11_lab_check_daftarlar_w14.py avtomatik tekshiradi. Tasodifiy
+  sonlar MINSTD LCG dan olinadi (x <- 48271 x mod 2147483647);
+  sample() / runif() / rnorm() ISHLATILMAYDI --- ular ikki tilda boshqa
+  ketma-ketlik beradi.
+  ==================================================================
+-->
+
+$$
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\SD}{\operatorname{SD}}
+\newcommand{\SE}{\operatorname{SE}}
+\newcommand{\xbar}{\bar{x}}
+$$
+
+# Laboratoriya haqida
+
+Semestr davomida siz oʻrtacha, oraliq, test, regressiya va shart
+tekshiruvini oʻrgandingiz. Bugun **birorta yangi usul yoʻq**. Bugungi
+savol boshqacha:
+
+> **Bir xil savol, bir xil maʼlumot, halol tahlilchi — javob bitta boʻladimi?**
+
+Javob: **yoʻq**. Va bugun buning **qanchaligi oʻlchanadi**.
+
+Bugun oltita narsa oʻlchanadi va yettinchisi sizning **oʻz loyihangizga**
+qaratiladi:
+
+1. **48 ta halol spetsifikatsiya.** Beshta asosli qaror
+   ($3\times2\times2\times2\times2$) — **23 tasi** ahamiyatli, **25 tasi**
+   ahamiyatsiz. Hech kim aldamaydi (F202).
+2. **Qaysi qaror hal qiladi.** «Foydali» ning taʼrifi $p$ ni oʻrtacha
+   **0,543134** ga surradi — bu statistik emas, **mazmuniy** qaror.
+3. **Urugʻsiz butstrep.** Yigirma xil urugʻ — quyi chegara **0,044627**
+   oraligʻida suzadi va uch xonaga yaxlitlanganda **13 xil** qiymat
+   beradi. Bitta qator kod buni yoʻqotadi (F204).
+4. **Necha xona yozish kerak.** Standart xato aytadi (F203).
+5. **Toʻliq tahlil, olti bosqich.** Besh mamlakat, besh model —
+   **2 tasida** bogʻliqsizlik sharti buzilgan va tuzatishdan keyin
+   **2 ta xulosa oʻzgaradi** (F199, F207).
+6. **Bir xil son, ikki dastur.** Ochiq formula va kutubxona funksiyasi —
+   ayirma nolga teng. Bu ham tekshiruv.
+7. **Oʻz loyihangiz.** Aynan shu tekshiruvlarni oʻz kodingizga
+   qaratasiz va topganingizni yozib olasiz. Bu — **juma kuni**
+   topshiriladigan yakuniy hisobotga koʻprik.
+
+**Ish zanjiri.** Har bir topshiriqda quyidagi ketma-ketlik **yozma**
+bajariladi:
+
+> **savol → qarorlar roʻyxati → kod → natija → shart tekshiruvi →
+> sezgirlik (F207) → nima isbotlanmadi**
+
+**Bu haftaning uchta qoidasi.**
+**(a)** Hech bir natija **bitta** spetsifikatsiya bilan keltirilmaydi —
+yo barcha spetsifikatsiyalar koʻrsatiladi, yo qaror **oldindan** qayd
+etilgan boʻladi.
+**(b)** Har bir tasodifiy hisobda **urugʻ** yoziladi.
+**(c)** Har bir son **standart xato ruxsat bergan xonagacha** chop
+etiladi; oraliq esa **toʻliq aniqlikda** hisoblanadi.
+
+**Vaqt taqsimoti (90 daqiqalik mashgʻulot, 80 daqiqa mazmun, 80 ball).**
+
+| # | Mazmun | Daqiqa | Blum | Qiyinlik | Ball |
+|---|---|---|---|---|---|
+| 0 | Muhit, maʼlumot va yoʻqolgan qiymatlar | 5 | — | — | — |
+| 1 | **48 spetsifikatsiya**ni oʻzingiz quring | 14 | Qoʻllash | 3 (Amaliy) | 14 |
+| 2 | Spetsifikatsiya egri chizigʻi va qaror taʼsiri | 10 | Tahlil | 4 (Analitik) | 10 |
+| 3 | **Urugʻsiz butstrep**: 20 urugʻ, 13 javob | 12 | Baholash | 5 (Ilgʻor) | 12 |
+| 4 | **Maʼnoli xonalar** qoidasi (F203) | 7 | Baholash | 5 (Ilgʻor) | 8 |
+| 5 | **Olti bosqichli tahlil** va $n_{\text{eff}}$ | 16 | Baholash | 5 (Ilgʻor) | 16 |
+| 6 | Ikki dastur — bitta son | 6 | Tahlil | 4 (Analitik) | 6 |
+| 7 | **Oʻz loyihangizni tekshirish** | 10 | Yaratish | 6 (Tadqiqot) | 14 |
+| | **Jami** | **80** | | | **80** |
+
+**Oldingi bilim.** Regressiya, $R^2$, $s_e$, L-I-N-E shartlari
+(12-hafta); ishonch oraligʻi va butstrep (9-hafta); $p$-hacking va
+oldindan qayd etish (10-hafta); $n_{\text{eff}}$ va chalgʻituvchi omil
+(13-hafta).
+
+**Bu hafta nimani qilmaymiz.** Rasmiy koʻp taqqoslash tuzatishlari
+(Bonferroni, FDR), bayes faktorlari, meta-tahlil va spetsifikatsiya
+egri chizigʻining permutatsion testi. Ularni **nomlaymiz**,
+oʻrgatmaymiz.
+
+---
+
+# 0-bosqich. Muhitni sozlash
+
+```{r lokal}
+# --- MUHIM: UTF-8 muhitini kafolatlash --------------------------------
+# Oʻzbekcha nomlarda tutuq belgisi «ʻ» (U+02BB) bor. Agar R UTF-8
+# boʻlmagan lokalda ishga tushsa, kod ichidagi oʻzbekcha satr va CSV dan
+# oʻqilgan qiymat TENG DEB HISOBLANMAYDI: filtr BOʻSH jadval qaytaradi.
+# QOIDA (2-haftadan): oʻzbekcha nomlarni kod ichida LITERAL yozmang —
+# ularni unique(...) orqali FAYLDAN oling va POZITSIYA boʻyicha tanlang.
+if (!grepl("UTF-8", Sys.getlocale("LC_CTYPE"), ignore.case = TRUE)) {
+  for (lokal in c("C.UTF-8", "en_US.UTF-8", "uz_UZ.UTF-8",
+                  "Uzbek_Uzbekistan.utf8", "English_United States.utf8")) {
+    if (suppressWarnings(Sys.setlocale("LC_CTYPE", lokal)) != "") break
+  }
+}
+cat(sprintf("MUHIT: R %s.%s | LC_CTYPE = %s\n",
+            R.version$major, R.version$minor, Sys.getlocale("LC_CTYPE")))
+```
+
+```{r paketlar}
+# --- Kerakli kutubxonalar ---------------------------------------------
+suppressPackageStartupMessages({
+  library(readr)      # CSV oʻqish (UTF-8 ni toʻgʻri oʻqiydi)
+  library(ggplot2)    # grafiklar
+})
+
+# Okabe–Ito palitrasi: rang koʻrmaslikka moslashgan (2-haftadan beri).
+oiBlue <- "#0072B2"; oiOrange <- "#E69F00"; oiGreen <- "#009E73"
+oiPink <- "#CC79A7"; oiVerm   <- "#D55E00"; oiSky   <- "#56B4E9"
+oiYell <- "#F0E442"; oiGrey   <- "#5A6470"
+
+theme_set(theme_minimal(base_size = 11) +
+          theme(panel.grid.minor = element_blank(),
+                plot.title = element_text(face = "bold")))
+
+# QOIDA (2-haftadan): grafik yorliqlarida faqat ASCII harflar.
+cat(sprintf("MUHIT: ggplot2 %s | readr %s\n",
+            as.character(packageVersion("ggplot2")),
+            as.character(packageVersion("readr"))))
+```
+
+```{r chiqish}
+# --- CHIQISHNI FAYLGA YOZISH ------------------------------------------
+# Har bir topshiriqning matni lab/out/w14-t*.txt ga yoziladi. Python
+# daftari AYNAN shu fayllarni hosil qiladi va gen/11_... ularni
+# fayl-ma-fayl solishtiradi. Bu — F204 ning oʻzi: natija fayl sifatida
+# saqlanmasa, uni takrorlanganini isbotlab boʻlmaydi.
+OUTDIR <- Sys.getenv("W14_OUT", "out")
+invisible(dir.create(OUTDIR, showWarnings = FALSE, recursive = TRUE))
+.OUT <- new.env(); .OUT$nom <- NULL; .OUT$buf <- character(0)
+
+och <- function(nom) { yop(); .OUT$nom <- nom; .OUT$buf <- character(0) }
+yop <- function() {
+  if (!is.null(.OUT$nom)) {
+    con <- file(file.path(OUTDIR, paste0(.OUT$nom, ".txt")), open = "wt")
+    writeLines(enc2utf8(.OUT$buf), con, useBytes = TRUE)
+    close(con); .OUT$nom <- NULL; .OUT$buf <- character(0)
+  }
+}
+# P_(): ekranga VA faylga. M_(): faqat ekranga (muhitga oid satrlar).
+P_ <- function(...) {
+  s <- sprintf(...)
+  cat(s, "\n", sep = "")
+  if (!is.null(.OUT$nom)) .OUT$buf <- c(.OUT$buf, s)
+  invisible(NULL)
+}
+M_ <- function(...) { cat("MUHIT: ", sprintf(...), "\n", sep = ""); invisible(NULL) }
+```
+
+```{r yordamchi}
+# --- IKKI DAFTAR BIR XIL MATN CHIQARISHI UCHUN YORDAMCHILAR -----------
+# (1) ha(): R «TRUE», Python «True» yozadi — mantiqiy qiymatni
+#     OʻZIMIZ formatlaymiz.
+ha <- function(b) if (isTRUE(as.logical(b))) "HA" else "YOʻQ"
+
+# (2) pad()/padl(): R BAYT boʻyicha, Python BELGI boʻyicha toʻldiradi.
+pad  <- function(s, n) {
+  s <- enc2utf8(as.character(s)); k <- n - nchar(s, type = "chars")
+  if (k > 0) paste0(s, strrep(" ", k)) else s
+}
+padl <- function(s, n) {
+  s <- enc2utf8(as.character(s)); k <- n - nchar(s, type = "chars")
+  if (k > 0) paste0(strrep(" ", k), s) else s
+}
+
+# (3) Dispersiya, SD va korrelyatsiya: MAXRAJ HAR DOIM OSHKORA.
+varS <- function(x) sum((x - mean(x))^2) / (length(x) - 1)
+sdS  <- function(x) sqrt(varS(x))
+korr <- function(x, y) {
+  dx <- x - mean(x); dy <- y - mean(y)
+  sum(dx * dy) / sqrt(sum(dx^2) * sum(dy^2))
+}
+
+# (4) ENG KICHIK KVADRATLAR + XULOSA (12--13-haftalardan oʻzgarmadi).
+ols <- function(x, y) {
+  x <- as.numeric(x); y <- as.numeric(y)
+  n <- length(x); xb <- mean(x); yb <- mean(y)
+  sxx <- sum((x - xb)^2); syy <- sum((y - yb)^2)
+  sxy <- sum((x - xb) * (y - yb))
+  b1 <- sxy / sxx; b0 <- yb - b1 * xb
+  e <- y - (b0 + b1 * x)
+  sse <- sum(e^2); ssr <- syy - sse
+  se <- sqrt(sse / (n - 2)); seb1 <- se / sqrt(sxx); t1 <- b1 / seb1
+  list(n = n, xb = xb, sxx = sxx, b1 = b1, b0 = b0, e = e, se = se,
+       seb1 = seb1, t1 = t1, p1 = 2 * pt(-abs(t1), n - 2), r2 = ssr / syy)
+}
+
+# (5) t va normal taqsimot.
+tq  <- function(pp, df) qt(pp, df)
+tp2 <- function(tt, df) 2 * pt(-abs(tt), df)
+np2 <- function(zz) 2 * pnorm(-abs(zz))
+
+# (6) Kvantil (type 7) — OSHKORA yozilgan. quantile() ning standart
+#     turi R va Python da bir xil, lekin biz unga TAYANMAYMIZ: formulani
+#     oʻzimiz yozsak, ikki tilda bir xil ekani KOʻRINIB turadi.
+kv7 <- function(x, pp) {
+  s <- sort(as.numeric(x)); n <- length(s)
+  sapply(pp, function(p) {
+    h <- (n - 1) * p; lo <- floor(h); fr <- h - lo; hi <- min(lo + 1, n - 1)
+    s[lo + 1] + fr * (s[hi + 1] - s[lo + 1])
+  })
+}
+
+# (7) MINSTD LCG: x <- 48271 x mod 2147483647. Ikki tilda AYNAN bir xil
+#     ketma-ketlik. sample() ISHLATILMAYDI (7-topshiriqqa qarang).
+lcgNew <- function(urug) { e <- new.env(); e$x <- urug %% 2147483647; e }
+lcgUv  <- function(g, n) {
+  o <- numeric(n); x <- g$x
+  for (i in seq_len(n)) { x <- (48271 * x) %% 2147483647
+                          o[i] <- x / 2147483647 }
+  g$x <- x; o
+}
+lcgIdx <- function(g, n, hi) as.integer(lcgUv(g, n) * hi) + 1L   # 1 dan
+
+# (8) F203: standart xatodan maʼnoli xonalar soni va chop etish.
+xona <- function(se) max(0, ceiling(-log10(se)) + 1)
+chop <- function(v, d) {
+  dek <- max(0, d - 1 - floor(log10(abs(v))))
+  sprintf("%.*f", dek, v)
+}
+```
+
+```{r malumot}
+# --- Ikkita HAQIQIY maʼlumot toʻplami ---------------------------------
+# A. markaziy-osiyo-hosildorlik.csv — 5 mamlakat x 27 yil (1992–2018),
+#    hosildorlik t/ga. Manba: FAOSTAT / Our World in Data (OWID).
+# B. kinolar-byudjet.csv — 2467 film. Manba: The Numbers / Kaggle.
+DATA  <- "data"
+hosil <- as.data.frame(read_csv(file.path(DATA, "markaziy-osiyo-hosildorlik.csv"),
+                                locale = locale(encoding = "UTF-8"),
+                                show_col_types = FALSE))
+kino  <- as.data.frame(read_csv(file.path(DATA, "kinolar-byudjet.csv"),
+                                locale = locale(encoding = "UTF-8"),
+                                show_col_types = FALSE))
+
+# QOIDA: oʻzbekcha mamlakat nomini LITERAL yozmaymiz — fayldan olamiz.
+mam <- unique(hosil$mamlakat)          # 1=UZ 2=KG 3=KZ 4=TJ 5=TM
+
+# Film ustunlari — vektor sifatida (ikki tilda bir xil tartibda).
+byu <- as.numeric(kino$byudjet)
+dar <- as.numeric(kino$jahon_daromadi)
+jan <- as.character(kino$janr)
+rey <- as.character(kino$reyting); rey[is.na(rey)] <- ""
+JAN <- sort(unique(jan), method = "radix")   # ASCII tartib — ikki tilda bir xil
+
+och("w14-t0")
+P_("=== 0-BOSQICH: MAʼLUMOT VA MUHIT ===")
+P_("")
+P_("A. markaziy-osiyo-hosildorlik.csv  (OWID/FAOSTAT, HAQIQIY)")
+P_("   qatorlar %d · mamlakat %d · yillar %d-%d (%d yil)",
+   nrow(hosil), length(mam), min(hosil$yil), max(hosil$yil),
+   length(unique(hosil$yil)))
+P_("   yoʻqolgan qiymatlar (jami): %d", sum(is.na(hosil)))
+P_("")
+P_("B. kinolar-byudjet.csv            (The Numbers/Kaggle, HAQIQIY)")
+P_("   qatorlar %d", nrow(kino))
+P_("   yoʻqolgan: byudjet %d · jahon_daromadi %d · janr %d",
+   sum(is.na(kino$byudjet)), sum(is.na(kino$jahon_daromadi)),
+   sum(is.na(kino$janr)))
+P_("   yoʻqolgan: reyting %d · distribyutor %d",
+   sum(is.na(kino$reyting)), sum(is.na(kino$distribyutor)))
+P_("   -> TAHLIL ustunlarida yoʻqolgan qiymat YOʻQ.")
+P_("   -> reytingi yoʻq %d film reyting filtri bilan chiqib ketadi.",
+   sum(is.na(kino$reyting)))
+P_("      Bu QAROR, yoʻqotish emas: hisobotning 3-bandida soni bilan")
+P_("      yoziladi (F205).")
+P_("")
+P_("   byudjeti musbat: %d   ulardan jahon daromadi nol: %d",
+   sum(byu > 0), sum(byu > 0 & dar <= 0))
+P_("   janrlar (ASCII tartibda): %s", paste(JAN, collapse = ", "))
+P_("")
+P_("=== TEKSHIRUV ===")
+P_("hosildorlik faylida yoʻqolgan qiymat yoʻqmi?   %s",
+   ha(sum(is.na(hosil)) == 0))
+P_("qatorlar soni kutilganidek (135 va 2467)?      %s",
+   ha(nrow(hosil) == 135 && nrow(kino) == 2467))
+P_("")
+P_("MANBA: OWID/FAOSTAT (hosildorlik) · The Numbers/Kaggle (kinolar).")
+P_("Ikkalasi ham HAQIQIY maʼlumot --- hech qanday simulyatsiya yoʻq.")
+yop()
+```
+
+---
+
+# 1-topshiriq. **48 ta halol spetsifikatsiya** {#t1}
+
+> **Blum:** Qoʻllash · **Qiyinlik:** 3 (Amaliy) · **Ball:** 14 ·
+> **Vaqt:** 14 daqiqa
+
+**Savol.** *PG-13 filmlari R filmlaridan koʻra koʻproq foyda
+keltiradimi?*
+
+Bu savolga javob berish uchun tahlilchi **hech kimni aldamasdan**
+beshta qaror qabul qilishi kerak. Har birining ikki yoki uchta
+**asosli** varianti bor:
+
+| # | Qaror | Variantlar |
+|---|---|---|
+| 1 | «Foydali» chegarasi | $2{,}0$ · $2{,}5$ · $3{,}0$ karra byudjet |
+| 2 | Daromadi nol boʻlgan qatorlar | chiqarilsin / qolsin |
+| 3 | Janrga tuzatish (13-hafta, F197) | ha / yoʻq |
+| 4 | Eng yuqori 1 foiz byudjet | chiqarilsin / qolsin |
+| 5 | PG ni PG-13 ga qoʻshish | ha / yoʻq |
+
+$3\times2\times2\times2\times2=48$. **Hech biri notoʻgʻri emas.**
+Bu — **tarmoqlanuvchi yoʻllar bogʻi** (*garden of forking paths*):
+har bir tugunda halol qaror,
+oxirida esa 48 ta halol javob.
+
+$$\text{Koʻpolam} = \{\hat\theta(s):\ s\in S\},\quad |S|=48 \tag{F202}$$
+
+```{r t1a}
+# --- BITTA SPETSIFIKATSIYA --------------------------------------------
+# chegara: 2.0 / 2.5 / 3.0     nol: 0/1 (daromadi nol qatorlar chiqsinmi)
+# tuz: 0/1 (janrga tuzatish)   top: 0/1 (eng yuqori 1 foiz byudjet chiqsinmi)
+# grp: 0 = PG-13 vs R          1 = (PG + PG-13) vs R
+spek <- function(chegara, nol, tuz, top, grp) {
+  m <- byu > 0                                   # byudjeti nolga teng emas
+  if (nol == 1) m <- m & (dar > 0)               # qaror 2
+  if (top == 1) { q <- kv7(byu[m], 0.99); m <- m & (byu <= q) }   # qaror 4
+  f <- as.numeric(dar > chegara * byu)           # qaror 1: «foydali»
+  if (grp == 0) {                                # qaror 5
+    m <- m & (rey == "PG-13" | rey == "R"); nomA <- "PG-13"; rr <- rey
+  } else {
+    m <- m & (rey == "PG" | rey == "PG-13" | rey == "R"); nomA <- "PG+"
+    rr <- ifelse(rey == "PG" | rey == "PG-13", "PG+", rey)
+  }
+  if (tuz == 1) {                                # qaror 3: janrga tuzatish
+    num <- 0; den <- 0; vr <- 0                  # F197 (13-hafta)
+    for (g in JAN) {                             # ASCII tartib — MUHIM
+      ma <- m & jan == g & rr == nomA
+      mb <- m & jan == g & rr == "R"
+      la <- sum(ma); lb <- sum(mb)
+      if (la < 10 || lb < 10) next               # kichik qatlam tashlanadi
+      pa <- sum(f[ma]) / la; pb <- sum(f[mb]) / lb
+      w  <- la + lb
+      num <- num + (pa - pb) * w; den <- den + w
+      vr  <- vr + (w^2) * (pa * (1 - pa) / la + pb * (1 - pb) / lb)
+    }
+    dif <- num / den; se <- sqrt(vr) / den
+  } else {
+    ma <- m & rr == nomA; mb <- m & rr == "R"
+    n1 <- sum(ma); n2 <- sum(mb)
+    s1 <- sum(f[ma]); s2 <- sum(f[mb])
+    pu <- (s1 + s2) / (n1 + n2)                  # birlashgan ulush
+    se  <- sqrt(pu * (1 - pu) * (1 / n1 + 1 / n2))
+    dif <- s1 / n1 - s2 / n2
+  }
+  z <- dif / se
+  list(dif = dif, se = se, z = z, p = np2(z))
+}
+
+# --- BARCHA 48 SPETSIFIKATSIYA ----------------------------------------
+MV <- NULL
+for (chegara in c(2.0, 2.5, 3.0))
+  for (nol in 0:1) for (tuz in 0:1) for (top in 0:1) for (grp in 0:1) {
+    r <- spek(chegara, nol, tuz, top, grp)
+    MV <- rbind(MV, data.frame(chegara = chegara, nol = nol, tuz = tuz,
+                               top = top, grp = grp, dif = r$dif,
+                               se = r$se, p = r$p))
+  }
+MVp <- MV$p; MVd <- MV$dif
+nsig <- sum(MVp < 0.05); nns <- sum(MVp >= 0.05)
+
+och("w14-t1a")
+P_("=== 1-TOPSHIRIQ: 48 TA HALOL SPETSIFIKATSIYA (F202) ===")
+P_("Savol: PG-13 filmlari R filmlaridan koʻra koʻproq foyda keltiradimi?")
+P_("Besh qaror: 3 x 2 x 2 x 2 x 2 = %d spetsifikatsiya. Hech biri notoʻgʻri emas.",
+   nrow(MV))
+P_("")
+P_("Spetsifikatsiyalar soni:   %d", nrow(MV))
+P_("p <  0.05 (ahamiyatli):    %d", nsig)
+P_("p >= 0.05 (ahamiyatsiz):   %d", nns)
+P_("Ulush: %.6f  ---  deyarli tanga tashlash.", nsig / nrow(MV))
+P_("")
+P_("Effekt bahosi diapazoni: %.6f .. %.6f  (%.4f marta)",
+   min(MVd), max(MVd), max(MVd) / min(MVd))
+P_("p-qiymat diapazoni:      %.6f .. %.6f", min(MVp), max(MVp))
+P_("Median effekt: %.6f   median p: %.6f", median(MVd), median(MVp))
+P_("")
+P_("TEKSHIRUV: %d + %d = %d ?  %s",
+   nsig, nns, nrow(MV), ha(nsig + nns == nrow(MV)))
+P_("TEKSHIRUV: ham ahamiyatli, ham ahamiyatsiz bormi?  %s",
+   ha(nsig > 0 && nns > 0))
+yop()
+```
+
+```{r t1b}
+# --- Eng kichik va eng katta p-qiymatli beshtadan --------------------
+ord <- order(MVp)
+idx <- c(head(ord, 5), tail(ord, 5))
+
+och("w14-t1b")
+P_("-- Eng 'yaxshi' va eng 'yomon' beshta spetsifikatsiya --------------")
+P_("%s%s%s%s%s%s%s", padl("chegara", 8), padl("nol?", 6), padl("janr?", 7),
+   padl("top1?", 7), padl("guruh", 10), padl("effekt", 11), padl("p", 11))
+for (i in idx) {
+  P_("%s%s%s%s%s%s%s",
+     padl(sprintf("%.1f", MV$chegara[i]), 8), padl(MV$nol[i], 6),
+     padl(MV$tuz[i], 7), padl(MV$top[i], 7),
+     padl(if (MV$grp[i] == 0) "PG13_R" else "PGplus_R", 10),
+     padl(sprintf("%.6f", MV$dif[i]), 11),
+     padl(sprintf("%.6f", MV$p[i]), 11))
+}
+P_("")
+P_("Yuqoridagi beshtasi ham, quyidagi beshtasi ham HALOL tahlil.")
+P_("Natijani koʻrgandan KEYIN birini tanlash --- p-hacking (10-hafta).")
+yop()
+```
+
+**Yozma topshiriq.** *(a)* Beshta qarordan qaysi biri sizningcha eng
+koʻp bahs tugʻdiradi va nega? *(b)* Agar tahlilchi maʼlumotni
+koʻrgandan **keyin** chegarani tanlasa, 48 tadan nechtasini «topa
+oladi»? *(c)* Bu 10-haftadagi $p$-hacking dan **nimasi bilan** farq
+qiladi — va nimasi bilan **bir xil**?
+
+---
+
+# 2-topshiriq. Spetsifikatsiya egri chizigʻi {#t2}
+
+> **Blum:** Tahlil · **Qiyinlik:** 4 (Analitik) · **Ball:** 10 ·
+> **Vaqt:** 10 daqiqa
+
+**Savol.** 48 ta sonni **bitta rasmda** koʻrsatish mumkinmi — va
+qaysi qaror natijani **hal qiladi**?
+
+**Spetsifikatsiya egri chizigʻi** (*specification curve*): effekt
+bahosi oʻsish tartibida chiziladi, ahamiyatlilik **rang bilan emas,
+shakl bilan ham** koʻrsatiladi (rang koʻrmaslik uchun).
+
+```{r t2a}
+# --- Qaror taʼsiri: p ning oʻrtacha oʻzgarishi -------------------------
+# Har bir qaror uchun: shu qarorning har variantida p ning oʻrtachasi
+# olinadi va ULARNING ENG KATTA FARQI hisoblanadi.
+qNom <- c("foydalilik chegarasi", "janrga tuzatish",
+          "nol qatorlarni chiqarish", "top 1 foizni chiqarish",
+          "PG ni qoʻshish")
+qUst <- list(MV$chegara, MV$tuz, MV$nol, MV$top, MV$grp)
+qTas <- numeric(5)
+for (k in 1:5) {
+  vs <- sort(unique(qUst[[k]]))
+  ms <- sapply(vs, function(v) mean(MVp[qUst[[k]] == v]))
+  qTas[k] <- max(ms) - min(ms)
+}
+
+och("w14-t2a")
+P_("=== 2-TOPSHIRIQ: QAYSI QAROR NATIJANI HAL QILADI? ===")
+P_("%s%s", pad("qaror", 30), padl("p ning oʻrtacha oʻzgarishi", 28))
+for (k in 1:5) P_("%s%s", pad(qNom[k], 30), padl(sprintf("%.6f", qTas[k]), 28))
+P_("")
+P_("Eng katta taʼsir: %s  (%.6f)", qNom[which.max(qTas)], max(qTas))
+P_("Bu STATISTIK qaror emas, MAZMUNIY qaror: 'foydali' ni kim taʼriflaydi?")
+P_("Shuning uchun u hisobotda ochiq aytilishi va asoslanishi SHART.")
+P_("")
+P_("TEKSHIRUV: chegara janrga tuzatishdan kuchliroqmi?  %s  (%.6f > %.6f)",
+   ha(qTas[1] > qTas[2]), qTas[1], qTas[2])
+P_("TEKSHIRUV: eng kuchsiz qaror --- %s (%.6f)",
+   qNom[which.min(qTas)], min(qTas))
+P_("")
+P_("Grafik 1: spetsifikatsiya egri chizigʻi (48 nuqta, effekt boʻyicha).")
+P_("Grafik 2: qaror taʼsiri --- ustun diagrammasi.")
+yop()
+```
+
+```{r t2b, fig.height=3.6}
+# --- Grafik 1: spetsifikatsiya egri chizigʻi ---------------------------
+# Yorliqlar ASCII; maʼno faqat rang bilan emas, SHAKL bilan ham berilgan.
+sc <- data.frame(nomer = seq_len(nrow(MV)),
+                 effekt = sort(MVd),
+                 ahm = MVp[order(MVd)] < 0.05)
+sc$belgi <- ifelse(sc$ahm, "p < 0.05", "p >= 0.05")
+g1 <- ggplot(sc, aes(nomer, effekt, colour = belgi, shape = belgi)) +
+  geom_hline(yintercept = 0, colour = oiGrey, linewidth = 0.4) +
+  geom_point(size = 2) +
+  scale_colour_manual(values = c("p < 0.05" = oiVerm, "p >= 0.05" = oiBlue)) +
+  scale_shape_manual(values = c("p < 0.05" = 17, "p >= 0.05" = 1)) +
+  labs(title = "Specification curve: 48 honest analyses of one question",
+       x = "specification (sorted by effect)",
+       y = "difference in profitable share", colour = NULL, shape = NULL)
+print(g1)
+```
+
+```{r t2c, fig.height=3.2}
+# --- Grafik 2: qaror taʼsiri ------------------------------------------
+bd <- data.frame(qaror = c("threshold", "genre adj.", "drop zero rev.",
+                           "drop top 1 pct", "merge PG"),
+                 tasir = qTas)
+bd$qaror <- factor(bd$qaror, levels = bd$qaror[order(bd$tasir)])
+g2 <- ggplot(bd, aes(qaror, tasir)) +
+  geom_col(fill = oiOrange, width = 0.6) +
+  coord_flip() +
+  labs(title = "Which decision moves the p-value most?",
+       x = NULL, y = "mean change in p")
+print(g2)
+```
+
+**Yozma topshiriq.** *(a)* Egri chiziqning qaysi qismida nol chizigʻi
+kesib oʻtadi va bu nimani anglatadi? *(b)* Nima uchun «chegara»
+qarorining taʼsiri qolgan toʻrttasidan **katta**? *(c)* Hisobotda
+48 ta sondan **qaysi biri** keltiriladi? Javobingizni bir jumlada
+asoslang.
+
+---
+
+# 3-topshiriq. **Urugʻsiz butstrep** {#t3}
+
+> **Blum:** Baholash · **Qiyinlik:** 5 (Ilgʻor) · **Ball:** 12 ·
+> **Vaqt:** 12 daqiqa
+
+**Savol.** Kod bir xil, maʼlumot bir xil, formula bir xil. Faqat
+**urugʻ yozilmagan**. Javob har safar bir xil boʻladimi?
+
+$$\text{Takrorlanuvchanlik} = \text{maʼlumot} + \text{kod} +
+  \text{urugʻ} + \text{versiyalar} \tag{F204}$$
+
+```{r t3a}
+# --- 12-haftadagi model AYNAN qaytadi ---------------------------------
+kz  <- hosil[hosil$mamlakat == mam[3] & hosil$yil >= 2010 & hosil$yil <= 2018, ]
+kz  <- kz[order(kz$yil), ]
+x1  <- as.numeric(kz$yil - 2010)
+y1  <- as.numeric(kz$kartoshka)
+o1  <- ols(x1, y1)
+
+# --- Bitta butstrep ishga tushirish (berilgan urugʻ bilan) ------------
+butstrep <- function(urug, M = 4000) {
+  g <- lcgNew(urug); bs <- numeric(M); k <- 0
+  for (j in seq_len(M)) {
+    ii <- lcgIdx(g, o1$n, o1$n)          # JUFTLIKLARNI qaytarib tanlaymiz
+    xx <- x1[ii]
+    if (sum((xx - mean(xx))^2) < 1e-12) next   # x tarqalmagan — tashlanadi
+    yy <- y1[ii]
+    k <- k + 1
+    bs[k] <- sum((xx - mean(xx)) * (yy - mean(yy))) / sum((xx - mean(xx))^2)
+  }
+  kv7(bs[seq_len(k)], c(0.025, 0.975))
+}
+
+# --- 20 ta HAR XIL urugʻ: «tahlilchi urugʻni belgilamagan» holat -------
+UR <- 20261401 + (0:19) * 7919
+lo <- numeric(20); hi <- numeric(20)
+for (k in 1:20) { q <- butstrep(UR[k]); lo[k] <- q[1]; hi[k] <- q[2] }
+
+och("w14-t3a")
+P_("=== 3-TOPSHIRIQ: URUGʻSIZ BUTSTREP (F204) ===")
+P_("Model (12--13-hafta): Qozogʻiston kartoshka 2010-2018, n = %d", o1$n)
+P_("b1 = %.6f t/ga        SE(b1) = %.6f", o1$b1, o1$seb1)
+P_("Har ishga tushirish: 4000 butstrep takrori, persentil oraligʻi.")
+P_("")
+P_("%s%s%s%s%s%s", padl("#", 3), padl("urugʻ", 11), padl("quyi", 11),
+   padl("yuqori", 11), padl("kenglik", 11), padl("3 xona", 9))
+for (k in 1:20)
+  P_("%s%s%s%s%s%s", padl(k, 3), padl(UR[k], 11),
+     padl(sprintf("%.6f", lo[k]), 11), padl(sprintf("%.6f", hi[k]), 11),
+     padl(sprintf("%.6f", hi[k] - lo[k]), 11),
+     padl(sprintf("%.3f", round(lo[k], 3)), 9))
+P_("")
+P_("Quyi chegara:    %.6f .. %.6f   (tarqoqlik %.6f)",
+   min(lo), max(lo), max(lo) - min(lo))
+P_("Yuqori chegara:  %.6f .. %.6f   (tarqoqlik %.6f)",
+   min(hi), max(hi), max(hi) - min(hi))
+P_("Oraliq kengligi: %.6f .. %.6f", min(hi - lo), max(hi - lo))
+P_("")
+P_("Hisobotda 3 xonagacha yaxlitlansa, quyi chegara %d xil qiymat oladi.",
+   length(unique(round(lo, 3))))
+P_("Yaʼni: bir xil kod, bir xil maʼlumot --- %d xil hisobot.",
+   length(unique(round(lo, 3))))
+yop()
+```
+
+```{r t3b}
+# --- Endi urugʻ BELGILANADI: uch marta ishga tushiramiz ---------------
+u3 <- lapply(1:3, function(i) butstrep(UR[1]))
+xil <- length(unique(sapply(u3, function(q) sprintf("%.9f|%.9f", q[1], q[2]))))
+
+och("w14-t3b")
+P_("-- Endi urugʻ belgilanadi: urugʻ = %d, uch marta ishga tushiramiz --",
+   UR[1])
+for (i in 1:3)
+  P_("ishga tushirish %d: [%.6f; %.6f]", i, u3[[i]][1], u3[[i]][2])
+P_("Xil natijalar soni: %d", xil)
+P_("")
+P_("TEKSHIRUV: uch ishga tushirish AYNAN mosmi?          %s", ha(xil == 1))
+P_("TEKSHIRUV: urugʻsiz holatda nechta xil quyi chegara? %d",
+   length(unique(round(lo, 3))))
+P_("")
+P_("Urugʻ tasodifni YOʻQOTMAYDI --- u tasodifni QAYTA TIKLASH imkonini")
+P_("beradi. Bitta qator kod (set.seed / LCG urugʻi) 3-xil hisobotni")
+P_("bitta hisobotga aylantiradi.")
+P_("")
+P_("NIMA ISBOTLANMADI: urugʻ belgilangani natijani TOʻGʻRI qilmaydi.")
+P_("U natijani faqat TAKRORLANUVCHI qiladi. Notoʻgʻri model urugʻ bilan")
+P_("ham notoʻgʻri qoladi --- takrorlanuvchanlik POL, shift emas.")
+yop()
+```
+
+**Yozma topshiriq.** *(a)* Quyi chegaraning tarqoqligi
+$0{,}044627$ — bu $b_1$ ning oʻzidan (0,588033) necha foizini tashkil
+qiladi? *(b)* Agar sizning ishonch oraligʻingiz nolga **yaqin**
+boʻlsa, urugʻsizlik xulosani oʻzgartira oladimi? *(c)* Urugʻ
+yozilgani natijani **toʻgʻri** qiladimi? Javobni bir jumlada
+asoslang.
+
+---
+
+# 4-topshiriq. **Maʼnoli xonalar qoidasi (F203)** {#t4}
+
+> **Blum:** Baholash · **Qiyinlik:** 5 (Ilgʻor) · **Ball:** 8 ·
+> **Vaqt:** 7 daqiqa
+
+**Savol.** Hisobotda son **necha xonagacha** yoziladi? Javobni siz
+emas, **standart xato** aytadi.
+
+$$\text{xona} = \max\!\left(0,\ \lceil-\log_{10}\SE\rceil + 1\right)
+  \tag{F203}$$
+
+```{r t4a}
+# --- Uchta model, uchta standart xato ---------------------------------
+uz  <- hosil[hosil$mamlakat == mam[1], ]; uz <- uz[order(uz$yil), ]
+o2  <- ols(uz$yil, uz$bugdoy)
+kk  <- kino[byu > 0 & dar > 0, ]
+o3  <- ols(as.numeric(kk$byudjet) / 1e6, as.numeric(kk$jahon_daromadi) / 1e6)
+
+nomM <- c("Qozogʻiston kartoshka (12-hafta)", "Oʻzbekiston bugʻdoy",
+          "Filmlar: byudjet -> daromad")
+mods <- list(o1, o2, o3)
+
+och("w14-t4a")
+P_("=== 4-TOPSHIRIQ: MAʼNOLI XONALAR QOIDASI (F203) ===")
+P_("Qoida: SE ning BIRINCHI maʼnoli xonasi --- bahoning OXIRGI maʼnoli")
+P_("xonasi. xona = max(0, ceil(-log10(SE)) + 1).")
+P_("")
+P_("%s%s%s%s", pad("model", 34), padl("b1", 12), padl("SE", 12),
+   padl("maʼnoli xona", 14))
+for (i in 1:3)
+  P_("%s%s%s%s", pad(nomM[i], 34), padl(sprintf("%.6f", mods[[i]]$b1), 12),
+     padl(sprintf("%.6f", mods[[i]]$seb1), 12),
+     padl(xona(mods[[i]]$seb1), 14))
+P_("")
+P_("Chop etish (F203 boʻyicha):")
+for (i in 1:3)
+  P_("  %s  ->  %s", sprintf("%.6f", mods[[i]]$b1),
+     chop(mods[[i]]$b1, xona(mods[[i]]$seb1)))
+P_("")
+P_("DIQQAT --- ikkita alohida amal:")
+P_("  (1) HISOBLASH: toʻliq aniqlikda. Oraliq, ayirma, nisbat --- hammasi.")
+P_("  (2) CHOP ETISH: F203 ruxsat bergan xonagacha yaxlitlanadi.")
+P_("Yaxlitlangan sondan yangi son hisoblash --- 3-nuqson (13-hafta:")
+P_("44.52 - 30.35 = 14.17 yozilgan edi; toʻgʻrisi 14.1645).")
+P_("")
+P_("TEKSHIRUV: uchala modelda ham xona soni bir xilmi?  %s",
+   ha(length(unique(sapply(mods, function(m) xona(m$seb1)))) == 1))
+P_("NIMA ISBOTLANMADI: xona soni aniqlikni OSHIRMAYDI --- u faqat")
+P_("mavjud aniqlikni HALOL koʻrsatadi.")
+yop()
+```
+
+**Yozma topshiriq.** *(a)* $b_1=0{,}588033$ va $\SE=0{,}086232$
+boʻlganda nima uchun $0{,}588033$ yozish **yolgʻon aniqlik**?
+*(b)* $\SE$ oʻn marta kichraysa, necha xona qoʻshiladi? *(c)*
+Ishonch oraligʻining chegarasi ham shu qoidaga boʻysunadimi?
+
+---
+
+# 5-topshiriq. **Olti bosqichli tahlil** {#t5}
+
+> **Blum:** Baholash · **Qiyinlik:** 5 (Ilgʻor) · **Ball:** 16 ·
+> **Vaqt:** 16 daqiqa
+
+**Savol.** *Markaziy Osiyoda bugʻdoy hosildorligi 1992–2018 yillarda
+oʻsganmi, va oʻsish mamlakatlar boʻyicha bir xilmi?*
+
+Quyidagi olti bosqich — **sizning yakuniy hisobotingizning skeleti**
+(F205). Har bosqichda nima yoziladi va nima **yozilmaydi** koʻrsatiladi.
+
+```{r t5a}
+och("w14-t5a")
+P_("=== 5-TOPSHIRIQ: OLTI BOSQICHLI TAHLIL ===")
+P_("")
+P_("-- 1-bosqich. Savol -----------------------------------------------")
+P_("\"Markaziy Osiyoda bugʻdoy hosildorligi 1992-2018 yillarda oʻsganmi,")
+P_(" va oʻsish mamlakatlar boʻyicha bir xilmi?\"")
+P_("Savol TEKSHIRILUVCHI: oʻzgaruvchi, davr va obyekt aniq.")
+P_("")
+P_("-- 2-bosqich. Maʼlumot va uning cheklovlari ------------------------")
+P_("Manba: OWID/FAOSTAT. %d qator = %d mamlakat x %d yil.",
+   nrow(hosil), length(mam), length(unique(hosil$yil)))
+P_("Yoʻqolgan qiymatlar: %d. Tozalash: hech narsa chiqarilmadi.",
+   sum(is.na(hosil)))
+P_("CHEKLOV: bu MAMLAKAT darajasidagi yigʻma maʼlumot. Fermer xoʻjaligi")
+P_("darajasidagi xulosa chiqarib boʻlmaydi --- ekologik xato.")
+P_("")
+P_("-- 3-bosqich. Tavsifiy tahlil -------------------------------------")
+P_("%s%s%s%s%s%s", pad("mamlakat", 14), padl("n", 4), padl("oʻrtacha", 10),
+   padl("SD", 9), padl("min", 8), padl("maks", 8))
+for (i in 1:5) {
+  v <- as.numeric(hosil$bugdoy[hosil$mamlakat == mam[i]])
+  P_("%s%s%s%s%s%s", pad(mam[i], 14), padl(length(v), 4),
+     padl(sprintf("%.4f", mean(v)), 10), padl(sprintf("%.4f", sdS(v)), 9),
+     padl(sprintf("%.3f", min(v)), 8), padl(sprintf("%.3f", max(v)), 8))
+}
+P_("Birlik: t/ga. Tavsif --- XULOSA emas: bu yerda hali hech narsa")
+P_("umumlashtirilmadi.")
+yop()
+```
+
+```{r t5b}
+# --- 4-bosqich: model VA shart (ikkalasi bitta jadvalda) -------------
+# QOIDA (12-haftadan): har bir model ortidan SHART TEKSHIRUVI keladi.
+mFit <- list(); mRho <- numeric(5); mLim <- numeric(5)
+for (i in 1:5) {
+  d <- hosil[hosil$mamlakat == mam[i], ]; d <- d[order(d$yil), ]
+  o <- ols(d$yil, d$bugdoy); e <- o$e
+  mFit[[i]] <- o
+  mRho[i] <- korr(e[-length(e)], e[-1])          # lag-1 avtokorrelyatsiya
+  mLim[i] <- 1.959964 / sqrt(o$n)                # chegara
+}
+buz <- abs(mRho) > mLim
+
+och("w14-t5b")
+P_("-- 4-bosqich. Model va shartlar -----------------------------------")
+P_("Model: bugdoy ~ yil (oddiy chiziqli regressiya, har mamlakat alohida).")
+P_("Shart: I (bogʻliqsizlik). Vosita: qoldiqlarning lag-1 korrelyatsiyasi;")
+P_("chegara 1.959964/sqrt(n).")
+P_("")
+P_("%s%s%s%s%s%s%s", pad("mamlakat", 14), padl("b1", 10), padl("SE", 9),
+   padl("p", 12), padl("R^2", 8), padl("lag-1", 9), padl("I sharti", 12))
+for (i in 1:5)
+  P_("%s%s%s%s%s%s%s", pad(mam[i], 14),
+     padl(sprintf("%.5f", mFit[[i]]$b1), 10),
+     padl(sprintf("%.5f", mFit[[i]]$seb1), 9),
+     padl(sprintf("%.3e", mFit[[i]]$p1), 12),
+     padl(sprintf("%.4f", mFit[[i]]$r2), 8),
+     padl(sprintf("%.4f", mRho[i]), 9),
+     padl(if (buz[i]) "BUZILGAN" else "bajarilgan", 12))
+P_("")
+P_("Beshta qatordan %d tasida bogʻliqsizlik sharti BUZILGAN.", sum(buz))
+P_("Buzilgan qatorlar: %s",
+   paste(mam[buz], collapse = ", "))
+P_("")
+P_("DIQQAT: buzilgan shart b1 ni buzmaydi --- u b1 ga boʻlgan ISHONCHNI")
+P_("buzadi. Shuning uchun quyida SE va p tuzatiladi, b1 emas.")
+yop()
+```
+
+```{r t5c}
+# --- 5-bosqich: n_eff bilan tuzatish (F199) --------------------------
+neff <- rep(NA_real_, 5); se2 <- numeric(5); p2 <- numeric(5)
+for (i in 1:5) {
+  o <- mFit[[i]]
+  if (buz[i]) {
+    neff[i] <- o$n * (1 - mRho[i]) / (1 + mRho[i])          # F199
+    infl <- sqrt((1 + mRho[i]) / (1 - mRho[i]))
+    se2[i] <- o$seb1 * infl
+    p2[i]  <- tp2(o$b1 / se2[i], max(neff[i] - 2, 1))
+  } else { se2[i] <- o$seb1; p2[i] <- o$p1 }
+}
+qOld <- sapply(1:5, function(i) mFit[[i]]$p1 < 0.05)
+qNew <- p2 < 0.05
+ozg  <- sum(qOld != qNew)
+
+och("w14-t5c")
+P_("-- 5-bosqich. Xulosa --- shartni hisobga olib (F199) ---------------")
+P_("Buzilgan qatorlarda: n_eff = n(1-rho)/(1+rho), SE ni sqrt((1+rho)/(1-rho))")
+P_("ga koʻpaytiramiz.")
+P_("")
+P_("%s%s%s%s%s%s", pad("mamlakat", 14), padl("n_eff", 9),
+   padl("tuzatilgan SE", 15), padl("tuzatilgan p", 14),
+   padl("oldin", 10), padl("keyin", 10))
+for (i in 1:5)
+  P_("%s%s%s%s%s%s", pad(mam[i], 14),
+     padl(if (buz[i]) sprintf("%.4f", neff[i]) else "---", 9),
+     padl(sprintf("%.6f", se2[i]), 15), padl(sprintf("%.6f", p2[i]), 14),
+     padl(if (qOld[i]) "RAD" else "rad emas", 10),
+     padl(if (qNew[i]) "RAD" else "rad emas", 10))
+P_("")
+P_("Xulosasi OʻZGARGAN qatorlar soni: %d", ozg)
+P_("Oʻzgarganlari: %s", paste(mam[qOld != qNew], collapse = ", "))
+P_("")
+P_("SEZGIRLIK BAYONOTI (F207). Eng muhim qaror: shartni tekshirish va")
+P_("tuzatish. Uni oʻzgartirdik --- natija: %d qatorda xulosa teskarisiga", ozg)
+P_("aylandi. Demak 'hosildorlik oʻsdi' degan umumiy xulosa maʼlumotning")
+P_("oʻzidan emas, TUZATISH QARORIDAN ham kelib chiqadi.")
+P_("")
+P_("TEKSHIRUV: buzilgan qatorlar soni = oʻzgargan xulosalar soni?  %s",
+   ha(sum(buz) == ozg))
+yop()
+```
+
+```{r t5d}
+och("w14-t5d")
+P_("-- 6-bosqich. Nima ISBOTLANMADI (majburiy boʻlim, F205) -----------")
+P_("(a) Sabab koʻrsatilmadi. Hosildorlik oʻsishining sababi (urugʻ navi,")
+P_("    sugʻorish, oʻgʻit, ob-havo, siyosat) bu maʼlumotda YOʻQ.")
+P_("(b) Mamlakatlararo taqqoslash chalgʻituvchi omillarga toʻla: iqlim,")
+P_("    yer sifati, sugʻorish tizimi --- hech biri nazorat qilinmagan.")
+P_("(c) Fermer xoʻjaligi darajasidagi xulosa yoʻq --- ekologik xato.")
+P_("(d) Kelajakka bashorat yoʻq: 2018 dan keyingi qiymat --- ekstrapolyatsiya.")
+P_("(e) Shart buzilgan qatorlarda p taxminiy tuzatilgan, aniq emas:")
+P_("    n_eff butun son emas va u ham BAHO.")
+P_("")
+P_("TOʻGʻRI BAYON (D1 dagi 4-variant, Tojikiston):")
+o4 <- mFit[[4]]
+tc <- tq(0.975, o4$n - 2)
+P_("  \"1992-2018 yillarda bugʻdoy hosildorligi yiliga oʻrtacha %.3f t/ga",
+   o4$b1)
+P_("   oshgan (95 foiz IO: %.3f--%.3f t/ga; p < 0.001). Qoldiqlarning",
+   o4$b1 - tc * o4$seb1, o4$b1 + tc * o4$seb1)
+P_("   lag-1 korrelyatsiyasi %.3f, chegara %.3f; bogʻliqsizlik sharti",
+   mRho[4], mLim[4])
+P_("   BAJARILGAN. Sabab koʻrsatilmagan.\"")
+P_("")
+P_("F203 bu yerda %d maʼnoli xonaga ruxsat beradi (%s), biz %d ta yozdik.",
+   xona(o4$seb1), chop(o4$b1, xona(o4$seb1)), 3)
+P_("Kamroq yozish har doim xavfsiz; koʻproq yozish --- yolgʻon aniqlik.")
+P_("")
+P_("Tekshiruv shu yerda hisoblanadi: |%.6f| vs %.6f -> %s",
+   mRho[4], mLim[4], if (buz[4]) "BUZILGAN" else "BAJARILGAN")
+P_("Sababiy feʼl YOʻQ: 'oshgan' --- tavsif; 'oshirgan' --- sabab.")
+yop()
+```
+
+**Yozma topshiriq.** *(a)* Nima uchun tuzatish $b_1$ ni emas, $p$ ni
+oʻzgartirdi? *(b)* $n_{\text{eff}}\approx3$ boʻlgan qatorga tayanib
+siyosat qarori qabul qilish mumkinmi? *(c)* Oltinchi bosqichdagi
+besh banddan qaysi biri **sizning** loyihangizda ham boʻlishi shart?
+
+---
+
+# 6-topshiriq. Ikki dastur — bitta son {#t6}
+
+> **Blum:** Tahlil · **Qiyinlik:** 4 (Analitik) · **Ball:** 6 ·
+> **Vaqt:** 6 daqiqa
+
+**Savol.** Kodda xato bor-yoʻqligini qanday bilamiz? Bitta arzon
+tekshiruv: **bir xil sonni ikki mustaqil yoʻl bilan** hisoblash.
+
+```{r t6a}
+# --- (1) ochiq formula (o1) va (2) kutubxona funksiyasi ---------------
+fit <- lm(y1 ~ x1)
+sm  <- summary(fit)$coefficients
+
+och("w14-t6a")
+P_("=== 6-TOPSHIRIQ: IKKI YOʻL BILAN BIR XIL SON ===")
+P_("Model: Qozogʻiston kartoshka ~ (yil - 2010), n = %d", o1$n)
+P_("  (1) ochiq formula: b1 = Sxy/Sxx,  SE = s_e/sqrt(Sxx)")
+P_("  (2) kutubxona:     R -> lm() · Python -> scipy.stats.linregress")
+P_("")
+P_("b1  ochiq formula : %.12f", o1$b1)
+P_("b1  kutubxona     : %.12f", sm[2, 1])
+P_("    |ayirma| < 1e-12 ?  %s", ha(abs(o1$b1 - sm[2, 1]) < 1e-12))
+P_("")
+P_("SE  ochiq formula : %.12f", o1$seb1)
+P_("SE  kutubxona     : %.12f", sm[2, 2])
+P_("    |ayirma| < 1e-12 ?  %s", ha(abs(o1$seb1 - sm[2, 2]) < 1e-12))
+P_("")
+P_("t   ochiq formula : %.9f", o1$t1)
+P_("t   kutubxona     : %.9f", sm[2, 3])
+P_("p   ochiq formula : %.12e", o1$p1)
+P_("p   kutubxona     : %.12e", sm[2, 4])
+P_("")
+P_("XULOSA: ikki MUSTAQIL yoʻl bir xil sonni berdi. Bu natijani")
+P_("TOʻGʻRI qilmaydi, lekin KODDA XATO boʻlish ehtimolini keskin")
+P_("kamaytiradi. Hisobotning 10-bandiga shu tekshiruv yoziladi.")
+P_("")
+P_("NIMA ISBOTLANMADI: ikkala yoʻl ham BIR XIL maʼlumotdan va BIR XIL")
+P_("modeldan foydalanadi. Model notoʻgʻri tanlangan boʻlsa, ikkalasi")
+P_("ham bir xil NOTOʻGʻRI javob beradi.")
+yop()
+```
+
+**Yozma topshiriq.** *(a)* Bu tekshiruv qanday xatolarni topadi va
+qanday xatolarni **topa olmaydi**? *(b)* Oʻz loyihangizda qaysi
+bitta sonni shu usulda tekshirasiz?
+
+---
+
+# 7-topshiriq. **Shu tekshiruvlarni oʻz loyihangizga qarating** {#t7}
+
+> **Blum:** Yaratish · **Qiyinlik:** 6 (Tadqiqotga yoʻnaltirilgan) ·
+> **Ball:** 14 · **Vaqt:** 10 daqiqa
+
+Bu topshiriq **juma kuni** topshiriladigan yakuniy loyiha hisobotiga
+bevosita kiradi. Quyidagi uchta blankani **oʻz loyiha kodingiz**
+uchun toʻldiring.
+
+```{r t7a}
+# --- (c) qismi uchun: tahlilni IKKI MARTA boshidan hisoblaymiz --------
+# Agar kod takrorlanuvchi boʻlsa, ikki ishga tushirish AYNAN bir xil
+# matn beradi. Bu — oʻz kodingizga qaratadigan birinchi tekshiruv.
+bosqich45 <- function() {
+  satr <- character(0)
+  for (i in 1:5) {
+    d <- hosil[hosil$mamlakat == mam[i], ]; d <- d[order(d$yil), ]
+    o <- ols(d$yil, d$bugdoy); e <- o$e
+    rho <- korr(e[-length(e)], e[-1]); lim <- 1.959964 / sqrt(o$n)
+    pv <- o$p1
+    if (abs(rho) > lim) {
+      nf <- o$n * (1 - rho) / (1 + rho)
+      pv <- tp2(o$b1 / (o$seb1 * sqrt((1 + rho) / (1 - rho))), max(nf - 2, 1))
+    }
+    satr <- c(satr, sprintf("%d|%.12f|%.12f|%.12f", i, o$b1, rho, pv))
+  }
+  satr
+}
+r1 <- bosqich45(); r2 <- bosqich45()
+
+och("w14-t7a")
+P_("=== 7-TOPSHIRIQ: OʻZ LOYIHANGIZNI TEKSHIRING ===")
+P_("")
+P_("-- (a) F204 minimumi: maʼlumot + kod + urugʻ + versiyalar ----------")
+bnd <- c("Maʼlumot fayli loyiha bilan birga",
+         "Maʼlumot manbai va olingan sanasi",
+         "Kod bitta buyruq bilan ishga tushadi",
+         "Har bir tasodifiy hisobda urugʻ yozilgan",
+         "Dastur va paket versiyalari yozilgan",
+         "Chiqish fayllari saqlangan (out/ papkasi)",
+         "Maʼlumot lugʻati: har ustun nimani anglatadi")
+P_("%s%s%s%s", padl("#", 3), pad("  band", 48), pad("bor?", 6), "qayerda")
+for (i in seq_along(bnd))
+  P_("%s%s%s%s", padl(i, 3), pad(paste0("  ", bnd[i]), 48),
+     pad("____", 6), "____________")
+P_("")
+P_("-- (b) Oʻnta nuqsondan qaysilari SIZNING hisobotingizda bor? -------")
+nuq <- c("Effektsiz p: 'p < 0.001' yozilgan, b1 va oraliq yoʻq",
+         "Yolgʻon aniqlik: SE ruxsat bergandan koʻp xona",
+         "Yaxlitlangan sonlar ayirilgan (13-hafta: 14.17 vs 14.1645)",
+         "Shart tekshirilmagan (bugun 5 qatordan 2 tasi buzilgan)",
+         "Bitta spetsifikatsiya koʻrsatilgan (bugun 48 dan 23 tasi)",
+         "Urugʻ yozilmagan (bugun quyi chegara 0.044627 ga suzdi)",
+         "Sababiy til: 'oshirdi', 'taʼsir qildi' --- kuzatuvda",
+         "Bashorat va oʻrtacha oraligʻi chalkashtirilgan (13-hafta)",
+         "'Nima isbotlanmadi' boʻlimi yoʻq",
+         "Kod yoʻq yoki ishga tushmaydi")
+for (i in seq_along(nuq))
+  P_("%s%s%s", padl(i, 3), pad(paste0("  ", nuq[i]), 62), "____")
+P_("")
+P_("-- (c) Ikki marta ishga tushirish tekshiruvi -----------------------")
+P_("Bu daftar 5-topshiriqning 4--5-bosqichlarini ikki marta BOSHIDAN")
+P_("hisobladi va ikkala natijani belgi-ma-belgi solishtirdi.")
+P_("Ikki ishga tushirish AYNAN mosmi?  %s", ha(identical(r1, r2)))
+P_("Solishtirilgan qatorlar: %d", length(r1))
+P_("")
+P_("Endi AYNAN shuni oʻz kodingizda bajaring: butun tahlilni ikki marta")
+P_("ishga tushiring va natijalarni solishtiring. Javob YOʻQ boʻlsa ---")
+P_("6-nuqson sizda bor: biror joyda urugʻ yozilmagan.")
+P_("")
+P_("-- (d) Juma kuni topshiriladigan hisobotga -------------------------")
+P_("Yuqoridagi uchta blanka yakuniy hisobotning 8- va 10-bandlariga")
+P_("(sezgirlik va takrorlash) toʻgʻridan-toʻgʻri koʻchiriladi.")
+P_("SI dan foydalangan boʻlsangiz --- F206 jadvali ham ilova qilinadi.")
+yop()
+```
+
+```{r t7b}
+# --- Versiya bayonoti: hisobotning 10-bandiga koʻchiriladi ------------
+# Bu satrlar ATAYLAB «MUHIT:» bilan boshlanadi: ular ikki tilda va har
+# bir kompyuterda BOSHQA boʻladi, shuning uchun solishtirishga kirmaydi.
+# Lekin sizning hisobotingizda ular BOʻLISHI SHART (F204).
+M_("R %s.%s · ggplot2 %s · readr %s",
+   R.version$major, R.version$minor,
+   as.character(packageVersion("ggplot2")),
+   as.character(packageVersion("readr")))
+M_("Generator: MINSTD LCG x <- 48271 x mod 2147483647; urugʻlar %d..%d",
+   min(UR), max(UR))
+```
+
+**Yozma topshiriq (uyga, hisobotga kiradi).** *(a)* (a) va (b)
+blankalarini toʻldiring. *(b)* Oʻz kodingizni ikki marta ishga
+tushiring va natijani solishtiring; farq chiqsa **sababini** toping.
+*(c)* Oʻz tahlilingizdagi **eng bahsli qarorni** nomlang, uni
+oʻzgartiring, qayta hisoblang va xulosa saqlanganini yoki
+oʻzgarganini bir xatboshida yozing (F207).
+
+---
+
+# Yakuniy tekshiruv roʻyxati
+
+Topshirishdan oldin:
+
+- Har bir natija **effekt + oraliq + $p$** tartibida, birliklari bilan.
+- Har bir tasodifiy hisobda **urugʻ** yozilgan.
+- Har bir son **F203** ruxsat bergan xonagacha chop etilgan; oraliqlar
+  toʻliq aniqlikda hisoblangan.
+- Har bir modelda **shart tekshiruvi** bor; buzilgan joyda
+  $n_{\text{eff}}$ va tuzatilgan xulosa keltirilgan.
+- Kamida bitta **sezgirlik** hisobi (F207) bajarilgan.
+- **«Nima isbotlanmadi va nega»** boʻlimi yozilgan.
+- Sababiy feʼl faqat dizayn ruxsat bergan joyda ishlatilgan
+  (bu laboratoriyada — **hech qayerda**).
+- Grafik yorliqlari ASCII, ranglar Okabe–Ito, maʼno faqat rang bilan
+  berilmagan.
+
+**Topshirish.** Daftar (`.Rmd` *va* chop etilgan `.html`) laboratoriya
+mashgʻulotidan **$+48$ soat** ichida Moodleʼga. Daftar *formativ*:
+ball qoʻyilmaydi, yozma fikr-mulohaza beriladi. **7-topshiriqning
+natijasi esa juma kungi yakuniy hisobotga kiradi va baholanadi.**

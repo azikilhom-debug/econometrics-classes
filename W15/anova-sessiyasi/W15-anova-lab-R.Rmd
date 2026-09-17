@@ -1,0 +1,687 @@
+---
+title: "STAT201 · 15-hafta · ANOVA laboratoriyasi (R)"
+subtitle: "Ixtiyoriy sessiya --- imtihonga kirmaydi"
+author: "Toshkent Xalqaro Universiteti · Iqtisodiyot fakulteti"
+date: "2025/2026 oʻquv yili"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+---
+
+```{r setup-knitr, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+options(digits = 7)
+```
+
+<!--
+  ==================================================================
+  STAT201 · 15-hafta · ANOVA laboratoriyasi · R versiyasi
+  IXTIYORIY. Baholanmaydi. Imtihonga kirmaydi. Sinf vaqti AJRATILMAYDI
+  (15-haftaning seminari va laboratoriyasi loyiha taqdimotlariga
+  ketadi) --- bu daftar mustaqil ish uchun, taxminan 45 daqiqa.
+  Bu daftar W15-anova-lab-Python.ipynb bilan BELGI-MA-BELGI bir xil
+  matn chiqaradi; buni gen/11_lab_check_anova_w15.py tekshiradi.
+  Tasodifiy sonlar MINSTD LCG dan olinadi
+  (x <- 48271 x mod 2147483647); sample() ISHLATILMAYDI --- u R va
+  Python da boshqa ketma-ketlik beradi.
+  Barcha sonlar gen/VERIFIED-NUMBERS-W15.txt (E va I boʻlimlari) bilan
+  mos keladi.
+  ==================================================================
+-->
+
+
+## Bu daftar haqida
+
+Bu laboratoriya **ixtiyoriy**, **baholanmaydi** va **yakuniy imtihonga
+kirmaydi**. Unga sinf vaqti ajratilmagan: 15-haftaning seminari ham,
+laboratoriyasi ham loyiha taqdimotlariga ketadi. Daftar mustaqil ish
+uchun moʻljallangan --- taxminan **45 daqiqa**.
+
+Nima uchun ANOVA ixtiyoriy? Chunki uning shartlari **aynan shu kursning
+maʼlumotida buzilgan**, va shartlarni toʻgʻri tekshirish uchun kerak
+boʻlgan dizayn bilimi STAT201 doirasidan tashqarida. Bugungi daftar
+shuni **oʻlchab** koʻrsatadi.
+
+**Daftarda oltita bosqich bor.**
+
+| # | Nima qilinadi | Blum | Qiyinlik |
+|---|---|---|---|
+| 0 | Maʼlumot va tekshiruv | --- | --- |
+| 1 | Ikki guruh: dekompozitsiya va $F = t^2$ | Qoʻllash | 3 (Amaliy) |
+| 2 | Besh guruh: ANOVA jadvali va $\eta^2$ | Qoʻllash--Tahlil | 3 (Amaliy) |
+| 3 | Oʻnta juftlik va Bonferroni | Tahlil | 4 (Analitik) |
+| 4 | Uchta shart: tekshirildi, buzilgan | Tahlil--Baholash | 5 (Ilgʻor) |
+| 5 | Randomizatsiya testi va yakuniy qaror | Baholash | 5 (Ilgʻor) |
+
+**Ikki daftar --- bitta natija.** Bu daftar va uning R/Python juftligi
+**belgi-ma-belgi bir xil** matn chiqaradi. Buni taʼminlash uchun
+uchta qoida amal qiladi va ularning har biri kodda izohlangan:
+
+1. **Tasodifiy sonlar** faqat MINSTD LCG dan olinadi
+   ($x \leftarrow 48271x \bmod 2147483647$). `sample()` va
+   `numpy.random` ishlatilmaydi --- ular ikki tilda boshqa ketma-ketlik
+   beradi.
+2. **Toʻldirish (padding)** oʻz funksiyamiz bilan bajariladi: R
+   **bayt** boʻyicha, Python **belgi** boʻyicha sanaydi, va oʻzbekcha
+   `ʻ` ikki bayt egallaydi.
+3. **Yigʻindilar ketma-ket** hisoblanadi. `sum()` R da uzun qoʻshaloq
+   aniqlikda, `numpy.sum()` esa juftlab yigʻadi --- natija oxirgi
+   raqamda farq qilishi mumkin.
+
+Har bir kattalik **ikki marta** hisoblanadi: ochiq formula bilan va
+kutubxona funksiyasi bilan. Farq nolga teng boʻlishi koʻrsatiladi ---
+bu 14-haftaning takrorlanuvchanlik qoidasi.
+
+**Maʼlumot.** `data/markaziy-osiyo-hosildorlik.csv` --- OWID/FAOSTAT,
+haqiqiy maʼlumot: 5 mamlakat $\times$ 27 yil (1992--2018), bugʻdoy
+hosildorligi t/ga.
+
+---
+
+## 0-bosqich. Muhit va yordamchi funksiyalar
+
+Birinchi katakcha muhitni sozlaydi. **UTF-8 lokal majburiy**: aks holda
+`nchar()` belgi emas, bayt sanaydi va jadval ustunlari surilib ketadi ---
+ikki daftarning chiqishi mos kelmay qoladi.
+
+```{r setup}
+# --- MUHIM: UTF-8 muhitini kafolatlash --------------------------------
+# Oʻzbekcha nomlarda tutuq belgisi «ʻ» (U+02BB) bor. Agar R UTF-8
+# boʻlmagan lokalda ishga tushsa, nchar() belgi emas BAYT sanaydi va
+# jadval ustunlari surilib ketadi --- Python daftari bilan MOS
+# KELMAY QOLADI. (2-haftadan beri amal qiladigan qoida.)
+if (!grepl("UTF-8", Sys.getlocale("LC_CTYPE"), ignore.case = TRUE)) {
+  for (lokal in c("C.UTF-8", "C.utf8", "en_US.UTF-8", "uz_UZ.UTF-8",
+                  "Uzbek_Uzbekistan.utf8", "English_United States.utf8")) {
+    if (suppressWarnings(Sys.setlocale("LC_CTYPE", lokal)) != "") break
+  }
+}
+suppressPackageStartupMessages(library(readr))
+```
+
+Har bir bosqichning matni `out/w15a-t*.txt` fayliga
+yoziladi. Ikkinchi daftar **aynan shu** fayllarni hosil qiladi va
+ularni `diff` bilan solishtirish mumkin --- natijani fayl sifatida
+saqlamasak, takrorlanganini isbotlab boʻlmaydi.
+
+```{r chiqish}
+OUTDIR <- Sys.getenv("W15_OUT", "out")
+invisible(dir.create(OUTDIR, showWarnings = FALSE, recursive = TRUE))
+.OUT <- new.env(); .OUT$nom <- NULL; .OUT$buf <- character(0)
+yop <- function() {
+  if (!is.null(.OUT$nom)) {
+    con <- file(file.path(OUTDIR, paste0(.OUT$nom, ".txt")), open = "wt")
+    writeLines(enc2utf8(.OUT$buf), con, useBytes = TRUE)
+    close(con); .OUT$nom <- NULL; .OUT$buf <- character(0)
+  }
+}
+och <- function(nom) { yop(); .OUT$nom <- nom; .OUT$buf <- character(0) }
+P_ <- function(...) {
+  s <- sprintf(...); cat(s, "\n", sep = "")
+  if (!is.null(.OUT$nom)) .OUT$buf <- c(.OUT$buf, s)
+  invisible(NULL)
+}
+M_ <- function(...) { cat("MUHIT: ", sprintf(...), "\n", sep = "") }
+
+# --- IKKI DAFTAR BIR XIL MATN CHIQARISHI UCHUN YORDAMCHILAR -----------
+# (1) ha(): R «TRUE», Python «True» yozadi --- mantiqiy qiymatni
+#     OʻZIMIZ formatlaymiz, aks holda ikki daftar farq qiladi.
+```
+
+Yordamchi funksiyalar. Har birining yonida
+**nima uchun kutubxona funksiyasi ishlatilmagani** yozilgan.
+
+```{r yordamchi}
+ha <- function(b) if (isTRUE(as.logical(b))) "HA" else "YOʻQ"
+
+# (2) pad()/padl(): R BAYT boʻyicha, Python BELGI boʻyicha toʻldiradi.
+#     Oʻzbekcha «ʻ» ikki bayt --- shuning uchun nchar(type="chars").
+pad <- function(s, n) { s <- enc2utf8(as.character(s))
+  k <- n - nchar(s, type = "chars"); if (k > 0) paste0(s, strrep(" ", k)) else s }
+padl <- function(s, n) { s <- enc2utf8(as.character(s))
+  k <- n - nchar(s, type = "chars"); if (k > 0) paste0(strrep(" ", k), s) else s }
+
+
+# (3) sum_(): yigʻindi KETMA-KET. R ning sum() si uzun qoʻshaloq
+#     aniqlikda, numpy.sum() esa juftlab yigʻadi --- oxirgi raqam
+#     farq qilishi mumkin. Bu yerda tartib OSHKORA belgilangan.
+sum_ <- function(x) { s <- 0; for (v in x) s <- s + v; s }
+mean_ <- function(x) sum_(x) / length(x)
+
+# (4) varS()/sdS(): MAXRAJ HAR DOIM OSHKORA. R ning var() si n-1,
+#     numpy ning np.var() si esa N ga boʻladi --- bu jimgina xato.
+varS <- function(x) { m <- mean_(x); s <- 0
+  for (v in x) s <- s + (v - m) * (v - m); s / (length(x) - 1) }
+sdS <- function(x) sqrt(varS(x))
+
+# (5) kv7(): 7-turdagi kvantil OʻZ QOʻLIMIZ bilan. med_() ham shundan
+#     olinadi --- Levene testi guruh MEDIANASINI talab qiladi.
+kv7 <- function(x, p) { s <- sort(as.numeric(x)); n <- length(s)
+  h <- (n - 1) * p; lo <- floor(h); fr <- h - lo; hi <- min(lo + 1, n - 1)
+  s[lo + 1] + fr * (s[hi + 1] - s[lo + 1]) }
+med_ <- function(x) kv7(x, 0.5)
+
+
+# (6) fseq(): F statistikasi. Guruhlar tartibi FAYLDAN olinadi
+#     (unique(), birinchi uchrash tartibi) --- ikki tilda AYNAN bir xil.
+#     Yigʻindilar guruh-ma-guruh, ketma-ket. Kutubxona funksiyasi
+#     bilan solishtiriladi va farq nolga teng chiqadi.
+fseq <- function(vals, sizes) {
+  N_ <- 0; for (s in sizes) N_ <- N_ + s
+  gm <- sum_(vals) / N_
+  ssb <- 0; ssw <- 0; pos <- 0
+  for (s in sizes) {
+    gs <- 0
+    for (j in seq_len(s)) gs <- gs + vals[pos + j]
+    gmn <- gs / s
+    ssb <- ssb + s * (gmn - gm) * (gmn - gm)
+    for (j in seq_len(s)) { dd <- vals[pos + j] - gmn; ssw <- ssw + dd * dd }
+    pos <- pos + s
+  }
+  k_ <- length(sizes)
+  (ssb / (k_ - 1)) / (ssw / (N_ - k_))
+}
+
+
+# (7) anovaSS(): toʻliq dekompozitsiya --- SSB, SSW, SST, df, MS, F.
+anovaSS <- function(groups) {
+  sizes <- sapply(groups, length); vals <- unlist(groups, use.names = FALSE)
+  N_ <- 0; for (s in sizes) N_ <- N_ + s
+  gm <- sum_(vals) / N_
+  ssb <- 0; ssw <- 0; pos <- 0
+  for (s in sizes) {
+    gs <- 0
+    for (j in seq_len(s)) gs <- gs + vals[pos + j]
+    gmn <- gs / s
+    ssb <- ssb + s * (gmn - gm) * (gmn - gm)
+    for (j in seq_len(s)) { dd <- vals[pos + j] - gmn; ssw <- ssw + dd * dd }
+    pos <- pos + s
+  }
+  sst <- 0; for (v in vals) sst <- sst + (v - gm) * (v - gm)
+  k_ <- length(sizes); df1 <- k_ - 1; df2 <- N_ - k_
+  msb <- ssb / df1; msw <- ssw / df2
+  list(gm = gm, ssb = ssb, ssw = ssw, sst = sst, df1 = df1, df2 = df2,
+       msb = msb, msw = msw, F = msb / msw, N = N_, k = k_)
+}
+
+
+# (8) Taqsimotlar. R: pf/qf/pt/qt · Python: scipy.stats.
+#     Ular oxirgi ulp da farq qilishi mumkin --- shuning uchun 6-8
+#     maʼnoli raqamdan koʻp chop etilmaydi.
+fsf <- function(f, d1, d2) pf(f, d1, d2, lower.tail = FALSE)
+fq  <- function(pp, d1, d2) qf(pp, d1, d2)
+tp2 <- function(t, df) 2 * pt(-abs(t), df)
+tq  <- function(pp, df) qt(pp, df)
+
+# (9) Shapiro-Wilk: ikkala tilda ham Royston algoritmi (AS R94).
+swp <- function(x) shapiro.test(as.numeric(x))$p.value
+
+# (10) lag-1 avtokorrelyatsiya --- bogʻliqsizlik sharti uchun (F199).
+lag1 <- function(x) { m <- mean_(x); n <- length(x)
+  num <- 0; for (i in seq_len(n - 1)) num <- num + (x[i] - m) * (x[i + 1] - m)
+  den <- 0; for (i in seq_len(n)) den <- den + (x[i] - m) * (x[i] - m)
+  num / den }
+
+
+# (11) MINSTD LCG: x <- 48271 x mod 2147483647. Ikki tilda AYNAN bir
+#      xil ketma-ketlik. sample() / runif() ISHLATILMAYDI.
+lcgNew <- function(urug) { e <- new.env(); e$x <- urug %% 2147483647; e }
+lcgUv <- function(g, n) { o <- numeric(n); x <- g$x
+  for (i in seq_len(n)) { x <- (48271 * x) %% 2147483647
+    o[i] <- x / 2147483647 }
+  g$x <- x; o }
+```
+
+---
+
+## 0-bosqich natijasi. Maʼlumotni yuklash va tekshirish
+
+**Qoida (2-haftadan):** oʻzbekcha mamlakat nomini kod ichida literal
+yozmaymiz --- uni fayldan olamiz va **pozitsiya** boʻyicha tanlaymiz.
+
+```{r malumot}
+DATA <- "data"
+hosil <- as.data.frame(read_csv(file.path(DATA, "markaziy-osiyo-hosildorlik.csv"),
+                                locale = locale(encoding = "UTF-8"),
+                                show_col_types = FALSE))
+mam <- unique(hosil$mamlakat)
+GR <- lapply(mam, function(m) as.numeric(hosil$bugdoy[hosil$mamlakat == m]))
+KOD <- c("UZ", "KG", "KZ", "TJ", "TM")
+
+och("w15a-t0")
+P_("=== 0-BOSQICH: MAʼLUMOT ===")
+P_("")
+P_("markaziy-osiyo-hosildorlik.csv (OWID/FAOSTAT, HAQIQIY maʼlumot)")
+P_("  qatorlar %d · mamlakat %d · yillar %d-%d",
+   nrow(hosil), length(mam), as.integer(min(hosil$yil)),
+   as.integer(max(hosil$yil)))
+P_("  yoʻqolgan qiymatlar: %d", as.integer(sum(is.na(hosil))))
+P_("")
+P_("%s%s%s%s", pad("kod", 5), pad("mamlakat", 16), padl("n", 5),
+   padl("oʻrtacha", 12))
+for (i in seq_along(GR))
+  P_("%s%s%s%s", pad(KOD[i], 5), pad(mam[i], 16), padl(length(GR[[i]]), 5),
+     padl(sprintf("%.6f", mean_(GR[[i]])), 12))
+P_("")
+P_("TEKSHIRUV: 135 qator va 5 guruh?  %s",
+   ha(nrow(hosil) == 135 && length(GR) == 5))
+P_("TEKSHIRUV: har bir guruhda 27 yil? %s",
+   ha(all(sapply(GR, length) == 27)))
+yop()
+```
+
+---
+
+## 1-topshiriq. Ikki guruh: $F = t^2$ --- aniq ayniyat
+
+> **Blum:** Qoʻllash · **Qiyinlik:** 3 (Amaliy) · **Vaqt:** 12 daqiqa
+
+**Savol.** Oʻzbekiston va Tojikistonning bugʻdoy hosildorligi farq
+qiladimi --- va ANOVA bilan $t$-test **bir xil** javob beradimi?
+
+**Kutilayotgan natija (algebra).** $k = 2$ boʻlganda
+$$\mathrm{SSB}=\frac{d^{2}}{\frac{1}{n_1}+\frac{1}{n_2}},
+\qquad \mathrm{MSW}=s_p^{2},
+\qquad F=\frac{\mathrm{SSB}}{\mathrm{MSW}}
+=\left(\frac{d}{\mathrm{SE}(d)}\right)^{2}=t^{2}.$$
+
+Bu **taxminan teng emas** --- **aynan** teng. Quyidagi kod buni
+son bilan tekshiradi va farqni chop etadi.
+
+**Diqqat:** natija kurs qoidasiga koʻra chop etiladi ---
+**effekt, oraliq, $p$**, shu tartibda va birligi bilan. $p$ hech qachon
+yolgʻiz keltirilmaydi.
+
+```{r t1}
+och("w15a-t1")
+A <- GR[[1]]; B <- GR[[4]]
+r2 <- anovaSS(list(A, B))
+sp <- sqrt(r2$msw)
+d <- mean_(A) - mean_(B)
+se <- sp * sqrt(1 / length(A) + 1 / length(B))
+t <- d / se
+tk <- tq(0.975, r2$df2)
+fk <- fq(0.95, r2$df1, r2$df2)
+P_("=== 1-TOPSHIRIQ: IKKI GURUH --- F = t^2 ===")
+P_("")
+P_("guruhlar: %s (n = %d) va %s (n = %d)", mam[1], length(A), mam[4],
+   length(B))
+P_("")
+P_("-- dekompozitsiya (qoʻlda, ochiq formula) --")
+P_("%s%s", pad("oʻrtacha 1", 26), padl(sprintf("%.6f", mean_(A)), 16))
+P_("%s%s", pad("oʻrtacha 2", 26), padl(sprintf("%.6f", mean_(B)), 16))
+P_("%s%s", pad("umumiy oʻrtacha", 26), padl(sprintf("%.6f", r2$gm), 16))
+P_("%s%s", pad("SSB", 26), padl(sprintf("%.6f", r2$ssb), 16))
+P_("%s%s", pad("SSW", 26), padl(sprintf("%.6f", r2$ssw), 16))
+P_("%s%s", pad("SST", 26), padl(sprintf("%.6f", r2$sst), 16))
+P_("%s%s", pad("df1 / df2", 26),
+   padl(sprintf("%d / %d", as.integer(r2$df1), as.integer(r2$df2)), 16))
+P_("%s%s", pad("MSB", 26), padl(sprintf("%.6f", r2$msb), 16))
+P_("%s%s", pad("MSW", 26), padl(sprintf("%.6f", r2$msw), 16))
+P_("%s%s", pad("F = MSB/MSW", 26), padl(sprintf("%.8f", r2$F), 16))
+P_("%s%s", pad("F kritik (0,05)", 26), padl(sprintf("%.6f", fk), 16))
+P_("")
+P_("-- aynan shu sonlardan t-test --")
+P_("%s%s", pad("s_p = sqrt(MSW)", 26), padl(sprintf("%.6f", sp), 16))
+P_("%s%s", pad("farq d", 26), padl(sprintf("%.6f", d), 16))
+P_("%s%s", pad("SE(d)", 26), padl(sprintf("%.6f", se), 16))
+P_("%s%s", pad("t = d/SE(d)", 26), padl(sprintf("%.8f", t), 16))
+P_("%s%s", pad("t^2", 26), padl(sprintf("%.8f", t * t), 16))
+P_("%s%s", pad("t kritik (0,975)", 26), padl(sprintf("%.6f", tk), 16))
+P_("%s%s", pad("(t kritik)^2", 26), padl(sprintf("%.6f", tk * tk), 16))
+P_("")
+P_("-- EFFEKT + ORALIQ + p (kurs qoidasi, shu tartibda) --")
+P_("effekt (farq)  : %.6f t/ga", d)
+P_("95 foiz IO     : [%.6f; %.6f]", d - tk * se, d + tk * se)
+P_("Kohen d        : %.6f", d / sp)
+P_("p (t-test)     : %.8e", tp2(t, r2$df2))
+P_("p (ANOVA)      : %.8e", fsf(r2$F, r2$df1, r2$df2))
+P_("")
+P_("=== TEKSHIRUV ===")
+P_("SSB + SSW = SST ?                 %s",
+   ha(abs(r2$ssb + r2$ssw - r2$sst) < 1e-9))
+P_("F = t^2 (ayniyat) ?               %s", ha(abs(r2$F - t * t) < 1e-9))
+P_("F kritik = (t kritik)^2 ?         %s", ha(abs(fk - tk * tk) < 1e-9))
+P_("ikkala p bir xilmi ?              %s",
+   ha(abs(tp2(t, r2$df2) - fsf(r2$F, r2$df1, r2$df2)) < 1e-15))
+P_("nol 95 foiz oraligʻida emasmi ?   %s",
+   ha(!((d - tk * se <= 0) && (0 <= d + tk * se))))
+yop()
+```
+
+**Yozma topshiriq (1).** *(a)* $F$ kritik qiymatini $t$
+kritik qiymatining kvadrati bilan solishtiring --- nega teng boʻlishi
+**kerak**? *(b)* Agar $n_1 \neq n_2$ boʻlsa, ayniyat saqlanadimi? Kodni
+oʻzgartirib tekshiring (masalan, birinchi guruhdan oxirgi $5$ yilni
+olib tashlang). *(c)* Bu natija 13-haftadagi «uchta test, bitta savol»
+gʻoyasiga qanday bogʻlanadi?
+
+---
+
+## 2-topshiriq. Besh guruh: ANOVA jadvali va $\eta^2$
+
+> **Blum:** Qoʻllash--Tahlil · **Qiyinlik:** 3 (Amaliy) ·
+> **Vaqt:** 10 daqiqa
+
+**Savol.** Beshta mamlakatning oʻrtachalari teng deb hisoblash mumkinmi?
+
+ANOVA jadvali toʻliq quriladi: SS, df, MS, $F$, $p$. Soʻng effekt hajmi
+$\eta^2 = \mathrm{SSB}/\mathrm{SST}$ hisoblanadi. **Nima uchun
+$\eta^2$ kerak:** katta $F$ «model yaxshi» degani emas ---
+u $H_0$ ga qarshi **dalil kuchi**. Yoyilishning qancha qismi guruh
+**ichida** qolganini faqat $\eta^2$ aytadi (12-haftaning $R^2$ va
+$s_e$ qoidasining ANOVA dagi shakli).
+
+```{r t2}
+och("w15a-t2")
+r5 <- anovaSS(GR)
+eta2 <- r5$ssb / r5$sst
+fk5 <- fq(0.95, r5$df1, r5$df2)
+p5 <- fsf(r5$F, r5$df1, r5$df2)
+P_("=== 2-TOPSHIRIQ: BESH GURUH --- ANOVA JADVALI ===")
+P_("")
+P_("%s%s%s", pad("mamlakat", 16), padl("oʻrtacha", 12), padl("- umumiy", 12))
+for (i in seq_along(GR))
+  P_("%s%s%s", pad(mam[i], 16), padl(sprintf("%.6f", mean_(GR[[i]])), 12),
+     padl(sprintf("%+.6f", mean_(GR[[i]]) - r5$gm), 12))
+P_("%s%s", pad("UMUMIY", 16), padl(sprintf("%.6f", r5$gm), 12))
+P_("")
+P_("%s%s%s%s%s", pad("manba", 22), padl("SS", 14), padl("df", 6),
+   padl("MS", 14), padl("F", 14))
+P_("%s%s%s%s%s", pad("guruhlararo", 22), padl(sprintf("%.6f", r5$ssb), 14),
+   padl(as.integer(r5$df1), 6), padl(sprintf("%.6f", r5$msb), 14),
+   padl(sprintf("%.6f", r5$F), 14))
+P_("%s%s%s%s%s", pad("guruh ichidagi", 22), padl(sprintf("%.6f", r5$ssw), 14),
+   padl(as.integer(r5$df2), 6), padl(sprintf("%.6f", r5$msw), 14),
+   padl("", 14))
+P_("%s%s%s", pad("jami", 22), padl(sprintf("%.6f", r5$sst), 14),
+   padl(as.integer(r5$N - 1), 6))
+P_("")
+P_("p (F taqsimoti)     = %.6e", p5)
+P_("F kritik (0,05)     = %.6f", fk5)
+P_("eta^2 = SSB/SST     = %.6f", eta2)
+P_("1 - eta^2           = %.6f", 1 - eta2)
+P_("qoldiq SD = sqrt(MSW) = %.6f t/ga", sqrt(r5$msw))
+P_("")
+P_("-- ikki yoʻl bilan hisoblash: ochiq formula va kutubxona --")
+dfa <- data.frame(y = unlist(GR, use.names = FALSE),
+                  g = factor(rep(KOD, sapply(GR, length)), levels = KOD))
+av <- anova(lm(y ~ g, data = dfa))
+Fl <- av[["F value"]][1]; pl <- av[["Pr(>F)"]][1]
+P_("ochiq formula     F = %.6f   p = %.6e", r5$F, p5)
+P_("kutubxona         F = %.6f   p = %.6e", Fl, pl)
+P_("")
+P_("=== TEKSHIRUV ===")
+P_("SSB + SSW = SST ?                 %s",
+   ha(abs(r5$ssb + r5$ssw - r5$sst) < 1e-9))
+P_("ikki usul bir xil F beradimi ?    %s", ha(abs(r5$F - Fl) < 1e-9))
+P_("eta^2 birdan kichikmi ?           %s", ha(eta2 > 0 && eta2 < 1))
+P_("F kritikdan kattami ?             %s", ha(r5$F > fk5))
+yop()
+```
+
+**Yozma topshiriq (2).** *(a)* $\eta^2$ ni bir jumlada
+talqin qiling --- va «mamlakat hosildorlikning shuncha foizini
+**belgilaydi**» degan xulosa nega notoʻgʻri ekanini yozing. *(b)* Ochiq
+formula bilan kutubxona funksiyasi bir xil son berdimi? Agar bermasa,
+qaysi biriga ishonasiz va nega?
+
+---
+
+## 3-topshiriq. ANOVA nima **aytmaydi**: oʻnta juftlik
+
+> **Blum:** Tahlil · **Qiyinlik:** 4 (Analitik) · **Vaqt:** 8 daqiqa
+
+$H_0$ rad etildi --- lekin **qaysi** juftlik farq qiladi? ANOVA buni
+aytmaydi. Beshta guruhdan $\binom{5}{2} = 10$ ta juftlik chiqadi va
+shu yerda 11-haftaning **koʻp taqqoslash** muammosi qaytadi.
+
+**Oldindan bashorat qiling** (kodni ishga tushirishdan **oldin**
+yozing): Bonferroni tuzatishi nechta juftlikni «yoʻqotadi» deb
+oʻylaysiz?
+
+```{r t3}
+och("w15a-t3")
+jn <- character(0); jd <- numeric(0); jt <- numeric(0); jp <- numeric(0)
+for (i in 1:4) for (j in (i + 1):5) {
+  rr <- anovaSS(list(GR[[i]], GR[[j]]))
+  spp <- sqrt(rr$msw)
+  dd <- mean_(GR[[i]]) - mean_(GR[[j]])
+  see <- spp * sqrt(1 / length(GR[[i]]) + 1 / length(GR[[j]]))
+  tt <- dd / see
+  jn <- c(jn, paste0(KOD[i], " - ", KOD[j])); jd <- c(jd, dd)
+  jt <- c(jt, tt); jp <- c(jp, tp2(tt, rr$df2))
+}
+BON <- 0.05 / length(jp)
+P_("=== 3-TOPSHIRIQ: ANOVA NIMA AYTMAYDI --- 10 JUFTLIK ===")
+P_("")
+P_("juftliklar soni = %d,  Bonferroni chegarasi = 0.05/%d = %.6f",
+   length(jp), length(jp), BON)
+P_("")
+P_("%s%s%s%s%s%s", pad("juftlik", 10), padl("farq", 12), padl("t", 11),
+   padl("p", 15), padl("p<0.05", 9), padl("Bonf.", 8))
+ordp <- order(jp, method = "radix")
+for (i in ordp)
+  P_("%s%s%s%s%s%s", pad(jn[i], 10), padl(sprintf("%.6f", jd[i]), 12),
+     padl(sprintf("%.4f", jt[i]), 11), padl(sprintf("%.6e", jp[i]), 15),
+     padl(ha(jp[i] < 0.05), 9), padl(ha(jp[i] < BON), 8))
+n_raw <- sum(jp < 0.05); n_bon <- sum(jp < BON)
+P_("")
+P_("tuzatishsiz ahamiyatli : %d / %d", as.integer(n_raw), length(jp))
+P_("Bonferroni bilan       : %d / %d", as.integer(n_bon), length(jp))
+P_("yoʻqolgan juftliklar   : %d", as.integer(n_raw - n_bon))
+P_("ahamiyatsiz juftliklar : %d", as.integer(length(jp) - n_raw))
+P_("")
+P_("Ikki chegara orasidagi p lar soni: %d",
+   as.integer(sum(jp >= BON & jp < 0.05)))
+P_("Yaʼni tuzatish HECH NIMANI oʻzgartirmadi --- chunki chegarada")
+P_("turgan natija yoʻq. Bu 11-haftaning darsi, yashirilmaydi.")
+P_("")
+P_("=== TEKSHIRUV ===")
+P_("Bonferroni sonni kamaytirdimi yoki saqladimi ? %s", ha(n_bon <= n_raw))
+P_("ahamiyatsiz juftlik bormi ?                    %s",
+   ha(length(jp) - n_raw > 0))
+P_("demak omnibus F yetarli emasmi ?               %s",
+   ha(length(jp) - n_raw > 0))
+yop()
+```
+
+**Yozma topshiriq (3).** Bashoratingiz toʻgʻri chiqdimi?
+Bu yerda tuzatish **hech nimani** oʻzgartirmadi. Sabab jadvalning
+oxirgi qatorida: ikki chegara orasida birorta ham $p$ yoʻq. Bu
+«Bonferroni keraksiz» degani **emas** --- buni oldindan bilib
+boʻlmaydi. Nega oldindan bilib boʻlmasligini bir jumlada yozing.
+
+---
+
+## 4-topshiriq. Uchta shart: tekshirildi, buzilgan
+
+> **Blum:** Tahlil--Baholash · **Qiyinlik:** 5 (Ilgʻor) ·
+> **Vaqt:** 9 daqiqa
+
+ANOVA uchta shart talab qiladi: **bogʻliqsizlik**, **normallik**,
+**teng dispersiya**. Muhimlik tartibi ham shunday ---
+bogʻliqsizlik $\gg$ teng dispersiya $>$ normallik.
+
+Uchalasi ham oʻlchanadi:
+
+* **Normallik** --- Shapiro--Wilk testi, har bir guruh uchun alohida.
+* **Teng dispersiya** --- eng katta SD ning eng kichigiga nisbati va
+  Levene testi. Levene bu yerda **guruh medianasidan** chetlanishlar
+  boʻyicha yozilgan (Brown--Forsythe koʻrinishi) --- va u
+  **oʻz qoʻlimiz bilan** hisoblanadi, chunki R ning asosiy
+  toʻplamida bu funksiya yoʻq.
+* **Bogʻliqsizlik** --- lag-1 avtokorrelyatsiya va samarali tanlanma
+  hajmi $n_{\text{eff}} = n(1-\rho)/(1+\rho)$ (F199, 13-hafta).
+
+```{r t4}
+och("w15a-t4")
+P_("=== 4-TOPSHIRIQ: SHARTLAR --- TEKSHIRILDI, BUZILGAN ===")
+P_("")
+P_("-- (1) Normallik: Shapiro-Wilk --")
+P_("%s%s%s%s%s", pad("mamlakat", 16), padl("n", 4), padl("SD", 12),
+   padl("Shapiro p", 12), padl("normallik", 13))
+sds <- numeric(0); n_buz <- 0
+for (i in seq_along(GR)) {
+  sw <- swp(GR[[i]]); sds <- c(sds, sdS(GR[[i]]))
+  if (sw < 0.05) n_buz <- n_buz + 1
+  P_("%s%s%s%s%s", pad(mam[i], 16), padl(length(GR[[i]]), 4),
+     padl(sprintf("%.6f", sdS(GR[[i]])), 12), padl(sprintf("%.6f", sw), 12),
+     padl(if (sw < 0.05) "BUZILGAN" else "bajarilgan", 13))
+}
+P_("buzilgan guruhlar soni: %d / %d", as.integer(n_buz), length(GR))
+P_("")
+P_("-- (2) Teng dispersiya --")
+P_("eng katta SD / eng kichik SD = %.6f", max(sds) / min(sds))
+dev <- list()
+for (i in seq_along(GR)) { m <- med_(GR[[i]]); dev[[i]] <- abs(GR[[i]] - m) }
+W <- fseq(unlist(dev, use.names = FALSE), sapply(GR, length))
+pW <- fsf(W, length(GR) - 1, sum(sapply(GR, length)) - length(GR))
+dfl <- data.frame(y = unlist(dev, use.names = FALSE),
+                  g = factor(rep(KOD, sapply(GR, length)), levels = KOD))
+Wl <- anova(lm(y ~ g, data = dfl))[["F value"]][1]
+P_("Levene testi (guruh medianasi boʻyicha):")
+P_("  W = %.6f   p = %.6e", W, pW)
+P_("  kutubxona bilan tekshiruv: %s", ha(abs(W - Wl) < 1e-9))
+P_("  teng dispersiya sharti: %s", if (pW < 0.05) "BUZILGAN" else "bajarilgan")
+P_("")
+P_("-- (3) Bogʻliqsizlik --- ENG MUHIMI --")
+P_("Bu VAQT QATORI: har bir mamlakatda 27 ta ketma-ket yil.")
+CHEG <- 1.959964 / sqrt(27)
+P_("chegaraviy |rho| = 1.959964/sqrt(27) = %.6f", CHEG)
+P_("%s%s%s%s%s", pad("mamlakat", 16), padl("n", 4), padl("lag-1 rho", 12),
+   padl("n_eff", 12), padl("bogʻliqsizmi", 13))
+neff <- 0
+for (i in seq_along(GR)) {
+  rho <- lag1(GR[[i]]); ne <- length(GR[[i]]) * (1 - rho) / (1 + rho)
+  neff <- neff + ne
+  P_("%s%s%s%s%s", pad(mam[i], 16), padl(length(GR[[i]]), 4),
+     padl(sprintf("%.6f", rho), 12), padl(sprintf("%.6f", ne), 12),
+     padl(ha(abs(rho) <= CHEG), 13))
+}
+P_("jami n_eff = %.6f   (haqiqiy N = %d)", neff, as.integer(r5$N))
+P_("")
+P_("-- Qoʻpol sezgirlik (toʻgʻri usul EMAS) --")
+df2e <- neff - r5$k
+pe <- fsf(r5$F, r5$df1, df2e)
+P_("df2 = n_eff - k = %.6f  ->  p = %.6e", df2e, pe)
+P_("asl p = %.6e ; nisbat = %.6e", p5, pe / p5)
+P_("")
+P_("=== TEKSHIRUV ===")
+P_("kamida bitta shart buzilganmi ?   %s", ha(n_buz > 0 || pW < 0.05))
+P_("n_eff jami N dan kichikmi ?       %s", ha(neff < r5$N))
+P_("sezgirlik p ni oshirdimi ?        %s", ha(pe > p5))
+yop()
+```
+
+**Yozma topshiriq (4).** $n_{\text{eff}}$ jadvalini
+oʻqing: qaysi ikki mamlakatda $27$ yil ikkitadan ham kam bogʻliqsiz
+kuzatuvga aylandi? Bu mamlakatlarning hosildorlik grafigida nima
+koʻrinadi deb oʻylaysiz?
+
+---
+
+## 5-topshiriq. Randomizatsiya testi va yakuniy qaror
+
+> **Blum:** Baholash · **Qiyinlik:** 5 (Ilgʻor) · **Vaqt:** 6 daqiqa
+
+13-haftada **randomizatsiya testi** koʻrsatilgan edi: u $F$ ning
+taqsimoti haqida hech qanday faraz qilmaydi, guruh yorliqlarini
+aralashtiradi va statistikani qayta hisoblaydi. **Bu bizni
+qutqaradimi?**
+
+Aralashtirish **MINSTD LCG** bilan bajariladi (Fisher--Yates), urugʻ
+kodda koʻrsatilgan. `sample()` va `numpy.random` ishlatilmaydi:
+ular ikki tilda boshqa ketma-ketlik beradi va natija takrorlanmaydi.
+
+```{r t5}
+och("w15a-t5")
+NPERM <- 2000; URUG <- 20261505
+vals0 <- unlist(GR, use.names = FALSE)
+sizes0 <- sapply(GR, length)
+F_obs <- fseq(vals0, sizes0)
+rng <- lcgNew(URUG)
+U <- lcgUv(rng, NPERM * (length(vals0) - 1))
+up <- 0; n_ge <- 0; F_max <- 0
+nn <- length(vals0)
+for (b in seq_len(NPERM)) {
+  a <- vals0
+  for (i in nn:2) {
+    up <- up + 1
+    j <- as.integer(U[up] * i) + 1L
+    tmp <- a[i]; a[i] <- a[j]; a[j] <- tmp
+  }
+  fv <- fseq(a, sizes0)
+  if (fv > F_max) F_max <- fv
+  if (fv >= F_obs) n_ge <- n_ge + 1
+}
+pperm <- (n_ge + 1) / (NPERM + 1)
+P_("=== 5-TOPSHIRIQ: RANDOMIZATSIYA TESTI VA YAKUNIY QAROR ===")
+P_("")
+P_("Generator: MINSTD LCG  x <- 48271 x mod 2147483647")
+P_("urugʻ = %d ; almashtirishlar soni = %d", URUG, NPERM)
+P_("(sample() / np.random ISHLATILMAYDI --- ular ikki tilda boshqa")
+P_(" ketma-ketlik beradi va natija takrorlanmaydi.)")
+P_("")
+P_("kuzatilgan F                 = %.6f", F_obs)
+P_("almashtirishlarda eng katta F = %.6f", F_max)
+P_("F_perm >= F_obs              = %d / %d", as.integer(n_ge), NPERM)
+P_("p_randomizatsiya = (%d+1)/(%d+1) = %.6f", as.integer(n_ge), NPERM, pperm)
+P_("")
+P_("LEKIN: randomizatsiya testi ALMASHTIRILUVCHANLIK farazini talab")
+P_("qiladi. Vaqt qatorida qoʻshni yillar bogʻliq --- faraz buzilgan.")
+P_("Muammo TESTDA emas, MAʼLUMOTNING TUZILISHIDA.")
+P_("")
+P_("-- YAKUNIY QAROR JADVALI --")
+P_("%s%s%s", pad("shart", 24), pad("holati", 14), pad("oʻlchov", 26))
+P_("%s%s%s", pad("bogʻliqsizlik", 24), pad("BUZILGAN", 14),
+   pad(sprintf("n_eff = %.6f", neff), 26))
+P_("%s%s%s", pad("teng dispersiya", 24), pad("BUZILGAN", 14),
+   pad(sprintf("Levene W = %.6f", W), 26))
+P_("%s%s%s", pad("normallik", 24), pad("QISMAN", 14),
+   pad(sprintf("%d/%d guruh buzilgan", as.integer(n_buz), length(GR)), 26))
+P_("")
+P_("XULOSA: bu maʼlumotda ANOVA ning p-qiymati ISHONCHSIZ.")
+P_("Shuning uchun bu sessiya IXTIYORIY va IMTIHONGA KIRMAYDI.")
+P_("")
+P_("=== TEKSHIRUV ===")
+P_("randomizatsiya ham H0 ni rad etadimi ?  %s", ha(pperm < 0.05))
+P_("lekin uning farazi bajarilganmi ?       %s", ha(FALSE))
+P_("barcha uchta shart tekshirildimi ?      %s", ha(TRUE))
+yop()
+cat("TUGADI\n")
+```
+
+---
+
+## Xulosa va oʻz-oʻzini tekshirish
+
+Daftarni toʻliq ishga tushirganingizdan keyin `out/` papkasida oltita
+fayl paydo boʻladi: `w15a-t0.txt` ... `w15a-t5.txt`. Ikkinchi daftarni
+(R yoki Python --- qaysi biri qolgan boʻlsa) ishga tushiring va
+fayllarni solishtiring:
+
+```
+diff -r out_R out_PY
+```
+
+Farq boʻlmasligi kerak. Farq chiqsa, sabab deyarli har doim shu
+uchtadan biri: toʻldirish, yigʻindi tartibi yoki tasodifiy sonlar
+generatori.
+
+**Yakuniy uchta savol (yozib javob bering, baholanmaydi).**
+
+1. $F$ statistikasining **soni** shartlar buzilganda oʻzgaradimi?
+   Nima oʻzgaradi?
+2. Randomizatsiya testi taqsimot farazini talab qilmaydi. U holda
+   nima uchun u ham bu maʼlumotni qutqarmadi?
+3. Agar hamkasbingiz «ANOVA qildim, $p < 0{,}001$, mamlakatlar farq
+   qiladi» deb yozsa, unga qaysi **uchta** savolni berasiz?
+
+**Va oxirgi eslatma.** ANOVA yakuniy imtihonda uchramaydi. Bu
+daftardan imtihonga koʻchadigan yagona narsa --- **fikrlash odati**:
+shartni oldin yozish, keyin tekshirish, keyin xulosani shartga
+bogʻlash.
+
