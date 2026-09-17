@@ -1,0 +1,37 @@
+STAT201 · 4-HAFTA · TALABA PAKETI
+Tasodifiy miqdorlar va diskret taqsimotlar
+Toshkent Xalqaro Universiteti · Iqtisodiyot fakulteti · 2026/2027
+
+UCHTA QOIDA
+1. ZIP ni TOʻLIQ oching (Extract All) — fayllarni ZIP ichidan alohida ochmang.
+   Laboratoriya kodi «data» papkasini oʻzi yonida kutadi.
+2. CSV fayllarni Excel da OCHMANG. Ochsangiz — SAQLAMANG. Excel oʻzbekcha «ʻ»
+   belgisini buzadi va kod jimgina notoʻgʻri natija beradi.
+3. .Rmd faylni faqat RStudio da oching (File > Open File). Ochgach:
+   Session > Set Working Directory > To Source File Location.
+
+PAKET TARKIBI
+  W04-slaydlar.pdf                           — maʼruza slaydlari
+  W04-talaba-tarqatmasi.pdf                  — talaba tarqatmasi (asosiy konspekt)
+  W04-oqish-royxati.pdf                      — oʻqish roʻyxati
+  W04-keys.pdf                               — keys-stadi (talaba nusxasi)
+  W04-individual-topshiriq.pdf               — individual topshiriq + rubrika
+  W04-guruh-topshirigi.pdf                   — guruh topshirigʻi
+  W04-uy-vazifasi.pdf                        — uy vazifasi
+  W04-refleksiya.pdf                         — refleksiya mashqi
+  W04-si-topshiriqlari.pdf                   — sunʼiy intellekt bilan ishlash topshiriqlari
+  W04-loyiha-4-bosqich.pdf                   — semestr loyihasi, 4-bosqich
+  laboratoriya/
+     W04-lab.pdf              — laboratoriya topshiriqlari (bosma)
+     W04-lab-R.Rmd            — R daftari (RStudio)
+     W04-lab-Python.ipynb     — Python varianti (ixtiyoriy, bir xil natija)
+     data/                    — ikkala maʼlumot toʻplami
+
+LABORATORIYADAN KEYIN TOPSHIRILADI
+  RStudio da Knit tugmasi → hosil boʻlgan W04-lab-R.html fayli.
+  Fayl nomi:  W04-Familiya-Ism.html   (kanalda eʼlon qilingan tartibda).
+  Har topshiriqning «Qaror» boʻlimi oʻz soʻzingiz bilan toʻldirilgan boʻlishi shart —
+  faqat kod ishga tushirilgan daftar «bajarilmagan» hisoblanadi.
+
+Bu paketdagi hujjatlar talaba nusxasi: oʻqituvchi uchun yechim va kalit boʻlimlari
+olib tashlangan. Kalitlar dars muhokamasidan keyin alohida eʼlon qilinadi.

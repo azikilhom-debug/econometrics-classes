@@ -1,0 +1,1303 @@
+---
+title: "STAT201 · 2-hafta · Kompyuter laboratoriyasi (R)"
+subtitle: "Ehtimollik asoslari: sanash, qoʻshish qoidasi, bogʻliqsizlik va simulyatsiya"
+author: "Toshkent Xalqaro Universiteti · Iqtisodiyot fakulteti"
+date: "2025/2026 oʻquv yili"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    df_print: kable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,     # kodni koʻrsatish
+  message = FALSE,    # paket yuklash xabarlarini yashirish
+  warning = FALSE,
+  fig.width = 7, fig.height = 4.2, dpi = 110,
+  # dev.args: grafiklarda oʻzbekcha «ʻ» belgisi chiqishi uchun cairo
+  # mexanizmi shart (0-bosqichdagi izohga qarang).
+  dev = "png", dev.args = list(type = "cairo")
+)
+options(digits = 7)
+```
+
+<!--
+  ==================================================================
+  STAT201 · 2-hafta · Kompyuter laboratoriyasi · R versiyasi
+  Davomiyligi: 2 akademik soat (120 daqiqa)
+  CLO2 — ehtimollik qoidalarini iqtisodiy masalalarga qoʻllash
+         (Blum: Qoʻllash)
+  Maʼlumot: data/kinolar-byudjet.csv          (2 467 film, 2000-2018)
+            data/markaziy-osiyo-hosildorlik.csv (FAOSTAT / OWID)
+  Har bir topshiriq bitta zanjirga boʻysunadi:
+  statistik tushuncha -> maʼlumot -> kod -> natija -> talqin -> qaror
+  Izohlar va oʻzgaruvchi nomlari — oʻzbekcha; funksiya nomlari — inglizcha.
+  Simulyatsiya urugʻi (seed): 2026. Generator: MINSTD (5-topshiriq).
+  ==================================================================
+-->
+
+# Laboratoriya haqida
+
+**Maqsad.** Maʼruzada aksioma va formula sifatida koʻrgan ehtimollikni
+haqiqiy maʼlumot ustida **sanab** qayta qurish, qoidalarni son bilan
+tekshirish va nazariy javobni **simulyatsiya** bilan mustaqil
+tasdiqlash.
+
+**Asosiy gʻoya.** Agar maʼlumot toʻplamining har bir qatori teng
+imkoniyatli natija deb qaralsa, u holda ehtimollik — bu shunchaki
+**ulush**:
+
+$$\Pr(A) \;=\; \frac{n(A)}{n}.$$
+
+Shu sababli bugungi barcha ehtimolliklarni siz `table()` va `sum()`
+yordamida, formulaga ishonmasdan, **oʻzingiz sanab** olasiz. Formula esa
+sanoq natijasini *tekshirish* uchun ishlatiladi — teskarisi emas.
+
+**Ish zanjiri.** Har bir topshiriqda quyidagi ketma-ketlikni yozma
+ravishda bajarasiz:
+
+> **statistik tushuncha → maʼlumot → kod → natija → talqin → qaror**
+
+Faqat kod yozib, natijani izohsiz qoldirish — topshiriq bajarilmagan
+hisoblanadi. Baholashning yarmidan koʻpi aynan *talqin* va *qaror*
+bosqichlariga beriladi.
+
+**Vaqt va ball taqsimoti (120 daqiqa, 115 ball + 5 bonus).**
+
+| # | Mazmun | Daqiqa | Blum | Ball |
+|---|---|---|---|---|
+| 0 | Muhitni sozlash | 5 | — | — |
+| 1 | Elementar hodisalar fazosini qurish, kontingensiya jadvali | 15 | Tushunish | 15 |
+| 2 | Qoʻshish qoidasini sanab tekshirish | 20 | Qoʻllash | 20 |
+| 3 | Bogʻliqsizlik: bogʻliq va deyarli bogʻliqsiz juftlik | 20 | Tahlil | 20 |
+| 4 | Shartli ehtimollik ikki yoʻnalishda | 15 | Tahlil | 15 |
+| 5 | Monte-Karlo va katta sonlar qonuni | 25 | Baholash | 25 |
+| 6 | Tugʻilgan kun masalasi: simulyatsiya vs aniq formula | 20 | Baholash | 20 |
+| 7 | Ixtiyoriy: hosildorlik maʼlumotidagi hodisalar | uyda | Yaratish | +5 |
+
+**Ogohlantirish.** 3-haftada oʻrganiladigan **toʻliq ehtimollik
+formulasi** va **Bayes teoremasi** bu laboratoriyada qoʻllanmaydi.
+Bugun faqat sanoq, qoʻshish qoidasi, shartli ehtimollik taʼrifi,
+koʻpaytirish qoidasi va bogʻliqsizlik bilan ishlaymiz.
+
+---
+
+# 0-bosqich. Muhitni sozlash
+
+```{r lokal}
+# --- MUHIM: UTF-8 muhitini kafolatlash --------------------------------
+# Oʻzbekcha nomlarda tutuq belgisi «ʻ» (U+02BB) bor. Agar R UTF-8
+# boʻlmagan lokalda ishga tushsa (masalan LC_CTYPE=C, yoki eski Windows),
+# kod ichidagi "Oʻzbekiston" satri va CSV dan oʻqilgan "Oʻzbekiston"
+# qiymati BAYTLARI bir xil boʻlsa ham TENG DEB HISOBLANMAYDI, chunki R
+# ularga turli kodlash bayrogʻini qoʻyadi. Natijada filter() BOʻSH jadval
+# qaytaradi va butun tahlil NaN ga aylanadi — hech qanday xato xabari
+# chiqmasdan. 7-topshiriqda aynan shu tuzoqqa duch kelasiz.
+if (!grepl("UTF-8", Sys.getlocale("LC_CTYPE"), ignore.case = TRUE)) {
+  for (lokal in c("C.UTF-8", "en_US.UTF-8", "uz_UZ.UTF-8",
+                  "Uzbek_Uzbekistan.utf8", "English_United States.utf8")) {
+    if (suppressWarnings(Sys.setlocale("LC_CTYPE", lokal)) != "") break
+  }
+}
+cat("LC_CTYPE =", Sys.getlocale("LC_CTYPE"), "\n")
+```
+
+```{r paketlar}
+# --- Kerakli paketlar -------------------------------------------------
+# readr   — CSV faylni oʻqish (kodlashni aniq belgilash imkoni bor)
+# dplyr   — maʼlumotni filtrlash, guruhlash, xulosalash
+# ggplot2 — grafiklar
+library(readr)
+library(dplyr)
+library(ggplot2)
+
+# Okabe-Ito palitrasi: rang koʻrmaslikka moslashgan.
+# Kursda maʼlumot ranglari faqat shu roʻyxatdan olinadi.
+oiBlue <- "#0072B2"; oiOrange <- "#E69F00"; oiGreen  <- "#009E73"
+oiPink <- "#CC79A7"; oiVerm   <- "#D55E00"; oiSky    <- "#56B4E9"
+
+theme_set(theme_minimal(base_size = 11))
+theme_update(
+  panel.grid.minor = element_blank(),
+  plot.title    = element_text(face = "bold"),
+  plot.subtitle = element_text(colour = "grey30")
+)
+```
+
+```{r shrift}
+# --- Grafiklarda oʻzbekcha «ʻ» belgisi -------------------------------
+# R ning standart pdf() qurilmasi eski Type 1 shriftlardan foydalanadi
+# va U+02BB belgisini CHIZA OLMAYDI: uning oʻrniga nuqta qoʻyadi va
+# «conversion failure ... mbcsToSbcs» ogohlantirishini beradi.
+# Yechim: cairo mexanizmiga asoslangan qurilma tanlash (setup katagida
+# allaqachon qilingan). Agar bu fayl Rscript orqali ishga tushirilsa,
+# quyidagi funksiya bilan saqlang:
+grafikni_saqla <- function(p, nom, kengligi = 7, balandligi = 4.2) {
+  ggsave(nom, p, width = kengligi, height = balandligi,
+         device = grDevices::cairo_pdf)
+}
+
+# QOIDA: agar cairo mavjudligiga ishonch boʻlmasa, grafik yorliqlarida
+# faqat ASCII harflardan foydalaning ("Ozbekiston", "n" va h.k.).
+# Quyidagi grafiklarda aynan shu ehtiyot chorasi qoʻllanadi.
+cat("cairo mavjudmi:", capabilities("cairo"), "\n")
+```
+
+---
+
+# 1-topshiriq. Elementar hodisalar fazosini qurish
+
+**Qiyinlik: 2 (Konseptual) · Blum: Tushunish · 15 ball · 15 daqiqa**
+
+### Statistik tushuncha
+
+**Tasodifiy tajriba** *(random experiment)* — natijasi oldindan aniq
+maʼlum boʻlmagan jarayon. **Elementar hodisalar fazosi** *(sample
+space)* $S$ — barcha mumkin boʻlgan natijalar toʻplami. **Hodisa**
+*(event)* — $S$ ning qism toʻplami.
+
+Bugungi tajriba: *maʼlumot toʻplamidan tasodifiy bitta filmni tanlash*.
+Har bir film — bitta elementar natija. Agar tanlov teng imkoniyatli
+boʻlsa (biz shunday deb faraz qilamiz), u holda
+
+$$\Pr(A) = \frac{n(A)}{n},\qquad n = |S|.$$
+
+**Fazoni aniqlash — pedantlik emas, majburiyat.** Reytingi
+koʻrsatilmagan filmlar reyting hodisalari uchun `NA` beradi. Ularni
+fazoda qoldirsak, «reytingi R boʻlmagan» hodisasiga tegishli boʻlmagan
+kuzatuvlar ham kirib ketadi va barcha ehtimolliklar biroz siljiydi.
+Shu sababli **fazoni oshkora toraytiramiz** va buni hisobotda yozamiz.
+
+### Maʼlumot
+
+`data/kinolar-byudjet.csv` — 2000–2018-yillardagi yirik byudjetli
+filmlar (manba: *The Numbers* / Kaggle ochiq toʻplami). Ustunlar:
+`nomi`, `yil`, `janr`, `reyting` (MPAA), `distribyutor`, `byudjet`,
+`ichki_daromad`, `jahon_daromadi`.
+
+```{r yuklash}
+# read_csv() — readr paketining funksiyasi: vergul ajratgichli faylni
+# oʻqiydi va ustun turlarini avtomatik aniqlaydi.
+# locale(encoding = "UTF-8") — MAJBURIY: fayl UTF-8 da yozilgan.
+kino <- read_csv("data/kinolar-byudjet.csv",
+                 locale = locale(encoding = "UTF-8"),
+                 show_col_types = FALSE)
+
+dim(kino)              # (qatorlar, ustunlar)
+```
+
+```{r tuzilma}
+# str() — ichki tuzilma: har bir ustun turi va dastlabki qiymatlari.
+str(kino)
+
+# Kategorik oʻzgaruvchilarning darajalari (levels)
+unique(kino$janr)
+unique(kino$reyting)
+```
+
+```{r yetishmaydigan}
+# --- Yetishmayotgan qiymatlarni TEKSHIRISH (taxmin qilmang!) ----------
+# is.na(x) — har bir katak uchun TRUE/FALSE; colSums() ularni sanaydi.
+colSums(is.na(kino))
+```
+
+```{r fazo}
+# --- Ishchi fazoni qurish --------------------------------------------
+# filter(!is.na(reyting)) — reytingi koʻrsatilgan qatorlarni qoldiradi.
+# Bu QAROR: uni hisobotda oshkora yozish shart.
+kino_t <- kino %>% filter(!is.na(reyting))
+
+n_xom  <- nrow(kino)      # xom maʼlumotdagi qatorlar
+n      <- nrow(kino_t)    # ISHCHI FAZO hajmi |S|
+n_yoq  <- n_xom - n       # chiqarib tashlangan kuzatuvlar
+
+cat("xom satrlar          :", n_xom, "\n")
+cat("reytingi yoʻq        :", n_yoq, "\n")
+cat("ISHCHI FAZO |S| = n  :", n, "\n")
+cat("ulushi               :", sprintf("%.2f%%", 100 * n_yoq / n_xom), "\n")
+```
+
+```{r jadval}
+# --- Kontingensiya jadvali -------------------------------------------
+# table(x, y) — ikki kategorik oʻzgaruvchi kesishmasidagi CHASTOTALAR.
+# addmargins() — qator va ustun yigʻindilarini (marginallarni) qoʻshadi.
+# Marginal yigʻindilar — bu «marginal ehtimollik» atamasining manbai:
+# ular jadvalning CHETIDA (margin) turadi.
+jadval <- table(kino_t$janr, kino_t$reyting)
+jadval_m <- addmargins(jadval)
+jadval_m
+```
+
+```{r jadval_tekshiruv}
+# Nazorat: jadvalning umumiy yigʻindisi n ga teng boʻlishi SHART.
+# Agar teng boʻlmasa — fazo notoʻgʻri qurilgan.
+cat("jadval yigʻindisi:", sum(jadval), " | n:", n,
+    " | mos:", sum(jadval) == n, "\n")
+```
+
+### Natija (kutilayotgan)
+
+```
+xom satrlar         : 2467
+reytingi yoʻq       : 9
+ISHCHI FAZO |S| = n : 2458   (0.36 % chiqarib tashlandi)
+
+            G   PG  PG-13     R   Sum
+Action      0    6    178   174   358
+Adventure  41  246     62    14   363
+Comedy      3   39    266   292   600
+Drama       5  106    339   479   929
+Horror      0    3     51   154   208
+Sum        49  400    896  1113  2458
+```
+
+### Talqin — daftaringizga yozing
+
+**T1.1** Ushbu tajribada elementar natija nima? Elementar hodisalar
+fazosi $S$ nechta elementdan iborat? Uni soʻz bilan taʼriflang.
+
+**T1.2** Jadvaldagi $5 \times 4 = 20$ ta katak nimani anglatadi? Har bir
+katak qanday hodisaga mos keladi? Bu 20 ta hodisa **birgalikda
+boʻlmagan** (mutually exclusive) va **toʻliq guruh** (exhaustive)
+tashkil qiladimi? Javobingizni yigʻindi bilan asoslang.
+
+**T1.3** Reytingi koʻrsatilmagan 9 ta film chiqarib tashlandi.
+(a) Bu qaror qanday farazga tayanadi? (b) Agar reyting *tasodifan
+emas*, balki tizimli sabab bilan yoʻqolgan boʻlsa (masalan, AQShda
+prokatga chiqmagan xorijiy filmlar), bu bizning $\Pr(R)$ bahomizni
+qaysi tomonga siljitadi? Yuqoridagi 9 ta filmning nomlariga qarab
+fikringizni asoslang.
+
+**T1.4** «Har bir film teng imkoniyatli» degan faraz qanchalik
+oʻrinli? Bu maʼlumot toʻplami *barcha* filmlarning tanlanmasimi yoki
+bosh toʻplamimi? Javobingiz $\Pr(A)$ ning maʼnosini qanday oʻzgartiradi?
+
+### Qaror
+
+Ushbu fazo ustida ehtimollik hisoblashni boshlash mumkinmi? Agar ha
+boʻlsa, hisobotingizda **qaysi bir jumlani** majburiy yozib qoʻyish
+kerak? Oʻsha jumlani yozing.
+
+---
+
+# 2-topshiriq. Qoʻshish qoidasini sanab tekshirish
+
+**Qiyinlik: 3 (Amaliy) · Blum: Qoʻllash · 20 ball · 20 daqiqa**
+
+### Statistik tushuncha
+
+**Qoʻshish qoidasi** *(addition rule)*:
+
+$$\Pr(A \cup B) \;=\; \Pr(A) + \Pr(B) - \Pr(A \cap B).$$
+
+Kesishmani ayirish — bezak emas: $A \cap B$ dagi kuzatuvlar $\Pr(A)$ da
+bir marta, $\Pr(B)$ da yana bir marta sanaladi. Ayirmasangiz, ular
+**ikki marta** hisoblanadi.
+
+Agar $A \cap B = \varnothing$ boʻlsa, hodisalar **birgalikda boʻlmagan**
+*(mutually exclusive)* deyiladi va qoida
+$\Pr(A \cup B) = \Pr(A) + \Pr(B)$ koʻrinishini oladi. Bu — Kolmogorovning
+uchinchi aksiomasi (A3).
+
+**Toʻldiruvchi qoidasi** *(complement rule)*:
+$\Pr(A^{c}) = 1 - \Pr(A)$ — A2 va A3 dan kelib chiqadi.
+
+### Maʼlumot
+
+$A = \{\text{janr} = \text{Drama}\}$, $B = \{\text{reyting} = \text{R}\}$,
+fazo $= 2\,458$ film.
+
+```{r hodisalar}
+# --- Hodisalarni MANTIQIY VEKTOR sifatida aniqlash --------------------
+# R da hodisa — TRUE/FALSE vektor. Bu eng muhim gʻoya:
+#   hodisa  <-> mantiqiy vektor
+#   n(A)    <-> sum(A)          (TRUE = 1, FALSE = 0)
+#   A kesishma B <-> A & B      (mantiqiy VA)
+#   A birlashma B <-> A | B     (mantiqiy YOKI)
+#   A toʻldiruvchisi <-> !A     (mantiqiy INKOR)
+A <- kino_t$janr    == "Drama"
+B <- kino_t$reyting == "R"
+
+# sum() mantiqiy vektorda — TRUE larning soni, yaʼni n(A).
+nA  <- sum(A)
+nB  <- sum(B)
+nAB <- sum(A & B)
+
+cat("n(A) =", nA, " n(B) =", nB, " n(A∩B) =", nAB, "\n")
+```
+
+```{r ehtimolliklar}
+# --- Ehtimolliklar: shunchaki ulush -----------------------------------
+# mean() mantiqiy vektorda — TRUE larning ULUSHI, yaʼni n(A)/n.
+# Yaʼni mean(A) va sum(A)/n AYNAN bir xil narsa. Buni tekshiring:
+PA  <- mean(A)
+PB  <- mean(B)
+PAB <- mean(A & B)
+
+cat(sprintf("P(A)   = %d/%d = %.4f\n", nA,  n, PA))
+cat(sprintf("P(B)   = %d/%d = %.4f\n", nB,  n, PB))
+cat(sprintf("P(A∩B) = %d/%d = %.4f\n", nAB, n, PAB))
+cat("mean(A) == sum(A)/n :", isTRUE(all.equal(PA, nA / n)), "\n")
+```
+
+```{r qoshish}
+# --- Qoʻshish qoidasi: IKKI YOʻL bilan --------------------------------
+# 1-yoʻl: formula
+formula_boyicha <- PA + PB - PAB
+
+# 2-yoʻl: bevosita sanash — birlashmani mantiqiy YOKI bilan qurib,
+# ulushini olamiz. Formulaga UMUMAN murojaat qilinmaydi.
+sanab <- mean(A | B)
+
+cat(sprintf("formula : %.4f + %.4f - %.4f = %.4f\n", PA, PB, PAB,
+            formula_boyicha))
+cat(sprintf("sanab   : n(A∪B) = %d  ->  %.4f\n", sum(A | B), sanab))
+cat("farq    :", format(abs(formula_boyicha - sanab), scientific = TRUE),
+    "\n")
+cat("mos     :", isTRUE(all.equal(formula_boyicha, sanab)), "\n")
+```
+
+```{r xato_bahosi}
+# --- Kesishmani AYIRMASLIK qanchalik xato beradi? ---------------------
+notogri <- PA + PB
+cat(sprintf("notoʻgʻri (kesishmasiz) : %.4f\n", notogri))
+cat(sprintf("toʻgʻri                 : %.4f\n", sanab))
+cat(sprintf("ortiqcha                : %.4f  (%.1f%% nisbiy xato)\n",
+            notogri - sanab, 100 * (notogri - sanab) / sanab))
+
+# --- Toʻldiruvchi qoidasi ---------------------------------------------
+cat(sprintf("P(A^c) = 1 - %.4f = %.4f ; sanab: %d/%d = %.4f\n",
+            PA, 1 - PA, sum(!A), n, mean(!A)))
+```
+
+```{r birgalikda_bolmagan}
+# --- Birgalikda boʻlmagan hodisalar -----------------------------------
+# C = "G reyting". Bitta film bir vaqtda ham R, ham G boʻla olmaydi,
+# chunki reyting ustuni har bir filmga BITTA qiymat beradi.
+C <- kino_t$reyting == "G"
+
+cat("n(B ∩ C) =", sum(B & C), "  -> boʻsh toʻplam\n")
+cat(sprintf("P(B ∪ C): formula = %.4f + %.4f = %.4f | sanab = %.4f\n",
+            mean(B), mean(C), mean(B) + mean(C), mean(B | C)))
+```
+
+### Natija (kutilayotgan)
+
+```
+n(A) = 929   n(B) = 1113   n(A∩B) = 479
+P(A)   = 929/2458  = 0.3779
+P(B)   = 1113/2458 = 0.4528
+P(A∩B) = 479/2458  = 0.1949
+
+formula : 0.3779 + 0.4528 - 0.1949 = 0.6359
+sanab   : n(A∪B) = 1563  ->  0.6359      mos: TRUE
+
+notoʻgʻri (kesishmasiz) : 0.8308
+ortiqcha                : 0.1949   (30.6 % nisbiy xato)
+P(A^c) = 0.6221          n(A^c) = 1529
+
+n(B ∩ C) = 0
+P(B ∪ C): 0.4528 + 0.0199 = 0.4727
+```
+
+### Talqin — daftaringizga yozing
+
+**T2.1** `mean(A | B)` va `PA + PB - PAB` bir xil son berdi. Bu
+qoʻshish qoidasini **isbotlaydimi**? Aniq javob bering: simulyatsiya
+yoki hisob nimani isbotlaydi, nimani faqat *tasdiqlaydi*?
+
+**T2.2** Kesishmani ayirmaslik $0{,}1949$ ortiqcha baho berdi. Bu
+son qayerdan kelib chiqqan? Uni «ikki marta sanalgan filmlar soni»
+bilan bogʻlab tushuntiring.
+
+**T2.3** $\Pr(A) + \Pr(B) = 0{,}8308 < 1$. Agar bu yigʻindi $1$ dan
+katta chiqqanida, bu xato boʻlarmidi? Nima uchun? (Diqqat: qaysi
+aksioma buziladi, qaysisi buzilmaydi?)
+
+**T2.4** $B$ va $C$ birgalikda boʻlmagan hodisalar. Ular **bogʻliqsiz**
+hammi? $\Pr(C \mid B)$ ni hisoblang va javobingizni shu son bilan
+asoslang. (Bu — haftaning markaziy savoli; 3-topshiriqda unga
+qaytamiz.)
+
+### Qaror
+
+Kinoprokat kompaniyasi «Drama **yoki** R reytingli» filmlar uchun
+alohida marketing byudjeti ajratmoqchi. Bu toifaga fazoning necha
+foizi kiradi? Byudjetni $\Pr(A) + \Pr(B)$ asosida rejalashtirsa, qancha
+resurs ortiqcha ajratiladi va nima uchun?
+
+---
+
+# 3-topshiriq. Bogʻliqsizlik: bogʻliq va deyarli bogʻliqsiz juftlik
+
+**Qiyinlik: 4 (Analitik) · Blum: Tahlil · 20 ball · 20 daqiqa**
+
+### Statistik tushuncha
+
+Ikki hodisa **bogʻliqsiz** *(independent)* deyiladi, agar quyidagi
+uchta shartdan biri (demak, uchalasi ham) bajarilsa:
+
+$$\Pr(A \cap B) = \Pr(A)\Pr(B),\qquad
+\Pr(A \mid B) = \Pr(A),\qquad
+\Pr(B \mid A) = \Pr(B).$$
+
+Maʼnosi: **$B$ ni bilish $A$ haqidagi bahoni oʻzgartirmaydi.**
+
+Tekshirishning eng qulay usuli — **nisbat**:
+
+$$\lambda \;=\; \frac{\Pr(A \cap B)}{\Pr(A)\Pr(B)}
+\;=\; \frac{\text{kuzatilgan son}}{\text{kutilgan son}}.$$
+
+$\lambda = 1$ — bogʻliqsizlik; $\lambda > 1$ — hodisalar birga
+uchrashga moyil; $\lambda < 1$ — bir-birini «itaradi».
+
+### Maʼlumot
+
+Bir xil jadval, ikki xil juftlik: (Drama, R) va (Drama, PG-13).
+
+```{r bogliqsizlik_funksiya}
+# --- Bogʻliqsizlikni tekshiruvchi funksiya ----------------------------
+# Funksiya yozish sababi: bir xil hisobni ikki juftlikka AYNAN bir xil
+# tarzda qoʻllash. Qoʻlda takrorlash — xato manbai.
+bogliqsizlik <- function(X, Y, nomX = "X", nomY = "Y") {
+  PX  <- mean(X); PY <- mean(Y); PXY <- mean(X & Y)
+  kutilgan <- PX * PY * length(X)        # bogʻliqsizlikdagi kutilgan son
+  # Yorliqlarni avval yigʻib, keyin bir xil kenglikka tekislaymiz —
+  # shunda ustunlar tik chiqadi (formatC bilan manfiy width = chapga).
+  yorliq <- function(s) formatC(s, width = -15)
+  cat("---", nomX, "va", nomY, "---\n")
+  cat(sprintf("  %s = %.4f    n = %d\n",
+              yorliq(sprintf("P(%s)", nomX)), PX, sum(X)))
+  cat(sprintf("  %s = %.4f    n = %d\n",
+              yorliq(sprintf("P(%s)", nomY)), PY, sum(Y)))
+  cat(sprintf("  %s = %.4f    n = %d\n",
+              yorliq("P(kesishma)"), PXY, sum(X & Y)))
+  cat(sprintf("  %s = %.4f\n",
+              yorliq(sprintf("P(%s)P(%s)", nomX, nomY)), PX * PY))
+  cat(sprintf("  %s = %.2f   kuzatilgan = %d\n",
+              yorliq("kutilgan son"), kutilgan, sum(X & Y)))
+  cat(sprintf("  %s = %.4f\n", yorliq("NISBAT lambda"), PXY / (PX * PY)))
+  cat(sprintf("  P(%s|%s) = %.4f   vs   P(%s) = %.4f   (farq %.4f)\n",
+              nomY, nomX, mean(Y[X]), nomY, PY, mean(Y[X]) - PY))
+  invisible(PXY / (PX * PY))
+}
+```
+
+```{r juftlik1}
+# --- 1-juftlik: Drama va R --------------------------------------------
+# Y[X] — X TRUE boʻlgan qatorlardagi Y qiymatlari. Bu aynan «fazoni
+# toraytirish», yaʼni shartli ehtimollikning taʼrifi.
+lam1 <- bogliqsizlik(A, B, "Drama", "R")
+```
+
+```{r juftlik2}
+# --- 2-juftlik: Drama va PG-13 ----------------------------------------
+D <- kino_t$reyting == "PG-13"
+lam2 <- bogliqsizlik(A, D, "Drama", "PG13")
+```
+
+```{r taqqoslash}
+# --- Ikki juftlikni yonma-yon qoʻyish ---------------------------------
+cat(sprintf("λ(Drama, R)    = %.4f   ->  |λ-1| = %.4f\n", lam1,
+            abs(lam1 - 1)))
+cat(sprintf("λ(Drama, PG13) = %.4f   ->  |λ-1| = %.4f\n", lam2,
+            abs(lam2 - 1)))
+cat(sprintf("bogʻliqlik kuchi %.0f barobar farq qiladi\n",
+            abs(lam1 - 1) / abs(lam2 - 1)))
+```
+
+```{r barcha_juftliklar}
+# --- BARCHA 20 juftlik uchun λ jadvali --------------------------------
+# outer() emas, oddiy ikki qatlamli sikl: har bir λ ni oshkora koʻrsatish
+# uchun. Jadval bogʻliqlikning QAYERDA kuchli ekanini bir qarashda
+# koʻrsatadi.
+janrlar   <- sort(unique(kino_t$janr))
+reytinglar <- c("G", "PG", "PG-13", "R")
+
+lambda <- matrix(NA_real_, length(janrlar), length(reytinglar),
+                 dimnames = list(janrlar, reytinglar))
+for (j in janrlar) {
+  for (r in reytinglar) {
+    Xj <- kino_t$janr == j
+    Yr <- kino_t$reyting == r
+    lambda[j, r] <- mean(Xj & Yr) / (mean(Xj) * mean(Yr))
+  }
+}
+round(lambda, 3)
+```
+
+```{r lambda_grafik, fig.height=3.6}
+# --- λ ni vizuallashtirish --------------------------------------------
+# DIQQAT: grafik yorliqlarida faqat ASCII harflar (Ozbekcha tutuq
+# belgisi ayrim grafik qurilmalarida chizilmaydi — 0-bosqichga qarang).
+lam_df <- as.data.frame(as.table(lambda))
+names(lam_df) <- c("janr", "reyting", "lambda")
+
+# MUHIM: ikkita katakda λ = 0 (Action×G va Horror×G — birorta ham film
+# yoʻq). log2(0) = -Inf boʻlgani uchun rang shkalasi butunlay buziladi:
+# qolgan barcha kataklar bir xil oq rangga aylanadi. Shu sababli
+# log2(λ) ni [-2.5, 2.5] oraligʻiga QISAMIZ (clamp). Bu — vizual qaror,
+# uni izohda oshkora aytish shart.
+lam_df$rang <- pmin(pmax(log2(lam_df$lambda), -2.5), 2.5)
+
+ggplot(lam_df, aes(x = reyting, y = janr, fill = rang)) +
+  geom_tile(colour = "white", linewidth = 0.8) +
+  geom_text(aes(label = sprintf("%.2f", lambda),
+                colour = abs(rang) > 1.6), size = 3.2, show.legend = FALSE) +
+  scale_colour_manual(values = c(`TRUE` = "white", `FALSE` = "grey10")) +
+  scale_fill_gradient2(low = oiBlue, mid = "grey95", high = oiVerm,
+                       midpoint = 0, limits = c(-2.5, 2.5),
+                       name = "log2(lambda)\n(qisilgan)") +
+  scale_y_discrete(limits = rev(janrlar)) +
+  labs(title = "Bogliqlik kuchi: lambda = kuzatilgan / kutilgan",
+       subtitle = "lambda = 1 -> bogliqsiz; >1 birga uchraydi; <1 itaradi",
+       x = "MPAA reyting", y = "Janr",
+       caption = "Manba: kinolar-byudjet.csv, n = 2458. Rang shkalasi +/-2.5 ga qisilgan.") +
+  theme(panel.grid = element_blank())
+```
+
+### Natija (kutilayotgan)
+
+```
+--- Drama va R ---
+  P(Drama)        = 0.3779    n = 929
+  P(R)            = 0.4528    n = 1113
+  P(kesishma)     = 0.1949    n = 479
+  P(Drama)P(R)    = 0.1711
+  kutilgan son    = 420.66   kuzatilgan = 479
+  NISBAT lambda   = 1.1387
+  P(R|Drama) = 0.5156   vs   P(R) = 0.4528   (farq 0.0628)
+
+--- Drama va PG13 ---
+  P(Drama)        = 0.3779    n = 929
+  P(PG13)         = 0.3645    n = 896
+  P(kesishma)     = 0.1379    n = 339
+  P(Drama)P(PG13) = 0.1378
+  kutilgan son    = 338.64   kuzatilgan = 339
+  NISBAT lambda   = 1.0011
+  P(PG13|Drama) = 0.3649   vs   P(PG13) = 0.3645   (farq 0.0004)
+
+λ(Drama, R)    = 1.1387   ->  |λ-1| = 0.1387
+λ(Drama, PG13) = 1.0011   ->  |λ-1| = 0.0011
+bogʻliqlik kuchi 131 barobar farq qiladi
+
+lambda jadvali (janr x reyting):
+              G    PG PG-13     R
+Action    0.000 0.103 1.364 1.073
+Adventure 5.666 4.164 0.469 0.085
+Comedy    0.251 0.399 1.216 1.075
+Drama     0.270 0.701 1.001 1.139
+Horror    0.000 0.089 0.673 1.635
+```
+
+### Talqin — daftaringizga yozing
+
+**T3.1** (Drama, PG-13) juftligida kutilgan son $338{,}64$, kuzatilgan
+$339$ — farq bitta filmdan kam. Bu juftlik **bogʻliqsiz** deb aytish
+mumkinmi? Javobingizda «bogʻliqsiz» va «bogʻliqsizlikdan sezilarli
+chetlanish aniqlanmadi» iboralarining farqini koʻrsating.
+
+**T3.2** $\lambda = 1{,}1387$ ni **soʻz bilan** tushuntiring: «Drama va
+R birga … barobar koʻp uchraydi». Bu 14 % ortiqcha — amaliy jihatdan
+katta farqmi? Javobingizni kutilgan va kuzatilgan sonlar (420,63 va
+479) orqali asoslang.
+
+**T3.3** 2-topshiriqda $B$ (R) va $C$ (G) **birgalikda boʻlmagan**
+edi. Ular uchun $\lambda$ ni hisoblang. Natijani izohlang: birgalikda
+boʻlmagan hodisalar bogʻliqsizlik shkalasining qaysi uchida turadi?
+
+**T3.4** $\lambda$ jadvalidagi eng katta va eng kichik qiymatlarni
+toping. Ular qaysi juftliklar? Bu natijalar kinoindustriya haqida
+qanday **mazmunli** (statistik emas) haqiqatni aytadi?
+
+**T3.5** Butun jadvalda bogʻliqlik topildi. Bu «janr reytingni
+**keltirib chiqaradi**» degani emas. Nima uchun emas? Kamida bitta
+uchinchi omilni nomlang.
+
+### Qaror
+
+Studiya rahbari: «Drama suratga olsak, R reyting olish ehtimoli
+oʻrtachadan yuqori». Bu jumla maʼlumot bilan tasdiqlanadimi? Aynan
+qaysi ikki sonni yonma-yon qoʻyib javob berasiz? Bir jumlada yozing.
+
+---
+
+# 4-topshiriq. Shartli ehtimollik ikki yoʻnalishda
+
+**Qiyinlik: 4 (Analitik) · Blum: Tahlil · 15 ball · 15 daqiqa**
+
+### Statistik tushuncha
+
+**Shartli ehtimollik** *(conditional probability)*:
+
+$$\Pr(A \mid B) \;=\; \frac{\Pr(A \cap B)}{\Pr(B)},\qquad \Pr(B) > 0.$$
+
+Maʼnosi: **fazoni toraytirish**. Endi maxraj $n$ emas, $n(B)$.
+
+$\Pr(A \mid B)$ va $\Pr(B \mid A)$ **umuman boshqa sonlar**, chunki
+maxrajlar boshqa. Ularni chalkashtirish — sud amaliyotida
+**prokuror xatosi** *(prosecutor's fallacy)* deb ataladi va real
+hukmlarga sabab boʻlgan.
+
+**Koʻpaytirish qoidasi** *(multiplication rule)*:
+$\Pr(A \cap B) = \Pr(B)\Pr(A \mid B) = \Pr(A)\Pr(B \mid A)$.
+
+### Maʼlumot
+
+$H = \{\text{Horror}\}$, $V = \{\text{Adventure}\}$, $B = \{\text{R}\}$.
+
+```{r shartli}
+# --- Shartli ehtimollikni IKKI usulda hisoblash -----------------------
+H <- kino_t$janr == "Horror"
+V <- kino_t$janr == "Adventure"
+
+# 1-usul: taʼrif boʻyicha (kesishma / shart hodisasi)
+tarif <- mean(H & B) / mean(H)
+
+# 2-usul: FAZONI TORAYTIRIB — faqat Horror qatorlarini olib, ular
+# ichidagi R ulushini hisoblaymiz. B[H] — H TRUE boʻlgan qatorlardagi B.
+toraytirib <- mean(B[H])
+
+cat(sprintf("P(R|Horror): taʼrif = %.4f | toraytirib = %.4f | mos = %s\n",
+            tarif, toraytirib, isTRUE(all.equal(tarif, toraytirib))))
+cat(sprintf("  maxraj: n(Horror) = %d  (n = %d emas!)\n", sum(H), n))
+```
+
+```{r ikki_yonalish}
+# --- IKKI YOʻNALISH: bir xil kesishma, boshqa maxraj -------------------
+PRH <- mean(B[H])     # P(R | Horror)      maxraj n(Horror) = 208
+PHR <- mean(H[B])     # P(Horror | R)      maxraj n(R)      = 1113
+
+cat(sprintf("P(R | Horror) = %3d/%4d = %.4f\n", sum(H & B), sum(H), PRH))
+cat(sprintf("P(Horror | R) = %3d/%4d = %.4f\n", sum(H & B), sum(B), PHR))
+cat(sprintf("SURAT bir xil (%d), MAXRAJ boshqa -> nisbat %.2f barobar\n",
+            sum(H & B), PRH / PHR))
+```
+
+```{r shartlash_kuchi}
+# --- Shartlash ehtimollikni qanchalik oʻzgartiradi? -------------------
+cat(sprintf("P(R)              = %.4f   (shartsiz)\n", mean(B)))
+cat(sprintf("P(R | Horror)     = %.4f   (%.1f barobar yuqori)\n",
+            mean(B[H]), mean(B[H]) / mean(B)))
+cat(sprintf("P(R | Adventure)  = %.4f   (%.1f barobar past)\n",
+            mean(B[V]), mean(B) / mean(B[V])))
+cat(sprintf("Horror va Adventure orasidagi farq: %.1f barobar\n",
+            mean(B[H]) / mean(B[V])))
+```
+
+```{r kopaytirish}
+# --- Koʻpaytirish qoidasini tekshirish --------------------------------
+# P(A∩B) ni UCH xil yoʻl bilan olamiz. Uchalasi teng chiqishi shart.
+y1 <- mean(A & B)                 # bevosita sanash
+y2 <- mean(A) * mean(B[A])        # P(A)·P(B|A)
+y3 <- mean(B) * mean(A[B])        # P(B)·P(A|B)
+
+cat(sprintf("bevosita        : %.6f\n", y1))
+cat(sprintf("P(A)·P(B|A)     : %.4f × %.4f = %.6f\n", mean(A), mean(B[A]),
+            y2))
+cat(sprintf("P(B)·P(A|B)     : %.4f × %.4f = %.6f\n", mean(B), mean(A[B]),
+            y3))
+cat("uchalasi teng   :", isTRUE(all.equal(y1, y2)) &&
+      isTRUE(all.equal(y1, y3)), "\n")
+```
+
+```{r shartli_grafik, fig.height=3.4}
+# --- Shartlash taʼsirini koʻrsatuvchi grafik --------------------------
+# Yorliqlar ASCII: grafik qurilmasidan qatʼi nazar toʻgʻri chiqadi.
+qiy <- data.frame(
+  hodisa = factor(c("P(R)", "P(R | Horror)", "P(R | Adventure)"),
+                  levels = c("P(R | Adventure)", "P(R)", "P(R | Horror)")),
+  qiymat = c(mean(B), mean(B[H]), mean(B[V])),
+  turi   = c("shartsiz", "shartli", "shartli")
+)
+
+ggplot(qiy, aes(x = hodisa, y = qiymat, fill = turi)) +
+  geom_col(width = 0.6) +
+  geom_hline(yintercept = mean(B), linetype = "dashed",
+             colour = "grey30") +
+  geom_text(aes(label = sprintf("%.4f", qiymat)), hjust = -0.15,
+            size = 3.4) +
+  scale_fill_manual(values = c(shartsiz = oiOrange, shartli = oiBlue)) +
+  scale_y_continuous(limits = c(0, 0.85)) +
+  labs(title = "Shartlash ehtimollikni qanchalik ozgartiradi",
+       subtitle = "Uzuq chiziq: shartsiz P(R) = 0.4528",
+       x = NULL, y = "Ehtimollik",
+       caption = "Manba: kinolar-byudjet.csv, n = 2458") +
+  coord_flip()
+```
+
+### Natija (kutilayotgan)
+
+```
+P(R|Horror): taʼrif = 0.7404 | toraytirib = 0.7404 | mos = TRUE
+  maxraj: n(Horror) = 208  (n = 2458 emas!)
+
+P(R | Horror) = 154/ 208 = 0.7404
+P(Horror | R) = 154/1113 = 0.1384
+SURAT bir xil (154), MAXRAJ boshqa -> nisbat 5.35 barobar
+
+P(R)              = 0.4528
+P(R | Horror)     = 0.7404   (1.6 barobar yuqori)
+P(R | Adventure)  = 0.0386   (11.7 barobar past)
+Horror va Adventure orasidagi farq: 19.2 barobar
+
+bevosita     : 0.194874
+P(A)·P(B|A)  : 0.3779 × 0.5156 = 0.194874
+P(B)·P(A|B)  : 0.4528 × 0.4304 = 0.194874
+uchalasi teng: TRUE
+```
+
+### Talqin — daftaringizga yozing
+
+**T4.1** $\Pr(R \mid \text{Horror}) = 0{,}7404$ va
+$\Pr(\text{Horror} \mid R) = 0{,}1384$. Surat ikkalasida ham $154$.
+Farq **faqat** maxrajdanmi? Har bir maxraj qanday fazoni bildiradi?
+Ikki jumla bilan yozing.
+
+**T4.2** Quyidagi jumlani toʻgʻrilang: «R reytingli filmlarning
+74 % i qoʻrqinchli filmlar». Xato qayerda? Toʻgʻri jumlani yozing va
+toʻgʻri sonni koʻrsating.
+
+**T4.3** **Prokuror xatosi.** Sud ekspertizasi: «Agar ayblanuvchi
+aybsiz boʻlsa, dalilning bunday mos kelishi ehtimoli $1/10\,000$».
+Prokuror: «Demak, ayblanuvchining aybsizlik ehtimoli $1/10\,000$».
+Bu ikki jumla qanday shartli ehtimolliklarni bildiradi? Nima uchun
+ikkinchisi birinchisidan **kelib chiqmaydi**? Yuqoridagi Horror
+misolini analogiya sifatida ishlating.
+
+**T4.4** $\Pr(R \mid \text{Adventure}) = 0{,}0386$ — bu $\Pr(R)$ dan
+qariyb 12 barobar past. Shartlash ehtimollikni **oshirishi ham,
+kamaytirishi ham** mumkin. Qaysi holatda shartlash ehtimollikni
+umuman oʻzgartirmaydi? (Javobingiz 3-topshiriq bilan bogʻlansin.)
+
+### Qaror
+
+Onlayn kinoteatr «qoʻrqinchli film → yosh cheklovi ogohlantirishi»
+avtomatik qoidasini joriy qilmoqchi. Ushbu qoida qaysi shartli
+ehtimollikka tayanadi? Qoida qanchalik toʻgʻri ishlaydi va necha
+foiz holatda ortiqcha ogohlantirish beradi? Sonlar bilan javob bering.
+
+---
+
+# 5-topshiriq. Monte-Karlo va katta sonlar qonuni
+
+**Qiyinlik: 5 (Ilgʻor) · Blum: Baholash · 25 ball · 25 daqiqa**
+
+### Statistik tushuncha
+
+**Monte-Karlo simulyatsiyasi** *(Monte Carlo simulation)* — tajribani
+kompyuterda koʻp marta takrorlab, hodisaning **nisbiy chastotasi**
+bilan ehtimollikni baholash usuli.
+
+**Katta sonlar qonuni** *(law of large numbers)*: $n \to \infty$ da
+nisbiy chastota $\hat{p}_n$ ehtimollik $p$ ga **yaqinlashadi**.
+
+> **Diqqat.** Qonun *yaqinlashishni* kafolatlaydi, **monoton
+> yaxshilanishni emas**. $n$ ni oshirganda xato *ayrim qadamlarda
+> oshishi* mumkin — bugun buni oʻz koʻzingiz bilan koʻrasiz.
+
+Baholash xatosi taxminan $\sqrt{p(1-p)/n}$ ga proporsional: aniqlikni
+$10$ barobar oshirish uchun $n$ ni $100$ barobar oshirish kerak.
+
+### Maʼlumot — bu yerda maʼlumotni **oʻzimiz yaratamiz**
+
+Bu topshiriqda faylni oʻqimaymiz: tasodifiy sonlarni generatsiya
+qilamiz. Shu sababli **urugʻ (seed)** ni belgilash majburiy — aks holda
+natija har safar oʻzgaradi va ish takrorlanmaydigan boʻlib qoladi.
+
+```{r generatorlar_farqi}
+# --- 1-qadam: TILGA XOS generator ------------------------------------
+# set.seed(2026) — R ning ichki generatorini (Mersenne-Twister)
+# belgilangan holatga qoʻyadi. Natija R da har safar bir xil chiqadi.
+set.seed(2026)
+zar_r <- sample(1:6, 20, replace = TRUE)   # replace=TRUE: qaytarib qoʻyish
+cat("R,      set.seed(2026):", zar_r, "\n")
+
+set.seed(2026)
+cat("R, yana set.seed(2026):", sample(1:6, 20, replace = TRUE), "\n")
+
+# MUHIM PEDAGOGIK NUQTA:
+# Aynan shu kod Pythonda np.random.default_rng(2026) bilan BOSHQA
+# sonlar beradi. Bu XATO EMAS. Takrorlanuvchanlik =
+#   bir xil urugʻ + bir xil generator + bir xil dastur versiyasi.
+# Shu sababli quyida R va Python AYNAN bir xil son berishi uchun
+# umumiy generatorni oʻzimiz yozamiz.
+```
+
+```{r minstd}
+# --- 2-qadam: UMUMIY generator (MINSTD / Lehmer) ----------------------
+# x[k+1] = (48271 * x[k]) mod 2147483647,   u[k] = x[k] / 2147483647
+#
+# Nima uchun aynan shu sonlar? Eng katta oraliq koʻpaytma
+#   48271 × 2147483646 = 103 661 183 076 066  <  2^53 = 9 007 199 254 740 992
+# yaʼni u R ning double turida VA Pythonning butun sonida AYNAN bir xil
+# hisoblanadi. Natijada ikkala tilda bir xil sonlar oqimi chiqadi.
+#
+# closure (yopiq funksiya): ichki holat `x` chaqiruvlar orasida saqlanadi.
+minstd_yangi <- function(urugh) {
+  m <- 2147483647; a <- 48271
+  x <- urugh %% m
+  if (x == 0) x <- 1
+  function(k) {
+    u <- numeric(k)
+    for (i in seq_len(k)) {
+      x <<- (a * x) %% m      # <<- : tashqi muhitdagi x ni yangilaydi
+      u[i] <- x / m
+    }
+    u
+  }
+}
+
+# Nazorat qiymatlari — Python daftaridagi sonlar bilan SOLISHTIRING.
+g <- minstd_yangi(2026)
+cat(sprintf("u[%d] = %.10f\n", 1:5, g(5)))
+```
+
+```{r zar_simulyatsiya}
+# --- 3-qadam: 100 000 marta zar tashlash ------------------------------
+N <- 100000
+g <- minstd_yangi(2026)      # generatorni BOSHIDAN ishga tushiramiz
+u <- g(N)
+
+# floor(u*6)+1 — [0,1) oraligʻini 6 ta teng boʻlakka boʻlib, 1..6 ga
+# akslantiradi. Har bir yuz teng ehtimolli.
+zar <- floor(u * 6) + 1
+cat("dastlabki 10 tashlash:", head(zar, 10), "\n")
+
+# Chastota jadvali — barcha yuzlar taxminan teng chiqishi kerak.
+tab <- table(zar)
+rbind(son = tab, ulush = round(prop.table(tab), 5))
+```
+
+```{r yaqinlashish}
+# --- 4-qadam: YIGʻILUVCHI baho ----------------------------------------
+# cumsum(zar == 6) — birinchi k tashlashdagi oltiliklar soni.
+# Uni k ga boʻlsak, HAR BIR k uchun baho hosil boʻladi.
+kum   <- cumsum(zar == 6)
+baho  <- kum / seq_len(N)
+nazariy <- 1 / 6
+
+nlar <- c(10, 100, 1000, 10000, 100000)
+yaqin_jadval <- data.frame(
+  n     = nlar,
+  baho  = baho[nlar],
+  xato  = abs(baho[nlar] - nazariy)
+)
+print(yaqin_jadval, digits = 5)
+cat(sprintf("nazariy 1/6 = %.5f\n", nazariy))
+```
+
+```{r monotonlik}
+# --- 5-qadam: XATO MONOTON KAMAYADIMI? --------------------------------
+# diff() — ketma-ket ayirmalar. Manfiy qiymat: xato kamaydi.
+kamaydi <- diff(yaqin_jadval$xato) < 0
+for (i in seq_along(kamaydi)) {
+  cat(sprintf("n: %6d -> %6d   xato %.5f -> %.5f   %s\n",
+              nlar[i], nlar[i + 1],
+              yaqin_jadval$xato[i], yaqin_jadval$xato[i + 1],
+              ifelse(kamaydi[i], "kamaydi", "OSHDI  <-- diqqat")))
+}
+cat("\nXato barcha qadamlarda kamaydimi?", all(kamaydi), "\n")
+```
+
+```{r yaqinlashish_grafik, fig.height=4.0}
+# --- 6-qadam: yaqinlashish grafigi ------------------------------------
+# Logarifmik x oʻqi: n = 10 dan 100 000 gacha oraliq juda keng.
+# Har bir n ni chizish shart emas — 3000 ta nuqta yetarli va tez.
+indeks <- unique(round(exp(seq(log(10), log(N), length.out = 3000))))
+egri <- data.frame(n = indeks, baho = baho[indeks])
+
+# Nazariy standart xato yoʻlagi: p ± 2·sqrt(p(1-p)/n)
+p0 <- nazariy
+yolak <- data.frame(
+  n     = indeks,
+  past  = p0 - 2 * sqrt(p0 * (1 - p0) / indeks),
+  yuqori = p0 + 2 * sqrt(p0 * (1 - p0) / indeks)
+)
+
+ggplot() +
+  geom_ribbon(data = yolak, aes(x = n, ymin = past, ymax = yuqori),
+              fill = oiSky, alpha = 0.25) +
+  geom_line(data = egri, aes(x = n, y = baho), colour = oiBlue,
+            linewidth = 0.5) +
+  geom_hline(yintercept = p0, colour = oiVerm, linewidth = 0.8,
+             linetype = "dashed") +
+  annotate("text", x = 25, y = p0 + 0.055, label = "1/6 = 0.1667",
+           colour = oiVerm, size = 3.4, hjust = 0) +
+  scale_x_log10(breaks = c(10, 100, 1000, 10000, 100000),
+                labels = c("10", "100", "1000", "10 000", "100 000")) +
+  coord_cartesian(ylim = c(0, 0.4)) +
+  labs(title = "Katta sonlar qonuni: chastota ehtimollikka yaqinlashadi",
+       subtitle = "Soya: nazariy +/- 2 SE yolagi. Egri chiziq yolakdan chiqishi MUMKIN.",
+       x = "Tashlashlar soni n (logarifmik oq)",
+       y = "P(olti) bahosi",
+       caption = "MINSTD generatori, urug 2026, N = 100 000")
+```
+
+```{r ikki_zar}
+# --- 7-qadam: ikki zar yigʻindisi = 7 ---------------------------------
+# Generatorni yangidan ishga tushiramiz va 2N ta son olamiz:
+# toq oʻrindagilar — birinchi zar, juft oʻrindagilar — ikkinchi zar.
+g2 <- minstd_yangi(2026)
+u2 <- g2(2 * N)
+z1 <- floor(u2[seq(1, 2 * N, by = 2)] * 6) + 1
+z2 <- floor(u2[seq(2, 2 * N, by = 2)] * 6) + 1
+yigindi <- z1 + z2
+
+cat(sprintf("nazariy 6/36     = %.5f\n", 6 / 36))
+cat(sprintf("simulyatsiya     = %.5f\n", mean(yigindi == 7)))
+cat(sprintf("|xato|           = %.5f\n", abs(mean(yigindi == 7) - 6 / 36)))
+
+# Butun taqsimotni solishtiramiz: nazariy P(yigindi = s) = (6-|7-s|)/36
+naz <- (6 - abs(7 - 2:12)) / 36
+solishtirish <- data.frame(
+  yigindi = 2:12,
+  sim     = as.numeric(table(factor(yigindi, levels = 2:12))) / N,
+  nazariy = naz
+)
+print(solishtirish, digits = 4)
+```
+
+### Natija (kutilayotgan)
+
+```
+u[1] = 0.0455402984      u[2] = 0.2757419647      u[3] = 0.3403783731
+u[4] = 0.4044473546      u[5] = 0.0782521903
+dastlabki 10 tashlash: 1 2 3 3 1 2 3 3 4 3
+
+      n     baho     xato
+1    10  0.00000  0.16667
+2   100  0.08000  0.08667
+3  1000  0.16700  0.00033      <- eng aniq baho
+4 10000  0.16580  0.00087      <- XATO OSHDI
+5 1e+05  0.16650  0.00017
+nazariy 1/6 = 0.16667
+
+Xato barcha qadamlarda kamaydimi? FALSE
+
+nazariy 6/36 = 0.16667
+simulyatsiya = 0.16616
+```
+
+### Talqin — daftaringizga yozing
+
+**T5.1** $n = 1000$ da xato $0{,}00033$, $n = 10\,000$ da $0{,}00087$ —
+**oʻn barobar koʻp maʼlumot bilan baho yomonlashdi**. Katta sonlar
+qonuni buzildimi? Javobingizda «yaqinlashish» va «monoton kamayish»
+tushunchalarini aniq ajrating.
+
+**T5.2** $n = 10$ da baho $0$ chiqdi. Bu «olti tushishi mumkin emas»
+degani emas. $n = 10$ da hech qanday olti tushmasligining nazariy
+ehtimolini hisoblang: $(5/6)^{10}$. Natija sizni hayron qoldiradimi?
+
+**T5.3** Grafikdagi soyali yoʻlak $\pm 2\sqrt{p(1-p)/n}$. Egri chiziq
+yoʻlakdan chiqqan joylarni toping. Bu «xato» belgisimi? Taxminan necha
+foiz vaqtda chiqishi **kutiladi**?
+
+**T5.4** Baho aniqligini $10$ barobar oshirish uchun $n$ ni necha
+barobar oshirish kerak? Bu qoidani hisob-kitob bilan koʻrsating va
+simulyatsiyaning **amaliy chegarasi** haqida xulosa chiqaring.
+
+**T5.5 (muhim).** R va Python daftarlarida `set.seed(2026)` va
+`default_rng(2026)` **turli** sonlar berdi; MINSTD esa **bir xil**
+sonlar berdi. «Takrorlanuvchi tadqiqot» uchun hisobotda nimalarni
+yozish shart? Kamida toʻrtta bandni sanang.
+
+### Qaror
+
+Sugʻurta kompaniyasi kamdan-kam uchraydigan hodisa ($p \approx 0{,}001$)
+ehtimolini simulyatsiya bilan baholamoqchi va $\pm 10\,\%$ nisbiy
+aniqlik talab qilmoqda. $\sqrt{p(1-p)/n}$ formulasidan foydalanib
+kerakli $n$ ni taxminlang. Simulyatsiya bu masala uchun toʻgʻri
+vositami, yoki analitik yechim izlash kerakmi? Asoslang.
+
+---
+
+# 6-topshiriq. Tugʻilgan kun masalasi
+
+**Qiyinlik: 5 (Ilgʻor) · Blum: Baholash · 20 ball · 20 daqiqa**
+
+### Statistik tushuncha
+
+**Masala.** Xonada $k$ kishi bor. Kamida ikkitasining tugʻilgan kuni
+mos kelishi ehtimoli qancha?
+
+**Toʻgʻridan-toʻgʻri hisoblash juda ogʻir**: «kamida ikkita» degani
+$2, 3, 4, \dots$ kishilik barcha mos kelishlarni sanashni talab qiladi.
+**Toʻldiruvchiga oʻtish** masalani bir qatorga tushiradi:
+
+$$\Pr(\text{kamida bitta mos}) \;=\; 1 - \Pr(\text{barchasi turlicha})
+\;=\; 1 - \prod_{i=0}^{k-1}\frac{365-i}{365}.$$
+
+**Shartlar** *(assumptions)*: 365 kun, hammasi teng ehtimolli, kabisa
+yili yoʻq, tugʻilgan kunlar bogʻliqsiz (egizaklar yoʻq), mavsumiylik
+yoʻq. Bularning hech biri toʻliq toʻgʻri emas — ammo aniq javob
+haqiqiy javobga juda yaqin.
+
+### Maʼlumot — yana simulyatsiya
+
+```{r bd_aniq}
+# --- Aniq formula ------------------------------------------------------
+# prod() — koʻpaytma. (365-0)/365 * (365-1)/365 * ... * (365-(k-1))/365
+tugilgan_aniq <- function(k) {
+  if (k > 365) return(1)
+  1 - prod((365 - 0:(k - 1)) / 365)
+}
+
+klar <- c(5, 10, 20, 22, 23, 30, 40, 50, 57, 70)
+aniq <- sapply(klar, tugilgan_aniq)
+data.frame(k = klar, aniq = round(aniq, 4))
+```
+
+```{r bd_sim}
+# --- Simulyatsiya ------------------------------------------------------
+# Har bir k uchun TAKROR ta «xona» yaratamiz. Bitta xonada k ta
+# tugʻilgan kun; length(unique(kunlar)) < k boʻlsa — mos kelish bor.
+TAKROR <- 3000
+gb <- minstd_yangi(2026)     # bitta generator — ketma-ket ishlatiladi
+
+sim <- numeric(length(klar))
+for (i in seq_along(klar)) {
+  k  <- klar[i]
+  ub <- gb(TAKROR * k)
+  # matrix(..., byrow = TRUE) — sonlarni QATOR boʻyicha toʻldiradi.
+  # Bu Pythondagi reshape(TAKROR, k) bilan AYNAN bir xil tartib beradi.
+  kunlar <- matrix(floor(ub * 365) + 1, nrow = TAKROR, ncol = k,
+                   byrow = TRUE)
+  mos <- apply(kunlar, 1, function(qator) length(unique(qator)) < k)
+  sim[i] <- mean(mos)
+}
+
+# DIQQAT: farq/SE nisbati YAXLITLANMAGAN qiymatlardan hisoblanadi.
+# Avval yaxlitlab, keyin boʻlish boshqa javob beradi (masalan k = 70 da
+# 0.0005/0.0005 = 1.00, aslida esa 0.93). Bu — koʻp uchraydigan xato.
+farq_xom <- abs(sim - aniq)
+SE_xom   <- sqrt(aniq * (1 - aniq) / TAKROR)
+
+natija <- data.frame(
+  k       = klar,
+  sim     = round(sim, 4),
+  aniq    = round(aniq, 4),
+  farq    = round(farq_xom, 4),
+  SE      = round(SE_xom, 4),
+  farq_SE = round(farq_xom / SE_xom, 2)
+)
+natija
+```
+
+```{r bd_grafik, fig.height=4.0}
+# --- Grafik: simulyatsiya vs aniq formula ------------------------------
+# Butun egri chiziqni chizish uchun k = 1..70 gacha aniq qiymatlar.
+egri <- data.frame(k = 1:70,
+                   aniq = sapply(1:70, tugilgan_aniq))
+
+ggplot() +
+  geom_line(data = egri, aes(x = k, y = aniq), colour = oiBlue,
+            linewidth = 0.9) +
+  geom_point(data = natija, aes(x = k, y = sim), colour = oiVerm,
+             size = 2.4, shape = 17) +
+  geom_hline(yintercept = 0.5, linetype = "dotted", colour = "grey40") +
+  geom_vline(xintercept = 23, linetype = "dotted", colour = "grey40") +
+  annotate("text", x = 24, y = 0.13, hjust = 0, size = 3.3,
+           label = "k = 23 -> P = 0.5073") +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(title = "Tugilgan kun masalasi: aniq formula va simulyatsiya",
+       subtitle = "Chiziq: aniq formula. Uchburchak: 3000 takrorli simulyatsiya (MINSTD, urug 2026)",
+       x = "Xonadagi kishilar soni k", y = "P(kamida ikkitasi mos keladi)",
+       caption = "365 kun, teng ehtimolli, bogliqsiz deb faraz qilinadi")
+```
+
+```{r bd_qidiruv}
+# --- Eng kichik k: P >= 0.5 va P >= 0.99 ------------------------------
+# which() — shartni qanoatlantiruvchi indekslar; min() — birinchisi.
+hammasi <- sapply(1:80, tugilgan_aniq)
+cat("P >= 0.50 boʻladigan eng kichik k :", min(which(hammasi >= 0.50)),
+    sprintf("(P = %.4f)\n", hammasi[min(which(hammasi >= 0.50))]))
+cat("P >= 0.99 boʻladigan eng kichik k :", min(which(hammasi >= 0.99)),
+    sprintf("(P = %.4f)\n", hammasi[min(which(hammasi >= 0.99))]))
+cat("k = 22 da P =", sprintf("%.4f", tugilgan_aniq(22)), "\n")
+```
+
+### Natija (kutilayotgan)
+
+```
+   k    sim   aniq   farq     SE  farq_SE
+1  5 0.0243 0.0271 0.0028 0.0030     0.94
+2 10 0.1203 0.1169 0.0034 0.0059     0.58
+3 20 0.3937 0.4114 0.0178 0.0090     1.98
+4 22 0.4633 0.4757 0.0124 0.0091     1.36
+5 23 0.5127 0.5073 0.0054 0.0091     0.59
+6 30 0.7223 0.7063 0.0160 0.0083     1.93
+7 40 0.8850 0.8912 0.0062 0.0057     1.10
+8 50 0.9730 0.9704 0.0026 0.0031     0.85
+9 57 0.9880 0.9901 0.0021 0.0018     1.18
+10 70 0.9987 0.9992 0.0005 0.0005     0.93
+
+P >= 0.50 boʻladigan eng kichik k : 23 (P = 0.5073)
+P >= 0.99 boʻladigan eng kichik k : 57 (P = 0.9901)
+k = 22 da P = 0.4757
+```
+
+### Talqin — daftaringizga yozing
+
+**T6.1** Nima uchun toʻldiruvchiga oʻtish masalani soddalashtirdi?
+«Kamida bitta» hodisasini toʻgʻridan-toʻgʻri sanash uchun nechta
+holatni koʻrib chiqish kerak edi?
+
+**T6.2** $k = 23$ da $P = 0{,}5073$ — koʻpchilik $180$ atrofidagi javob
+kutadi. Intuitsiya qayerda adashadi? **Juftliklar sonini**
+$\binom{23}{2} = 253$ hisoblang va shu son orqali tushuntiring.
+
+**T6.3** Jadvaldagi `farq_SE` ustuni — farqning standart xatoga
+nisbati. Barcha qiymatlar $2$ dan kichik. Bu nimani anglatadi?
+Agar bittasi $4$ chiqqanida, qanday xulosa qilardingiz?
+
+**T6.4** Simulyatsiya $k = 20$ da $0{,}3937$, aniq formula $0{,}4114$
+berdi. Qaysi biriga ishonasiz va **nima uchun**? (Diqqat: bu yerda
+aniq javob mavjud — simulyatsiya nima uchun kerak boʻlishi mumkin?)
+
+**T6.5** Farazlarni buzamiz: haqiqiy tugʻilishlar yil boʻylab teng
+taqsimlanmagan (masalan, sentyabrda koʻproq). Bu haqiqiy $P$ ni
+oshiradimi yoki kamaytiradimi? Intuitiv asoslang. *(Maslahat:
+notekislik mos kelishni osonlashtiradimi yoki qiyinlashtiradimi?)*
+
+### Qaror
+
+Universitet 30 kishilik guruhlarda «tugʻilgan kun mos kelsa, bepul
+tushlik» aksiyasini oʻtkazmoqchi. Har bir guruhda toʻlash ehtimoli
+qancha? $50$ ta guruhda kutilayotgan toʻlovlar soni qancha? Aksiyani
+tavsiya qilasizmi?
+
+---
+
+# 7-topshiriq (ixtiyoriy, +5 bonus ball). Hosildorlik maʼlumotidagi hodisalar
+
+**Qiyinlik: 6 (Tadqiqotga yoʻnaltirilgan) · Blum: Yaratish · uyda**
+
+### Statistik tushuncha
+
+Bir xil apparat — butunlay boshqa soha. Fazo: $135$ ta *mamlakat–yil*
+kuzatuvi. Hodisalar: $U$ = «kuzatuv Oʻzbekistonga tegishli»,
+$Y$ = «bugʻdoy hosildorligi mintaqa medianasidan yuqori».
+
+```{r hosildorlik}
+# --- Maʼlumot ---------------------------------------------------------
+hos <- read_csv("data/markaziy-osiyo-hosildorlik.csv",
+                locale = locale(encoding = "UTF-8"),
+                show_col_types = FALSE)
+
+# --- LOKAL TUZOGʻI ----------------------------------------------------
+# QUYIDAGI KOD AYRIM MUHITLARDA JIMGINA ISHLAMAY QOLADI:
+#     U <- hos$mamlakat == "Oʻzbekiston"
+# chunki kod ichidagi satr va fayldan oʻqilgan satr turlicha
+# belgilangan boʻlishi mumkin (0-bosqichdagi izoh).
+# BARQAROR YECHIM: nomni fayldan OLIB kelamiz — literal yozmaymiz.
+mamlakatlar <- sort(unique(hos$mamlakat))
+print(mamlakatlar)
+uz <- mamlakatlar[1]                 # alifbo tartibida birinchisi
+cat("tanlangan mamlakat:", uz, "| kuzatuvlar:", sum(hos$mamlakat == uz),
+    "\n")
+
+# Tekshiruv: agar 27 ta chiqmasa, nom mos kelmagan — davom etmang.
+stopifnot(sum(hos$mamlakat == uz) == 27)
+```
+
+```{r hosildorlik_hodisalar}
+# --- Hodisalar va bogʻliqsizlik ---------------------------------------
+mediana <- median(hos$bugdoy)          # BUTUN mintaqa boʻyicha
+U <- hos$mamlakat == uz
+Y <- hos$bugdoy > mediana
+
+cat(sprintf("mintaqa bugʻdoy medianasi = %.3f t/ga\n", mediana))
+bogliqsizlik(U, Y, "UZ", "yuqori")
+```
+
+### Talqin va qaror
+
+**T7.1** $\Pr(Y \mid U) = 0{,}8889$, $\Pr(Y) = 0{,}4963$. Bu **sababiy**
+xulosa emas. Kamida ikkita chalgʻituvchi omilni nomlang va har biri
+uchun mexanizmni koʻrsating (masalan: sugʻoriladigan va lalmi
+dehqonchilik ulushi).
+
+**T7.2** Mediana **butun mintaqa** boʻyicha olindi. Agar u faqat
+Oʻzbekiston maʼlumotidan olinganida, $\Pr(Y \mid U)$ qanday boʻlardi?
+Hisoblang va farqni tushuntiring.
+
+**T7.3** Kuzatuv birligi — *mamlakat–yil*. Bir mamlakatning ketma-ket
+yillari bir-biriga bogʻliq (hosildorlik yildan yilga oʻsib boradi).
+Bu «teng imkoniyatli va bogʻliqsiz kuzatuvlar» farazini buzadimi?
+Bu $\lambda$ ni talqin qilishga qanday taʼsir qiladi?
+
+**Qaror.** Ushbu tahlil asosida «Oʻzbekistonda bugʻdoy yetishtirish
+samaraliroq» degan xulosa chiqarish mumkinmi? Bir xatboshi bilan
+asoslangan javob yozing.
+
+---
+
+# Yakuniy nazorat roʻyxati
+
+```{r yakun}
+# Barcha asosiy natijalarni bitta jadvalda yigʻamiz — topshirishdan
+# oldin ularni kutilayotgan qiymatlar bilan solishtiring.
+xulosa <- data.frame(
+  koʻrsatkich = c("n = |S|", "P(Drama)", "P(R)", "P(Drama∩R)",
+                  "P(Drama∪R)", "lambda(Drama,R)", "lambda(Drama,PG13)",
+                  "P(R|Horror)", "P(Horror|R)", "P^(olti), n=100000",
+                  "P(kamida 1 mos), k=23"),
+  qiymat = c(n, round(mean(A), 4), round(mean(B), 4),
+             round(mean(A & B), 4), round(mean(A | B), 4),
+             round(lam1, 4), round(lam2, 4),
+             round(mean(B[H]), 4), round(mean(H[B]), 4),
+             round(baho[N], 5), round(tugilgan_aniq(23), 4))
+)
+xulosa
+```
+
+**Kutilayotgan qiymatlar:** 2458 · 0.3779 · 0.4528 · 0.1949 · 0.6359 ·
+1.1387 · 1.0011 · 0.7404 · 0.1384 · 0.16650 · 0.5073
+
+---
+
+# Refleksiya (topshiriq bilan birga topshiriladi)
+
+Har biriga **3–4 jumla** bilan javob bering.
+
+1. **Sanoq va formula.** Bugun har bir ehtimollikni ikki yoʻl bilan
+   oldingiz: sanab va formula bilan. Agar ular mos kelmaganida, qaysi
+   biriga ishonardingiz va xatoni qanday qidirgan boʻlardingiz?
+2. **Bogʻliqsizlik va birgalikda boʻlmaslik.** Ushbu ikki tushuncha
+   sizga dars boshida qanday koʻringan edi va endi qanday? Farqni
+   oʻzingizning misolingizda tushuntiring.
+3. **Yoʻnalish.** $\Pr(A \mid B)$ va $\Pr(B \mid A)$ ni chalkashtirish
+   qanday real zarar keltirishi mumkin (tibbiyot, sud, kredit
+   skoring)? Bitta aniq holatni tasvirlang.
+4. **Simulyatsiya chegarasi.** Simulyatsiya qachon *foydali*, qachon
+   *xavfli* vosita boʻladi? Bugungi tajribangizdan misol keltiring.
+5. **Takrorlanuvchanlik.** Nima uchun R va Python bir xil urugʻ bilan
+   turli sonlar berdi? Bu haqiqiy tadqiqotda qanday muammo tugʻdiradi
+   va qanday hal qilinadi?
+
+---
+
+# Topshirish tartibi va akademik halollik
+
+* **Fayl:** `W02-lab-<familiya>.Rmd` + undan olingan `.html`.
+* **Kod xatosiz ishlashi shart:** *Knit* / *Restart and Run All* dan
+  soʻng hech bir katak xato bermasligi kerak.
+* **Talqin va qaror** har bir topshiriq uchun matn koʻrinishida
+  yozilgan boʻlishi shart. Faqat kod — bajarilmagan ish.
+* **Muddat:** laboratoriyadan keyingi 48 soat ichida, Moodle.
+* **Grafiklar:** faqat Okabe–Ito ranglari; maʼnoni faqat rang bilan
+  bermang; oʻq nomlari, oʻlchov birligi va manba koʻrsatilsin.
+* **Sonlar:** matnda oʻnli ajratgich — **vergul** ($0{,}6359$); kod
+  natijasida — **nuqta** (`0.6359`). Aralashtirmang.
+* **Urugʻ:** har bir simulyatsiya natijasi yonida urugʻ va generator
+  nomi yozilishi shart.
+
+**Sunʼiy intellekt.** Ruxsat etiladi: kod xatosini topish, funksiya
+hujjatini tushuntirish, matnni tahrirlash. **Mumkin emas:** talqin va
+qaror bosqichlarini SIʼ ga yozdirish. Ish oxirida qaysi vosita, qaysi
+bosqichda va qanday soʻrov bilan ishlatilgani yoziladi.

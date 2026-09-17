@@ -1,0 +1,1315 @@
+---
+title: "STAT201 · 4-hafta · Kompyuter laboratoriyasi (R)"
+subtitle: "Tasodifiy miqdorlar va diskret taqsimotlar"
+author: "Toshkent Xalqaro Universiteti · Iqtisodiyot fakulteti"
+date: "2025/2026 oʻquv yili"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    df_print: kable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,     # kodni koʻrsatish
+  message = FALSE,    # paket yuklash xabarlarini yashirish
+  warning = FALSE,
+  fig.width = 7, fig.height = 4.2, dpi = 110,
+  # dev.args: grafiklarda oʻzbekcha «ʻ» belgisi chiqishi uchun cairo
+  # mexanizmi shart (0-bosqichdagi izohga qarang).
+  dev = "png", dev.args = list(type = "cairo")
+)
+options(digits = 7)
+```
+
+<!--
+  ==================================================================
+  STAT201 · 4-hafta · Kompyuter laboratoriyasi · R versiyasi
+  Davomiyligi: 2 akademik soat (120 daqiqa)
+  CLO3 — tasodifiy miqdorlar va standart taqsimotlar bilan ishlash,
+         matematik kutilma va dispersiyani hisoblash (Blum: Qoʻllash)
+  Maʼlumot: data/kinolar-byudjet.csv  (2 467 film, 2000-2018)
+  Har bir topshiriq bitta zanjirga boʻysunadi:
+  statistik tushuncha -> maʼlumot -> kod -> natija -> talqin -> qaror
+  Izohlar va oʻzgaruvchi nomlari — oʻzbekcha; funksiya nomlari — inglizcha.
+  Simulyatsiya generatori: MINSTD (2- va 3-haftadagi bilan AYNAN bir xil),
+  urugʻ 2026. Shu sababli R va Python daftarlari bir xil son beradi.
+  ==================================================================
+-->
+
+# Laboratoriya haqida
+
+**Maqsad.** Maʼruzada keltirib chiqarilgan **ehtimollik massasi
+funksiyasi**, **taqsimot funksiyasi**, **matematik kutilma** va
+**dispersiya**ni haqiqiy maʼlumot ustida *birinchi tamoyillardan*
+qurish; soʻng ikkita nomlangan taqsimotning — binomial va Puassonning
+— **shartlarini tekshirib**, qaysi biri qayerda qoʻllanishini
+*maʼlumot bilan* hal qilish.
+
+**Haftaning markaziy gʻoyasi — shartni tekshirmasdan taqsimot
+tanlanmaydi.** Bugun *bitta* maʼlumot toʻplamidan bir nechta sanoq
+oʻzgaruvchisi olamiz. Ularning hammasi «sanoq», hammasi butun son,
+hammasi manfiy emas — ammo Puasson modeli ularning faqat bir qismiga
+mos keladi. Taqsimotni **maʼlumot turi emas, jarayon sharti**
+belgilaydi.
+
+> **Qoida.** Har bir taqsimotning tekshiriladigan sharti bor:
+> binomial uchun **BINS**, Puasson uchun $s^2/\bar{x} \approx 1$.
+> Shartni tekshirmasdan qoʻllangan model xato javob beradi va *hech
+> qanday ogohlantirish bermaydi*.
+
+**Ish zanjiri.** Har bir topshiriqda quyidagi ketma-ketlikni yozma
+ravishda bajarasiz:
+
+> **statistik tushuncha → maʼlumot → kod → natija → talqin → qaror**
+
+Faqat kod yozib, natijani izohsiz qoldirish — topshiriq bajarilmagan
+hisoblanadi. Baholashning yarmidan koʻpi aynan *talqin* va *qaror*
+bosqichlariga beriladi.
+
+**Vaqt va ball taqsimoti (120 daqiqa, 110 ball + 5 bonus).**
+
+| # | Mazmun | Daqiqa | Blum | Ball |
+|---|---|---|---|---|
+| 0 | Muhitni sozlash | 5 | — | — |
+| 1 | Ehtimollik massasi funksiyasi va taqsimot funksiyasi | 20 | Qoʻllash | 20 |
+| 2 | Matematik kutilma va dispersiya: yigʻindi va yopiq shakl | 20 | Qoʻllash | 20 |
+| 3 | Takroriy tanlash: empirik taqsimot va cheklangan toʻplam tuzatmasi | 25 | Tahlil | 25 |
+| 4 | Dispersiya/oʻrtacha nisbati: Puasson qayerda mos keladi | 25 | Baholash | 25 |
+| 5 | Puasson — binomialning limiti | 20 | Tahlil | 20 |
+| 6 | Ixtiyoriy: sugʻurta, dispersiya va $\sqrt{n}$ qonuni | uyda | Yaratish | +5 |
+
+**Oldingi bilim (2- va 3-hafta).** Sizga quyidagilar allaqachon maʼlum
+boʻlishi kerak: hodisani **mantiqiy vektor** sifatida ifodalash
+(`sum(A)` $= n(A)$, `mean(A)` $= \Pr(A)$); kombinatsiyalar soni
+$\binom{n}{x}$ (`choose()`); bogʻliqsizlik taʼrifi; MINSTD generatori
+va urugʻ tushunchasi; ishchi fazo $|S| = 2\,458$ va nima uchun
+$2\,467$ emas.
+
+---
+
+# 0-bosqich. Muhitni sozlash
+
+```{r lokal}
+# --- MUHIM: UTF-8 muhitini kafolatlash --------------------------------
+# Oʻzbekcha nomlarda tutuq belgisi «ʻ» (U+02BB) bor. Agar R UTF-8
+# boʻlmagan lokalda ishga tushsa (masalan LC_CTYPE=C), kod ichidagi
+# oʻzbekcha satr va CSV dan oʻqilgan qiymat BAYTLARI bir xil boʻlsa ham
+# TENG DEB HISOBLANMAYDI: filter() BOʻSH jadval qaytaradi va butun
+# tahlil NaN ga aylanadi — hech qanday xato xabari chiqmasdan.
+# QOIDA (2-haftadan): toifa nomlarini kod ichida literal yozmang —
+# ularni sort(unique(...)) orqali FAYLDAN oling.
+if (!grepl("UTF-8", Sys.getlocale("LC_CTYPE"), ignore.case = TRUE)) {
+  for (lokal in c("C.UTF-8", "en_US.UTF-8", "uz_UZ.UTF-8",
+                  "Uzbek_Uzbekistan.utf8", "English_United States.utf8")) {
+    if (suppressWarnings(Sys.setlocale("LC_CTYPE", lokal)) != "") break
+  }
+}
+cat("LC_CTYPE =", Sys.getlocale("LC_CTYPE"), "\n")
+```
+
+```{r paketlar}
+# --- Kerakli paketlar -------------------------------------------------
+# readr   — CSV faylni oʻqish (kodlashni aniq belgilash imkoni bor)
+# dplyr   — maʼlumotni filtrlash, guruhlash, xulosalash
+# ggplot2 — grafiklar
+library(readr)
+library(dplyr)
+library(ggplot2)
+
+# Okabe-Ito palitrasi: rang koʻrmaslikka moslashgan.
+oiBlue <- "#0072B2"; oiOrange <- "#E69F00"; oiGreen  <- "#009E73"
+oiPink <- "#CC79A7"; oiVerm   <- "#D55E00"; oiSky    <- "#56B4E9"
+
+theme_set(theme_minimal(base_size = 11))
+theme_update(
+  panel.grid.minor = element_blank(),
+  plot.title    = element_text(face = "bold"),
+  plot.subtitle = element_text(colour = "grey30")
+)
+
+# QOIDA (2-haftadan): grafik yorliqlarida faqat ASCII harflar.
+# R ning standart pdf() qurilmasi U+02BB belgisini chiza olmaydi va
+# uning oʻrniga nuqta qoʻyadi. Yorliqlarda «taqsimot», «nisbat» kabi
+# ASCII shakllardan foydalanamiz.
+cat("cairo mavjudmi:", capabilities("cairo"), "\n")
+```
+
+```{r yuklash}
+# --- Asosiy maʼlumot va ISHCHI FAZO -----------------------------------
+# 2-haftadagi qaror oʻzgarmaydi: reytingi koʻrsatilmagan 9 ta film
+# fazodan chiqariladi, chunki ular uchun «R reyting» hodisasi
+# aniqlanmagan. |S| = 2458.
+kino <- read_csv("data/kinolar-byudjet.csv",
+                 locale = locale(encoding = "UTF-8"),
+                 show_col_types = FALSE)
+kino_t <- kino %>% filter(!is.na(reyting))
+N_pop  <- nrow(kino_t)
+
+# Hodisa = mantiqiy vektor (2-hafta). «R» — ASCII satr, lokal tuzogʻi yoʻq.
+R_bayroq <- as.integer(kino_t$reyting == "R")
+K_pop    <- sum(R_bayroq)
+p        <- K_pop / N_pop
+
+cat("xom satrlar          :", nrow(kino), "\n")
+cat("reytingi yoʻq        :", nrow(kino) - N_pop, "\n")
+cat("ISHCHI FAZO |S| = N  :", N_pop, "\n")
+cat("R reytinglilar K     :", K_pop, "\n")
+cat(sprintf("p = K/N              : %.10f\n", p))
+```
+
+**Bugungi tasodifiy miqdor.** $2\,458$ ta filmdan **10 tasi tasodifiy
+tanlanadi**. $X$ — tanlangan oʻntalikdagi R reytingli filmlar soni.
+Bu — 3-haftadagi *hodisa* ($R$) ning *songa* aylantirilishi:
+$X: S \to \{0, 1, \dots, 10\}$.
+
+---
+
+# 1-topshiriq. Ehtimollik massasi funksiyasi va taqsimot funksiyasi
+
+**Qiyinlik: 3 (Amaliy) · Blum: Qoʻllash · 20 ball · 20 daqiqa**
+
+### Statistik tushuncha
+
+**Ehtimollik massasi funksiyasi** *(probability mass function)*:
+$$p(x) = \Pr(X = x).$$
+Ikkita shart bajarilishi **shart**:
+
+1. $p(x) \ge 0$ har bir $x$ uchun;
+2. $\sum_x p(x) = 1$.
+
+**Taqsimot funksiyasi** *(cumulative distribution function)*:
+$$F(x) = \Pr(X \le x) = \sum_{t \le x} p(t).$$
+
+$F$ kamaymaydigan, pogʻonasimon; sakrash balandligi aynan $p(x)$ ga
+teng. Diskret holda $\Pr(X < x)$ va $\Pr(X \le x)$ **bir xil emas** —
+farq $p(x)$ ga teng. Bugun buni sonli koʻrsatamiz.
+
+**Binomial ehtimollik massasi funksiyasi.** Agar BINS shartlari
+bajarilsa,
+$$\Pr(X = x) = \binom{n}{x} p^{x}(1-p)^{n-x}.$$
+$\binom{n}{x}$ — 2-haftadagi kombinatsiya; $p^{x}(1-p)^{n-x}$ —
+bogʻliqsizlik tufayli koʻpaytma. Formulani **yodlash shart emas** —
+uni ikki bloknikdan qayta yigʻish mumkin.
+
+### Maʼlumot
+
+`data/kinolar-byudjet.csv`, $N = 2\,458$, $p = 1113/2458 = 0{,}4528$,
+$n = 10$.
+
+```{r pmf_qurish}
+# --- 1-qadam: pmf ni QOʻLDA quramiz (dbinom ni ishlatmasdan) -----------
+# Maqsad: formulani «qora quti» sifatida emas, ikki boʻlakdan yigʻish.
+n <- 10
+x <- 0:n
+kombinatsiya <- choose(n, x)              # 2-hafta: C(n, x)
+ketma_ketlik <- p^x * (1 - p)^(n - x)     # bogʻliqsizlik: koʻpaytma
+p_x <- kombinatsiya * ketma_ketlik
+
+# Nazorat: R ning oʻz funksiyasi bilan solishtiramiz.
+# DIQQAT: «aynan teng» deb kutmang — koʻpaytirish tartibi boshqacha
+# boʻlgani uchun oxirgi bit farq qilishi mumkin. Bu xato emas.
+cat("maks |qoʻlda - dbinom| < 1e-12 :",
+    max(abs(p_x - dbinom(x, n, p))) < 1e-12, "\n")
+cat("amaliy jihatdan tengmi         :",
+    isTRUE(all.equal(p_x, dbinom(x, n, p))), "\n")
+```
+
+```{r pmf_shartlar}
+# --- 2-qadam: IKKI SHARTNI tekshirish ----------------------------------
+# Bu ikki qator — butun haftaning eng arzon xato tutuvchisi.
+cat("(1) barcha p(x) >= 0  :", all(p_x >= 0), "\n")
+cat(sprintf("(2) yigʻindi          : %.12f\n", sum(p_x)))
+cat("    |yigʻindi-1| < 1e-12:", abs(sum(p_x) - 1) < 1e-12, "\n")
+cat(sprintf("    mashina aniqligi  : %.3e\n", .Machine$double.eps))
+# Yigʻindi aynan 1 emas — farq 1e-16 tartibida. Bu SUZUVCHI NUQTALI
+# arifmetikaning xossasi, xato emas. Shu sababli tekshiruv «== 1» emas,
+# «chegaradan kichikmi» shaklida yoziladi.
+```
+
+```{r cdf_qurish}
+# --- 3-qadam: taqsimot funksiyasi = pmf ning yigʻindisi -----------------
+F_x <- cumsum(p_x)
+
+# Jadvalni QOʻLDA formatlaymiz: shunda R va Python natijasi belgi-ma-belgi
+# bir xil chiqadi va ularni bevosita solishtirish mumkin boʻladi.
+cat(sprintf("%3s %10s %10s %10s %10s\n",
+            "x", "p(x)", "F(x)", "x p(x)", "x^2 p(x)"))
+for (i in seq_along(x)) {
+  cat(sprintf("%3d %10.6f %10.6f %10.6f %10.6f\n",
+              x[i], p_x[i], F_x[i], x[i] * p_x[i], x[i]^2 * p_x[i]))
+}
+
+# F ning xossalari — sonli tekshiruv
+cat("\nF kamaymaydimi           :", all(diff(F_x) >= 0), "\n")
+cat(sprintf("F(10)                    : %.12f\n", F_x[n + 1]))
+cat("sakrash balandligi = p(x):",
+    max(abs(diff(c(0, F_x)) - p_x)) < 1e-12, "\n")
+```
+
+```{r cdf_qattiq}
+# --- 4-qadam: P(X < x) va P(X <= x) — diskret holdagi FARQ -------------
+# Eng koʻp uchraydigan «bir bosqichlik» xato aynan shu yerda.
+cat(sprintf("P(X <  4) = F(3) = %.6f\n", F_x[4]))   # indeks: x=3 -> 4-element
+cat(sprintf("P(X <= 4) = F(4) = %.6f\n", F_x[5]))
+cat(sprintf("farq      = p(4) = %.6f\n", p_x[5]))
+cat("farq aynan p(4) gami:",
+    abs((F_x[5] - F_x[4]) - p_x[5]) < 1e-12, "\n\n")
+
+cat(sprintf("P(X >= 7) = 1 - F(6) = %.6f\n", 1 - F_x[7]))
+cat(sprintf("P(X <= 3) = F(3)     = %.6f\n", F_x[4]))
+cat(sprintf("moda (eng ehtimolli x) = %d,  p = %.6f\n",
+            x[which.max(p_x)], max(p_x)))
+```
+
+```{r pmf_grafik, fig.height=3.8}
+# --- 5-qadam: pmf ni koʻrsatish ----------------------------------------
+gr1 <- data.frame(x = x, p_x = p_x)
+ggplot(gr1, aes(x = factor(x), y = p_x)) +
+  geom_col(fill = oiBlue, width = 0.68) +
+  geom_vline(xintercept = 1 + 10 * p, colour = oiVerm,
+             linetype = "dashed", linewidth = 0.8) +
+  annotate("text", x = 7.4, y = 0.225, colour = oiVerm, size = 3.4,
+           label = "E[X] = 4.528 (moda emas!)") +
+  labs(title = "X ~ Bin(10, 0.4528): ehtimollik massasi funksiyasi",
+       subtitle = "Eng ehtimolli qiymat x = 4; kutilma esa 4.528",
+       x = "x — 10 ta filmdagi R reytinglilar soni", y = "p(x)",
+       caption = "Manba: kinolar-byudjet.csv, N = 2458, p = 1113/2458")
+```
+
+```{r cdf_grafik, fig.height=3.8}
+# --- 6-qadam: taqsimot funksiyasi — pogʻonasimon -----------------------
+gr2 <- data.frame(x = x, F_x = F_x)
+ggplot(gr2, aes(x = x, y = F_x)) +
+  geom_step(direction = "hv", colour = oiBlue, linewidth = 0.9) +
+  geom_point(colour = oiBlue, size = 1.9) +
+  scale_x_continuous(breaks = 0:10) +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(title = "Taqsimot funksiyasi F(x) = P(X <= x)",
+       subtitle = "Pogonasimon: har bir sakrash balandligi = p(x)",
+       x = "x", y = "F(x)",
+       caption = "Manba: kinolar-byudjet.csv")
+```
+
+### Natija (kutilayotgan)
+
+```
+maks |qoʻlda - dbinom| < 1e-12 : TRUE
+amaliy jihatdan tengmi         : TRUE
+
+(1) barcha p(x) >= 0  : TRUE
+(2) yigʻindi          : 1.000000000000
+    |yigʻindi-1| < 1e-12: TRUE
+    mashina aniqligi  : 2.220e-16
+
+  x       p(x)       F(x)     x p(x)   x^2 p(x)
+  0   0.002407   0.002407   0.000000   0.000000
+  1   0.019915   0.022321   0.019915   0.019915
+  2   0.074159   0.096480   0.148317   0.296635
+  3   0.163645   0.260126   0.490936   1.472809
+  4   0.236982   0.497107   0.947927   3.791708
+  5   0.235326   0.732433   1.176628   5.883138
+  6   0.162278   0.894711   0.973670   5.842021
+  7   0.076735   0.971447   0.537147   3.760032
+  8   0.023812   0.995259   0.190498   1.523981
+  9   0.004379   0.999638   0.039410   0.354687
+ 10   0.000362   1.000000   0.003624   0.036235
+
+F kamaymaydimi           : TRUE
+F(10)                    : 1.000000000000
+sakrash balandligi = p(x): TRUE
+
+P(X <  4) = F(3) = 0.260126
+P(X <= 4) = F(4) = 0.497107
+farq      = p(4) = 0.236982
+farq aynan p(4) gami: TRUE
+
+P(X >= 7) = 1 - F(6) = 0.105289
+P(X <= 3) = F(3)     = 0.260126
+moda (eng ehtimolli x) = 4,  p = 0.236982
+```
+
+### Talqin — daftaringizga yozing
+
+**T1.1** Yigʻindi aynan $1$ emas, $0{,}999999999999999$ chiqdi. Farq
+$1{,}11\times 10^{-15}$. Bu **xatomi**? Javobingizda «suzuvchi nuqtali
+arifmetika» va «yaxlitlash» soʻzlarini ishlating va farqning tartibini
+mashina aniqligi bilan solishtiring (`.Machine$double.eps`).
+
+**T1.2** $p(x)$ ni ikki boʻlakdan yigʻdik: `choose(n, x)` va
+$p^x(1-p)^{n-x}$. Har bir boʻlak *qaysi* statistik gʻoyadan keladi?
+Agar sinovlar bogʻliq boʻlsa, qaysi boʻlak buziladi?
+
+**T1.3** $\Pr(X < 4)$ va $\Pr(X \le 4)$ farqi $0{,}2370$ — bu
+**kichik son emas**. Uzluksiz taqsimotlarda (5-hafta) bu farq
+yoʻqoladi. Nima uchun?
+
+**T1.4** Moda $x = 4$, ammo $\E[X] = 4{,}53$. Ikkalasi ham
+«markaziy» koʻrsatkich. *Qaysi savolga* moda javob beradi, *qaysi
+savolga* kutilma? Har biriga bittadan aniq savol yozing.
+
+**T1.5** $\Pr(X \ge 7) = 0{,}1053$. Kinoprokat menejeri: «Demak har
+oʻnta filmdan yettitasi R reyting olishi *deyarli mumkin emas*».
+Bu jumlani baholang: $10{,}5\,\%$ «deyarli mumkin emas»mi?
+
+### Qaror
+
+Kinoteatr har hafta $10$ ta film namoyish etadi va R reytingli
+filmlarga alohida zal ajratadi. Zalda $6$ ta seans bor. **Bir haftada
+zal yetishmay qolish ehtimolini** hisoblang va menejerga tavsiya
+bering: zalni kengaytirish kerakmi? Javobda $\Pr(X \ge 7)$ dan
+foydalaning va *bir yilda necha marta* muammo yuz berishini
+baholang.
+
+---
+
+# 2-topshiriq. Matematik kutilma va dispersiya
+
+**Qiyinlik: 3 (Amaliy) · Blum: Qoʻllash · 20 ball · 20 daqiqa**
+
+### Statistik tushuncha
+
+**Matematik kutilma** *(expected value)* — qiymatlarning
+ehtimolliklar bilan **ogʻirlangan** oʻrtachasi:
+$$\E[X] = \sum_x x\,p(x).$$
+
+**Dispersiya** *(variance)* — taʼrif boʻyicha oʻrtachadan
+chetlanishning kvadratik oʻrtachasi:
+$$\Var(X) = \E[(X-\mu)^2] = \sum_x (x-\mu)^2 p(x).$$
+
+Uni yoyib chiqarsak **hisoblash formulasi** hosil boʻladi:
+$$\Var(X) = \E[X^2] - (\E[X])^2 .$$
+
+**Chiziqlilik xossalari:**
+$$\E[aX+b] = a\,\E[X] + b, \qquad \Var(aX+b) = a^{2}\,\Var(X).$$
+Ikkinchisida $b$ **butunlay yoʻqoladi**: siljish tarqoqlikni
+oʻzgartirmaydi.
+
+Binomial uchun yopiq shakl: $\E[X] = np$, $\Var(X) = np(1-p)$.
+Bugun **ikkala yoʻlni ham** hisoblab, ular *aynan* mos kelishini
+koʻrsatamiz.
+
+### Maʼlumot
+
+1-topshiriqdagi `taqsimot` jadvali (11 qator) va qoʻlda hisoblash
+uchun kichik faraziy misol.
+
+```{r kutilma}
+# --- 1-qadam: yigʻindi boʻyicha E[X] va E[X^2] -------------------------
+EX  <- sum(x * p_x)
+EX2 <- sum(x^2 * p_x)
+VarX_hisob <- EX2 - EX^2                     # hisoblash formulasi
+VarX_tarif <- sum((x - EX)^2 * p_x)          # TAʼRIF boʻyicha
+
+cat(sprintf("E[X]  = sum x p(x)      = %.6f\n", EX))
+cat(sprintf("E[X]  = n p             = %.6f\n", n * p))
+cat("mos      :", isTRUE(all.equal(EX, n * p, tolerance = 1e-12)), "\n\n")
+
+cat(sprintf("E[X^2] = sum x^2 p(x)   = %.6f\n", EX2))
+cat(sprintf("Var(X) = E[X^2]-(E X)^2 = %.6f\n", VarX_hisob))
+cat(sprintf("Var(X) = taʼrif boʻyicha= %.6f\n", VarX_tarif))
+cat(sprintf("Var(X) = n p (1-p)      = %.6f\n", n * p * (1 - p)))
+cat("uchalasi mos:",
+    isTRUE(all.equal(VarX_hisob, VarX_tarif, tolerance = 1e-10)) &&
+    isTRUE(all.equal(VarX_hisob, n * p * (1 - p), tolerance = 1e-10)), "\n")
+cat(sprintf("SD(X) = %.6f\n", sqrt(VarX_hisob)))
+```
+
+```{r kutilma_qolda}
+# --- 2-qadam: qoʻlda hisoblash misoli (FARAZIY taqsimot) ----------------
+# Maʼruzadagi misol: X = 0,1,2,3 ehtimolliklari 0.10, 0.35, 0.40, 0.15.
+# Bu maʼlumotdan olinmagan — oʻquv maqsadida tuzilgan taqsimot.
+hx <- 0:3
+hp <- c(0.10, 0.35, 0.40, 0.15)
+stopifnot(abs(sum(hp) - 1) < 1e-12)          # SHART TEKSHIRUVI
+
+hE  <- sum(hx * hp)
+hE2 <- sum(hx^2 * hp)
+hV  <- hE2 - hE^2
+
+cat(sprintf("E[X]   = %.4f\n", hE))
+cat(sprintf("E[X^2] = %.4f\n", hE2))
+cat(sprintf("Var(X) = %.4f - %.4f^2 = %.4f\n", hE2, hE, hV))
+cat(sprintf("taʼrif boʻyicha        = %.4f\n", sum((hx - hE)^2 * hp)))
+cat(sprintf("SD(X)  = %.4f\n", sqrt(hV)))
+```
+
+```{r chiziqlilik}
+# --- 3-qadam: CHIZIQLILIKNI sonli tekshirish ---------------------------
+# Y = 3X + 2 ning taqsimotini OSHKORA quramiz va E, Var ni QAYTA
+# hisoblaymiz. Formula toʻgʻri boʻlsa, natijalar aynan mos keladi.
+a <- 3; b <- 2
+hy  <- a * hx + b                  # yangi qiymatlar, ehtimolliklar OʻZGARMAYDI
+hEy <- sum(hy * hp)
+hVy <- sum(hy^2 * hp) - hEy^2
+
+cat(sprintf("E[3X+2]   oshkora = %.4f   formula = %.4f\n", hEy, a * hE + b))
+cat(sprintf("Var(3X+2) oshkora = %.4f   formula = %.4f\n", hVy, a^2 * hV))
+cat("mos:", isTRUE(all.equal(hEy, a * hE + b)) &&
+           isTRUE(all.equal(hVy, a^2 * hV)), "\n\n")
+
+# Faqat SILJISH: b oʻzgaradi, a = 1. Dispersiya OʻZGARMASLIGI kerak.
+hz  <- hx + 100
+cat(sprintf("E[X+100]   = %.4f  (100 ga surildi)\n", sum(hz * hp)))
+cat(sprintf("Var(X+100) = %.4f  (OʻZGARMADI: %.4f)\n",
+            sum(hz^2 * hp) - sum(hz * hp)^2, hV))
+```
+
+```{r kutilma_grafik, fig.height=3.6}
+# --- 4-qadam: dispersiya nimani oʻlchaydi ------------------------------
+# Har bir x uchun (x - mu)^2 p(x) hissasini chizamiz: dispersiya —
+# aynan shu ustunlarning yigʻindisi.
+gr3 <- data.frame(x = x, hissa = (x - EX)^2 * p_x)
+ggplot(gr3, aes(x = factor(x), y = hissa)) +
+  geom_col(fill = oiOrange, width = 0.68) +
+  labs(title = "Har bir qiymatning dispersiyaga qoshgan hissasi",
+       subtitle = sprintf("Ustunlar yigindisi = %.6f = Var(X)", VarX_tarif),
+       x = "x", y = "(x - mu)^2 p(x)",
+       caption = "mu = 4.528. Chetdagi qiymatlar kam ehtimolli, ammo (x-mu)^2 katta")
+```
+
+### Natija (kutilayotgan)
+
+```
+E[X]  = sum x p(x)      = 4.528072
+E[X]  = n p             = 4.528072
+mos      : TRUE
+
+E[X^2] = sum x^2 p(x)   = 22.981161
+Var(X) = E[X^2]-(E X)^2 = 2.477728
+Var(X) = taʼrif boʻyicha= 2.477728
+Var(X) = n p (1-p)      = 2.477728
+uchalasi mos: TRUE
+SD(X) = 1.574080
+
+E[X]   = 1.6000
+E[X^2] = 3.3000
+Var(X) = 3.3000 - 1.6000^2 = 0.7400
+taʼrif boʻyicha        = 0.7400
+SD(X)  = 0.8602
+
+E[3X+2]   oshkora = 6.8000   formula = 6.8000
+Var(3X+2) oshkora = 6.6600   formula = 6.6600
+mos: TRUE
+
+E[X+100]   = 101.6000  (100 ga surildi)
+Var(X+100) = 0.7400  (OʻZGARMADI: 0.7400)
+```
+
+### Talqin — daftaringizga yozing
+
+**T2.1** $\E[X] = 4{,}528$ — ammo $X$ hech qachon $4{,}528$ ga teng
+boʻlmaydi (u butun son). Kutilmaning **toʻgʻri talqini**ni bir jumlada
+yozing. Qaysi qonun bunga asos boʻladi?
+
+**T2.2** Dispersiyani ikki yoʻl bilan hisobladik va aynan bir xil son
+chiqdi. Bu **tasodifmi**? $\Var(X) = \E[X^2] - (\E[X])^2$ ni
+taʼrifdan uch qatorda keltirib chiqaring.
+
+**T2.3** $\Var(X + 100) = \Var(X)$. Buni *soʻz bilan* tushuntiring:
+nima uchun butun taqsimotni $100$ ga surish tarqoqlikni oʻzgartirmaydi?
+Endi $\Var(3X) = 9\Var(X)$ ni ham shunday tushuntiring — nima uchun
+$3$ emas, $9$?
+
+**T2.4** `stopifnot(abs(sum(hp) - 1) < 1e-12)` qatori nima uchun kodda
+turibdi? Agar u boʻlmasa va ehtimolliklar yigʻindisi $0{,}98$ boʻlsa,
+$\E[X]$ qanday xato beradi — **oshadimi yoki kamayadimi**? Sonli
+misol keltiring.
+
+**T2.5** Dispersiya hissalari grafigida $x = 0$ va $x = 10$ ning
+hissasi kichik, garchi ular oʻrtachadan eng uzoq boʻlsa ham. Nima
+uchun? Bu bizga **chetlashgan kuzatuvlar** haqida nima deydi?
+
+### Qaror
+
+Kinoteatr R reytingli har bir film uchun qoʻshimcha $3$ mln soʻm
+litsenziya toʻlaydi va haftalik $2$ mln soʻm doimiy xarajati bor.
+Haftalik xarajat $C = 3X + 2$ (mln soʻm). $\E[C]$ va $\SD(C)$ ni
+hisoblang (bugungi $X \sim \Bin(10;\,0{,}4528)$ uchun) va moliya
+boʻlimiga **byudjet chegarasi** taklif qiling: $\E[C] + 2\,\SD(C)$
+qancha? Bu chegara qanchalik tez-tez oshib ketadi?
+
+---
+
+# 3-topshiriq. Takroriy tanlash va cheklangan toʻplam tuzatmasi
+
+**Qiyinlik: 4 (Analitik) · Blum: Tahlil · 25 ball · 25 daqiqa**
+
+### Statistik tushuncha
+
+Binomial modelning shartlari — **BINS**:
+
+* **B** — ikkita natija (muvaffaqiyat / muvaffaqiyatsizlik);
+* **I** — sinovlar **bogʻliqsiz**;
+* **N** — sinovlar soni $n$ **oldindan belgilangan**;
+* **S** — muvaffaqiyat ehtimoli $p$ **oʻzgarmas**.
+
+Katalogdan **qaytarishsiz** tanlaganda **I** va **S** shartlari
+buziladi: birinchi film R chiqsa, ikkinchisining R boʻlish ehtimoli
+$1112/2457$ ga tushadi. Toʻgʻri model — **gipergeometrik**:
+$$\Var(X) = n\,p(1-p)\cdot\underbrace{\frac{N-n}{N-1}}_{\text{cheklangan toʻplam tuzatmasi}}.$$
+
+Bugun **oʻlchaymiz**: tuzatma qanchalik katta va binomialni ishlatish
+qachon maqbul.
+
+**Nima uchun yana MINSTD?** 2-haftada koʻrganingizdek, R ning
+`set.seed(2026)` va Pythonning `default_rng(2026)` buyruqlari *turli*
+sonlar beradi. Shu sababli ikkala daftar ham **MINSTD** (Lehmer)
+generatorini oʻzi yozadi:
+$$x_{k+1} = (48\,271\,x_k) \bmod 2\,147\,483\,647, \qquad
+u_k = x_k / 2\,147\,483\,647 .$$
+Toʻliq izoh — 2-hafta laboratoriyasining 5-topshirigʻida; bu yerda uni
+takrorlamaymiz, faqat qayta ishlatamiz.
+
+> **Diqqat.** Maʼruza slaydidagi simulyatsiya sonlari
+> ($\bar{x} = 4{,}5335$, $s^2 = 2{,}4718$) Pythonning
+> `default_rng(2026)` generatoridan va $200\,000$ tanlanmadan olingan.
+> Laboratoriyada MINSTD va $50\,000$ tanlanma ishlatiladi, shuning
+> uchun sonlar biroz boshqacha — **ikkalasi ham toʻgʻri**. Nazariy
+> qiymat generatorga bogʻliq emas; simulyatsiya natijasi bogʻliq.
+
+### Maʼlumot
+
+Haqiqiy $2\,458$ ta filmning roʻyxati (`R_bayroq` vektori). Har bir
+takrorda undan **qaytarishsiz** $10$ ta tanlanadi.
+
+```{r minstd}
+# --- 1-qadam: MINSTD generatori (2-haftadan oʻzgarishsiz) --------------
+minstd_yangi <- function(urugh) {
+  m <- 2147483647; a <- 48271
+  x <- urugh %% m
+  if (x == 0) x <- 1
+  function(k) {
+    u <- numeric(k)
+    for (i in seq_len(k)) {
+      x <<- (a * x) %% m      # <<- : tashqi muhitdagi x ni yangilaydi
+      u[i] <- x / m
+    }
+    u
+  }
+}
+# Nazorat qiymatlari — Python daftaridagi sonlar bilan SOLISHTIRING.
+cat(sprintf("u[%d] = %.10f\n", 1:5, minstd_yangi(2026)(5)), sep = "")
+```
+
+```{r tanlash_funksiya}
+# --- 2-qadam: QAYTARISHSIZ tanlash funksiyasi --------------------------
+# Rad etish (rejection) usuli: indeks tanlanadi; agar u allaqachon
+# olingan boʻlsa, TASHLANADI va yangisi olinadi. Ikkala tilda AYNAN
+# shu tartib bajarilgani uchun natija bit darajasida bir xil chiqadi.
+tanla <- function(u, ptr, Npop, n_ta, bayroq) {
+  olingan <- integer(0)
+  while (length(olingan) < n_ta) {
+    j <- as.integer(u[ptr] * Npop)      # 0, 1, ..., Npop-1
+    ptr <- ptr + 1L
+    if (!(j %in% olingan)) olingan <- c(olingan, j)
+  }
+  list(X = sum(bayroq[olingan + 1L]), ptr = ptr)   # R da indeks 1 dan
+}
+```
+
+```{r simulyatsiya}
+# --- 3-qadam: 50 000 ta takror -----------------------------------------
+TAKROR <- 50000L
+BYUDJET <- 20L          # bitta tanlanmaga ajratilgan tasodifiy sonlar
+
+g <- minstd_yangi(2026)
+u <- g(TAKROR * BYUDJET)
+
+ptr <- 1L
+Xsim <- integer(TAKROR)
+for (i in seq_len(TAKROR)) {
+  natija <- tanla(u, ptr, N_pop, n, R_bayroq)
+  Xsim[i] <- natija$X
+  ptr <- natija$ptr
+}
+stopifnot(ptr - 1L <= length(u))        # NAZORAT: oqim yetdimi?
+
+cat(sprintf("ishlatilgan tasodifiy son  : %d  (tanlanmaga %.5f)\n",
+            ptr - 1L, (ptr - 1L) / TAKROR))
+cat(sprintf("simulyatsiya oʻrtachasi    : %.5f\n", mean(Xsim)))
+cat(sprintf("simulyatsiya dispersiyasi  : %.5f\n", var(Xsim)))
+```
+
+```{r fpc_taqqoslash}
+# --- 4-qadam: uchta nazariy qiymat bilan taqqoslash ---------------------
+Var_bin <- n * p * (1 - p)
+FPC     <- (N_pop - n) / (N_pop - 1)
+Var_fpc <- Var_bin * FPC
+
+# Monte-Karlo xatosi: simulyatsiyaning OʻZI qanchalik aniq?
+mu4  <- n*p*(1-p) * (1 + 3*(n-2)*p*(1-p))     # binomialning 4-markaziy momenti
+SE_s2   <- sqrt((mu4 - Var_bin^2) / TAKROR)
+SE_mean <- sqrt(Var_bin / TAKROR)
+
+cat(sprintf("nazariy E[X] = n p             : %.5f\n", n * p))
+cat(sprintf("simulyatsiya oʻrtachasi        : %.5f   (SE = %.5f)\n",
+            mean(Xsim), SE_mean))
+cat(sprintf("farq / SE                      : %.2f\n\n",
+            (mean(Xsim) - n * p) / SE_mean))
+
+cat(sprintf("binomial dispersiya n p (1-p)  : %.5f\n", Var_bin))
+cat(sprintf("cheklangan toʻplam tuzatmasi   : %.6f  (%.2f %%)\n",
+            FPC, 100 * (1 - FPC)))
+cat(sprintf("tuzatilgan (gipergeometrik)    : %.5f\n", Var_fpc))
+cat(sprintf("simulyatsiya dispersiyasi      : %.5f   (SE = %.5f)\n",
+            var(Xsim), SE_s2))
+cat(sprintf("  |sim - binomial| / SE        : %.2f\n",
+            abs(var(Xsim) - Var_bin) / SE_s2))
+cat(sprintf("  |sim - tuzatilgan| / SE      : %.2f\n",
+            abs(var(Xsim) - Var_fpc) / SE_s2))
+cat(paste0("\nXULOSA: tuzatma (0.37 %) simulyatsiyaning OʻZ xatosidan kichik.\n",
+           "Demak bu tajriba ikki modelni AJRATA OLMAYDI — buni tan olish\n",
+           "kerak, «binomial tasdiqlandi» deb yozish emas.\n"))
+```
+
+```{r empirik_taqsimot}
+# --- 5-qadam: empirik va nazariy taqsimotni yonma-yon qoʻyish ----------
+kuzatilgan <- as.integer(table(factor(Xsim, levels = 0:n)))
+empirik    <- kuzatilgan / TAKROR
+cat(sprintf("%3s %11s %10s %10s %11s\n",
+            "x", "kuzatilgan", "empirik", "binomial", "kutilgan"))
+for (i in seq_along(x)) {
+  cat(sprintf("%3d %11d %10.5f %10.6f %11.2f\n",
+              x[i], kuzatilgan[i], empirik[i], p_x[i], TAKROR * p_x[i]))
+}
+cat(sprintf("maks |empirik - p(x)| = %.5f\n", max(abs(empirik - p_x))))
+```
+
+```{r empirik_grafik, fig.height=3.8}
+gr4 <- rbind(
+  data.frame(x = x, ulush = empirik, turi = "empirik (50 000 takror)"),
+  data.frame(x = x, ulush = p_x,     turi = "binomial (nazariy)"))
+ggplot(gr4, aes(x = factor(x), y = ulush, fill = turi)) +
+  geom_col(position = position_dodge(width = 0.72), width = 0.68) +
+  scale_fill_manual(values = c(oiOrange, oiBlue)) +
+  labs(title = "Empirik taqsimot binomialga mos keladimi?",
+       subtitle = "Qaytarishsiz tanlash, MINSTD, urug 2026, 50 000 takror",
+       x = "x", y = "ulush", fill = NULL,
+       caption = "Manba: kinolar-byudjet.csv, N = 2458") +
+  theme(legend.position = "top")
+```
+
+```{r kichik_populyatsiya}
+# --- 6-qadam: TUZATMA QACHON AHAMIYATLI BOʻLADI ------------------------
+# Yuqorida n/N = 10/2458 = 0.4 % — tuzatma sezilmadi. Endi KICHIK
+# populyatsiya olamiz: faqat 2018-yilda chiqqan filmlar.
+kichik   <- kino_t %>% filter(yil == 2018)
+N_kichik <- nrow(kichik)
+R_kichik <- as.integer(kichik$reyting == "R")
+p_kichik <- mean(R_kichik)
+
+cat(sprintf("2018-yil: N = %d, R reytinglilar = %d, p = %.6f\n",
+            N_kichik, sum(R_kichik), p_kichik))
+cat(sprintf("n/N = %.4f  (yuqorida %.4f edi)\n", n / N_kichik, n / N_pop))
+
+g2 <- minstd_yangi(2026)          # AYNAN oʻsha urugʻ — taqqoslash uchun
+u2 <- g2(TAKROR * BYUDJET)
+ptr <- 1L
+Ysim <- integer(TAKROR)
+for (i in seq_len(TAKROR)) {
+  natija <- tanla(u2, ptr, N_kichik, n, R_kichik)
+  Ysim[i] <- natija$X
+  ptr <- natija$ptr
+}
+
+Var_bin_k <- n * p_kichik * (1 - p_kichik)
+FPC_k     <- (N_kichik - n) / (N_kichik - 1)
+
+cat(sprintf("\nsimulyatsiya oʻrtachasi   : %.5f  (nazariy n p = %.5f)\n",
+            mean(Ysim), n * p_kichik))
+cat(sprintf("simulyatsiya dispersiyasi : %.5f\n", var(Ysim)))
+cat(sprintf("binomial n p (1-p)        : %.5f   <- %.1f %% ORTIQCHA\n",
+            Var_bin_k, 100 * (Var_bin_k / var(Ysim) - 1)))
+cat(sprintf("tuzatma (N-n)/(N-1)       : %.6f\n", FPC_k))
+cat(sprintf("gipergeometrik            : %.5f   <- MOS KELADI\n",
+            Var_bin_k * FPC_k))
+```
+
+### Natija (kutilayotgan)
+
+```
+u[1] = 0.0455402984
+u[2] = 0.2757419647
+u[3] = 0.3403783731
+u[4] = 0.4044473546
+u[5] = 0.0782521903
+
+ishlatilgan tasodifiy son  : 500962  (tanlanmaga 10.01924)
+simulyatsiya oʻrtachasi    : 4.52714
+simulyatsiya dispersiyasi  : 2.46211
+
+nazariy E[X] = n p             : 4.52807
+simulyatsiya oʻrtachasi        : 4.52714   (SE = 0.00704)
+farq / SE                      : -0.13
+
+binomial dispersiya n p (1-p)  : 2.47773
+cheklangan toʻplam tuzatmasi   : 0.996337  (0.37 %)
+tuzatilgan (gipergeometrik)    : 2.46865
+simulyatsiya dispersiyasi      : 2.46211   (SE = 0.01488)
+  |sim - binomial| / SE        : 1.05
+  |sim - tuzatilgan| / SE      : 0.44
+
+XULOSA: tuzatma (0.37 %) simulyatsiyaning OʻZ xatosidan kichik.
+Demak bu tajriba ikki modelni AJRATA OLMAYDI — buni tan olish
+kerak, «binomial tasdiqlandi» deb yozish emas.
+
+  x  kuzatilgan    empirik   binomial    kutilgan
+  0         104    0.00208   0.002407      120.33
+  1        1030    0.02060   0.019915      995.74
+  2        3710    0.07420   0.074159     3707.94
+  3        8136    0.16272   0.163645     8182.27
+  4       11774    0.23548   0.236982    11849.09
+  5       11885    0.23770   0.235326    11766.28
+  6        8153    0.16306   0.162278     8113.92
+  7        3835    0.07670   0.076735     3836.77
+  8        1156    0.02312   0.023812     1190.61
+  9         203    0.00406   0.004379      218.94
+ 10          14    0.00028   0.000362       18.12
+maks |empirik - p(x)| = 0.00237
+
+2018-yil: N = 53, R reytinglilar = 20, p = 0.377358
+n/N = 0.1887  (yuqorida 0.0041 edi)
+
+simulyatsiya oʻrtachasi   : 3.77486  (nazariy n p = 3.77358)
+simulyatsiya dispersiyasi : 1.94497
+binomial n p (1-p)        : 2.34959   <- 20.8 % ORTIQCHA
+tuzatma (N-n)/(N-1)       : 0.826923
+gipergeometrik            : 1.94293   <- MOS KELADI
+```
+
+### Talqin — daftaringizga yozing
+
+**T3.1** Katta populyatsiyada simulyatsiya dispersiyasi
+($2{,}46211$) binomialdan ham ($2{,}47773$), tuzatilgan qiymatdan ham
+($2{,}46865$) $1{,}05$ va $0{,}44$ SE uzoqlikda. **Bu tajriba qaysi
+modelni tanlashga imkon beradi?** Javobingiz «hech qaysisini» boʻlsa
+— bu **kuchli** javob; nima uchun ekanini tushuntiring.
+
+**T3.2** Kichik populyatsiyada ($N = 53$) binomial dispersiyani
+$20{,}8\,\%$ ga **oshirib** yubordi. Nima uchun binomial har doim
+*oshirib* yuboradi, hech qachon kamaytirmaydi? Tuzatma formulasidan
+javob bering.
+
+**T3.3** Amaliy qoida: $n < 0{,}05N$ boʻlsa binomial maqbul. Bizning
+ikki holatda $n/N$ qiymatlari $0{,}0041$ va $0{,}1887$. Qoida ikkala
+holatni ham toʻgʻri tasnifladimi? Qoidaning **oʻzboshimchalik**
+elementi qayerda?
+
+**T3.4** Oʻrtacha ikkala holatda ham *aynan* toʻgʻri chiqdi
+($4{,}527$ va $3{,}775$), faqat dispersiya farq qildi. Nima uchun
+qaytarishsiz tanlash **kutilmani buzmaydi**? (Maslahat: har bir
+alohida film uchun $\Pr(\text{R}) = p$ oʻzgarmaydi; buziladigan narsa
+— *bogʻliqsizlik*.)
+
+**T3.5** `stopifnot(ptr - 1L <= length(u))` va
+`if (!(j %in% olingan))` qatorlari nima uchun kerak? Ikkinchisi
+olib tashlansa, simulyatsiya *qanday* modelni hisoblab qoʻyadi va
+natija qaysi tomonga siljiydi? Taxminingizni yozing.
+
+**T3.6** Bir tildagi natijangiz boshqa tildagi talabaning natijasi
+bilan **aynan** mos tushishi kerak. Bu mos tushish nimani
+**isbotlaydi** va nimani **isbotlamaydi**?
+
+### Qaror
+
+Marketing agentligi $2\,458$ ta film katalogidan $10$ tasini
+tasodifiy tanlab tadqiqot oʻtkazmoqchi; xarajat tejash uchun ular
+faqat $60$ ta filmdan iborat qisqa roʻyxatdan tanlashni taklif
+qilmoqda. Statistik nuqtayi nazardan bu nimani oʻzgartiradi?
+Dispersiyaning oʻzgarishini **hisoblang** va agentlikka yozma
+tavsiya bering.
+
+---
+
+# 4-topshiriq. Dispersiya/oʻrtacha nisbati: Puasson qayerda mos keladi
+
+**Qiyinlik: 5 (Ilgʻor) · Blum: Baholash · 25 ball · 25 daqiqa**
+
+### Statistik tushuncha
+
+**Puasson taqsimoti** *(Poisson distribution)*: belgilangan oraliqdagi
+hodisalar soni,
+$$\Pr(X = x) = \frac{e^{-\lambda}\lambda^{x}}{x!},\qquad x = 0,1,2,\dots$$
+va uning **imzo xossasi**:
+$$\E[X] = \Var(X) = \lambda .$$
+
+Bu — *tekshiriladigan* shart. Maʼlumotda **dispersiya/oʻrtacha
+nisbati** $s^2/\bar{x}$ ni hisoblaymiz: Puasson uchun u $1$ atrofida
+boʻlishi kerak.
+
+**Ammo «atrofida» qancha?** Agar maʼlumot chindan ham Puasson boʻlsa,
+$n$ ta kuzatuv uchun nisbatning oʻzi tasodifiy va uning standart
+ogʻishi taxminan
+$$\SE\!\left(\frac{s^2}{\bar{x}}\right) \approx \sqrt{\frac{2}{n-1}} .$$
+$n = 19$ da bu $0{,}333$ — yaʼni $0{,}33$ dan $1{,}67$ gacha boʻlgan
+har qanday nisbat Puasson bilan **muvofiq**. Nisbatni *chegarasiz*
+oʻqish — bugungi eng koʻp uchraydigan xato.
+
+### Maʼlumot
+
+Bitta fayl, oltita **turli sanoq oʻzgaruvchisi**. Hammasi butun son,
+hammasi manfiy emas, hammasi «sanoq». Puasson ularning faqat bir
+qismiga mos keladi.
+
+```{r seriyalar}
+# --- 1-qadam: oltita sanoq seriyasini qurish ---------------------------
+yillar <- 2000:2018
+yil_sanogi <- function(shart) {
+  shart[is.na(shart)] <- FALSE          # NA — hodisa emas (2-hafta qoidasi)
+  t <- table(factor(kino_t$yil[shart], levels = yillar))
+  as.numeric(t)
+}
+
+seriyalar <- list(
+  "Horror / yil"                    = yil_sanogi(kino_t$janr == "Horror"),
+  "Action / yil"                    = yil_sanogi(kino_t$janr == "Action"),
+  "Jahon daromadi > 500 mln / yil"  = yil_sanogi(kino_t$jahon_daromadi > 5e8),
+  "G reyting / yil"                 = yil_sanogi(kino_t$reyting == "G"),
+  "Barcha filmlar / yil"            = yil_sanogi(rep(TRUE, nrow(kino_t))),
+  "Filmlar / distribyutor"          = as.numeric(table(kino_t$distribyutor))
+)
+
+for (nm in names(seriyalar)) {
+  s <- seriyalar[[nm]]
+  cat(sprintf("%-32s n=%3d  ", nm, length(s)))
+  cat(paste(head(as.integer(s), 19), collapse = " "), "\n")
+}
+```
+
+```{r nisbatlar}
+# --- 2-qadam: nisbat va uning NOANIQLIGI --------------------------------
+cat(sprintf("%-31s %4s %9s %10s %9s %6s %9s  %s\n",
+            "seriya", "n", "xbar", "s2", "nisbat", "SE", "z", "xulosa"))
+for (nm in names(seriyalar)) {
+  s  <- seriyalar[[nm]]
+  nn <- length(s); m <- mean(s); v <- var(s)
+  se <- sqrt(2 / (nn - 1))        # Puasson boʻlganda nisbatning SE si
+  z  <- (v / m - 1) / se
+  xulosa <- if (abs(z) < 2) "Puasson MUVOFIQ" else
+            if (v / m > 1) "haddan tarqoq" else "juda tekis"
+  cat(sprintf("%-31s %4d %9.4f %10.4f %9.4f %6.4f %9.2f  %s\n",
+              nm, nn, m, v, v / m, se, z, xulosa))
+}
+```
+
+```{r horror_moslik}
+# --- 3-qadam: eng mos seriyani BATAFSIL tekshirish ----------------------
+# Nisbat 1 ga yaqin boʻlishi — zaruriy shart, YETARLI shart emas.
+# Kuzatilgan va kutilgan chastotalarni yonma-yon qoʻyamiz.
+h <- seriyalar[["Horror / yil"]]
+lambda <- mean(h)
+cat(sprintf("lambda^ = xbar = %.4f ; s2 = %.4f ; nisbat = %.4f\n\n",
+            lambda, var(h), var(h) / lambda))
+
+guruh <- list("<= 7" = 0:7, "8-9" = 8:9, "10-11" = 10:11,
+              "12-13" = 12:13, ">= 14" = 14:40)
+cat(sprintf("%-7s %11s %9s\n", "guruh", "kuzatilgan", "kutilgan"))
+jami_k <- 0; jami_e <- 0
+for (nm in names(guruh)) {
+  kk  <- guruh[[nm]]
+  obs <- sum(h %in% kk)
+  exp_ <- length(h) * sum(dpois(kk, lambda))
+  jami_k <- jami_k + obs; jami_e <- jami_e + exp_
+  cat(sprintf("%-7s %11d %9.2f\n", nm, obs, exp_))
+}
+cat(sprintf("%-7s %11d %9.2f\n", "JAMI", jami_k, jami_e))
+```
+
+```{r g_reyting_sabab}
+# --- 4-qadam: NIMA UCHUN G reyting seriyasi mos kelmaydi -----------------
+# Puassonning sharti: oʻrtacha tezlik OʻZGARMAS. Uni tekshiramiz.
+g_ser <- seriyalar[["G reyting / yil"]]
+h_ser <- seriyalar[["Horror / yil"]]
+cat(sprintf("G reyting : birinchi 6 yil oʻrtacha = %.4f ; oxirgi 6 yil = %.4f\n",
+            mean(g_ser[1:6]), mean(g_ser[14:19])))
+cat(sprintf("Horror    : birinchi 6 yil oʻrtacha = %.4f ; oxirgi 6 yil = %.4f\n",
+            mean(h_ser[1:6]), mean(h_ser[14:19])))
+cat(paste0("\nG reyting seriyasida tezlik 13 barobar tushgan: «oʻzgarmas\n",
+           "tezlik» sharti buzilgan. Sanoq boʻlishi Puassonni oqlamaydi.\n"))
+```
+
+```{r nisbat_grafik, fig.height=3.6}
+gr5 <- data.frame(
+  seriya = names(seriyalar),
+  nisbat = sapply(seriyalar, function(s) var(s) / mean(s)))
+gr5$seriya <- factor(gr5$seriya, levels = gr5$seriya[order(gr5$nisbat)])
+ggplot(gr5, aes(x = nisbat, y = seriya)) +
+  annotate("rect", xmin = 1 - 2 * 0.333, xmax = 1 + 2 * 0.333,
+           ymin = -Inf, ymax = Inf, fill = oiGreen, alpha = 0.13) +
+  geom_vline(xintercept = 1, colour = oiGreen, linetype = "dashed") +
+  geom_point(colour = oiBlue, size = 3) +
+  scale_x_log10(breaks = c(0.5, 1, 2, 5, 10, 30, 100)) +
+  labs(title = "Dispersiya / ortacha nisbati (logarifmik oq)",
+       subtitle = "Yashil yolak: n = 19 uchun Puasson bilan muvofiq oraliq",
+       x = "s^2 / xbar", y = NULL,
+       caption = "Manba: kinolar-byudjet.csv. Nisbat 1 dan uzoq bolsa Puasson mos emas")
+```
+
+```{r horror_grafik, fig.height=3.6}
+gr6 <- rbind(
+  data.frame(k = 4:18, soni = sapply(4:18, function(kk) sum(h == kk)),
+             turi = "kuzatilgan"),
+  data.frame(k = 4:18, soni = length(h) * dpois(4:18, lambda),
+             turi = "Puasson kutilgan"))
+ggplot(gr6, aes(x = k, y = soni, fill = turi)) +
+  geom_col(position = position_dodge(width = 0.8), width = 0.72) +
+  scale_fill_manual(values = c(oiBlue, oiOrange)) +
+  labs(title = "Horror filmlari / yil: kuzatilgan va Puasson kutilgan",
+       subtitle = "lambda = 10.947, n = 19 yil. Mos, ammo n kichik",
+       x = "bir yildagi Horror filmlari soni", y = "yillar soni", fill = NULL,
+       caption = "Manba: kinolar-byudjet.csv, 2000-2018") +
+  theme(legend.position = "top")
+```
+
+### Natija (kutilayotgan)
+
+```
+Horror / yil                     n= 19  7 8 8 11 8 16 16 16 12 12 14 13 13 9 7 9 11 12 6
+Action / yil                     n= 19  19 18 21 21 16 27 22 16 19 13 19 22 13 24 19 18 16 19 16
+Jahon daromadi > 500 mln / yil   n= 19  1 1 1 2 5 3 3 5 3 2 4 6 4 5 7 6 6 6 5
+G reyting / yil                  n= 19  7 5 6 2 1 5 5 2 5 3 1 4 1 0 1 1 0 0 0
+Barcha filmlar / yil             n= 19  131 128 143 132 132 149 168 137 150 123 148 157 115 113 129 132 122 96 53
+Filmlar / distribyutor           n=168  201 1 16 3 1 1 1 7 1 14 3 13 2 1 1 3 1 1 4
+
+seriya                             n      xbar         s2    nisbat     SE         z  xulosa
+Horror / yil                      19   10.9474    10.3860    0.9487 0.3333     -0.15  Puasson MUVOFIQ
+Action / yil                      19   18.8421    12.4737    0.6620 0.3333     -1.01  Puasson MUVOFIQ
+Jahon daromadi > 500 mln / yil    19    3.9474     3.7193    0.9422 0.3333     -0.17  Puasson MUVOFIQ
+G reyting / yil                   19    2.5789     5.3684    2.0816 0.3333      3.24  haddan tarqoq
+Barcha filmlar / yil              19  129.3684   622.1345    4.8090 0.3333     11.43  haddan tarqoq
+Filmlar / distribyutor           168   14.5119  1672.7903  115.2702 0.1094   1044.18  haddan tarqoq
+
+lambda^ = xbar = 10.9474 ; s2 = 10.3860 ; nisbat = 0.9487
+
+guruh    kuzatilgan  kutilgan
+<= 7              3      2.79
+8-9               5      3.79
+10-11             2      4.55
+12-13             5      3.81
+>= 14             4      4.06
+JAMI             19     19.00
+
+G reyting : birinchi 6 yil oʻrtacha = 4.3333 ; oxirgi 6 yil = 0.3333
+Horror    : birinchi 6 yil oʻrtacha = 9.6667 ; oxirgi 6 yil = 9.0000
+
+G reyting seriyasida tezlik 13 barobar tushgan: «oʻzgarmas
+tezlik» sharti buzilgan. Sanoq boʻlishi Puassonni oqlamaydi.
+```
+
+### Talqin — daftaringizga yozing
+
+**T4.1** Oltita seriyaning hammasi sanoq. Uchtasi Puassonga mos,
+uchtasi mos emas. **Farq qayerda?** Har bir mos kelmagan seriya uchun
+buzilgan shartni *nomlang* (bogʻliqsizlik, oʻzgarmas tezlik, yoki
+ikkalasi).
+
+**T4.2** «Filmlar / distribyutor» nisbati $115$. Bu shunchaki «katta»
+emas — $z = 1044$. Nima uchun distribyutorlar boʻyicha sanoq **hech
+qachon** Puasson boʻla olmaydi? (Maslahat: bitta studiya $264$ ta
+film chiqargan, oʻnlab studiya bittadan.)
+
+**T4.3** «Action / yil» nisbati $0{,}662$ — $1$ dan **kichik**.
+Bu qanday jarayonni bildiradi? Kinostudiyalar yiliga chiqariladigan
+film sonini *rejalashtiradi* — bu Puassonning qaysi sharti bilan
+ziddiyatda?
+
+**T4.4** $n = 19$ uchun muvofiq oraliq $[0{,}33;\ 1{,}67]$ juda keng.
+Oraliqni ikki barobar toraytirish uchun $n$ nechaga yetishi kerak?
+Formuladan hisoblang. Bu bizga **kichik namunalarda model tanlash**
+haqida nima deydi?
+
+**T4.5** Horror seriyasida nisbat $0{,}949$ — ajoyib. Ammo
+guruhlangan jadvalda $10$–$11$ oraligʻida $2$ kuzatilgan, $4{,}55$
+kutilgan. Bu **modelni rad etish** uchun asosmi? Javobingizda
+$n = 19$ ning kichikligini eslang.
+
+**T4.6** G reyting seriyasining oʻrtachasi $13$ barobar tushdi.
+Agar tahlilni faqat $2013$–$2018$ yillar uchun qilsak, nisbat qanday
+boʻlishi mumkin? Hisoblang va **nima uchun bu ham «yechim» emas**ligini
+ayting.
+
+### Qaror
+
+Chaqiruv markazi rahbari: «Bizga soatiga oʻrtacha $40$ ta qoʻngʻiroq
+keladi, demak Puasson modelini olamiz va $\lambda = 40$ deb
+xodimlarni rejalashtiramiz». Undan **qaysi uchta savolni** soʻrar
+edingiz va **qanday maʼlumot** talab qilar edingiz? Agar
+$s^2/\bar{x} = 3{,}5$ chiqsa, xodimlar rejasi qaysi tomonga xato
+boʻladi — **kam** yoki **koʻp** xodim rejalashtiriladi? Sabab bilan
+javob bering.
+
+---
+
+# 5-topshiriq. Puasson — binomialning limiti
+
+**Qiyinlik: 4 (Analitik) · Blum: Tahlil · 20 ball · 20 daqiqa**
+
+### Statistik tushuncha
+
+$n$ katta, $p$ kichik va $np = \lambda$ oʻzgarmas boʻlganda
+$$\Bin(n, \lambda/n) \longrightarrow \Pois(\lambda).$$
+
+Buni **isbot** sifatida emas, **son** sifatida koʻramiz: $n$ ni
+oshirib borib, ikki taqsimot orasidagi eng katta farqni oʻlchaymiz.
+
+Amaliy foydasi ikkita: (i) $\binom{10\,000}{3}$ ni hisoblash ogʻir,
+Puasson formulasi esa uch amaldan iborat; (ii) koʻp real jarayonlarda
+$n$ maʼlum emas (nechta odam *potensial* qoʻngʻiroq qilishi mumkin?)
+— Puasson $n$ ni talab qilmaydi.
+
+### Maʼlumot
+
+Maʼlumot fayli yoʻq — bu **sof sonli tajriba**. $\lambda = 5$.
+
+```{r limit}
+# --- 1-qadam: yaqinlashishni oʻlchash ----------------------------------
+lam <- 5
+n_lar <- c(10, 50, 100, 1000, 10000)
+
+cat(sprintf("%7s %12s %12s %12s\n",
+            "n", "P(X=3) bin", "|farq| P3", "maks farq"))
+for (nn in n_lar) {
+  pp <- lam / nn
+  kk <- 0:min(nn, 40)
+  b  <- dbinom(kk, nn, pp); po <- dpois(kk, lam)
+  cat(sprintf("%7d %12.6f %12.8f %12.8f\n",
+              nn, dbinom(3, nn, pp),
+              abs(dbinom(3, nn, pp) - dpois(3, lam)), max(abs(b - po))))
+}
+cat(sprintf("%7s %12.6f\n", "Pois(5)", dpois(3, lam)))
+```
+
+```{r limit_qoida}
+# --- 2-qadam: amaliy qoidani sinash (n >= 20, p <= 0.05) ---------------
+cat(sprintf("%5s %6s %8s %11s  %s\n",
+            "n", "p", "lambda", "maks farq", "qoida"))
+for (pp in c(0.01, 0.05, 0.10, 0.30)) {
+  for (nn in c(10, 20, 50, 100)) {
+    mf <- max(abs(dbinom(0:nn, nn, pp) - dpois(0:nn, nn * pp)))
+    qq <- if (nn >= 20 && pp <= 0.05) "qoida BAJARILDI" else "-"
+    cat(sprintf("%5d %6.2f %8.2f %11.6f  %s\n", nn, pp, nn * pp, mf, qq))
+  }
+}
+```
+
+```{r limit_grafik, fig.height=3.8}
+gr7 <- rbind(
+  data.frame(k = 0:14, ehtimol = dbinom(0:14, 10, 0.5),   turi = "Bin(10, 0.5)"),
+  data.frame(k = 0:14, ehtimol = dbinom(0:14, 100, 0.05), turi = "Bin(100, 0.05)"),
+  data.frame(k = 0:14, ehtimol = dpois(0:14, 5),          turi = "Pois(5)"))
+ggplot(gr7, aes(x = k, y = ehtimol, colour = turi, shape = turi)) +
+  geom_point(size = 2.4) + geom_line(alpha = 0.45) +
+  scale_colour_manual(values = c(oiOrange, oiSky, oiBlue)) +
+  scale_x_continuous(breaks = 0:14) +
+  labs(title = "Binomial Puassonga qanday yaqinlashadi (lambda = 5)",
+       subtitle = "n oshib, p kamayganda ikki egri chiziq ustma-ust tushadi",
+       x = "k", y = "P(X = k)", colour = NULL, shape = NULL,
+       caption = "Sof sonli tajriba — malumot fayli ishlatilmagan") +
+  theme(legend.position = "top")
+```
+
+### Natija (kutilayotgan)
+
+```
+      n   P(X=3) bin    |farq| P3    maks farq
+     10     0.117188   0.02318640   0.07062638
+     50     0.138565   0.00180875   0.00945723
+    100     0.139576   0.00079822   0.00455046
+   1000     0.140303   0.00007111   0.00044025
+  10000     0.140367   0.00000703   0.00004388
+Pois(5)     0.140374
+
+    n      p   lambda   maks farq  qoida
+   10   0.01     0.10    0.000868  -
+   20   0.01     0.20    0.001488  qoida BAJARILDI
+   50   0.01     0.50    0.002293  qoida BAJARILDI
+  100   0.01     1.00    0.001850  qoida BAJARILDI
+   10   0.05     0.50    0.011859  -
+   20   0.05     1.00    0.009474  qoida BAJARILDI
+   50   0.05     2.50    0.006112  qoida BAJARILDI
+  100   0.05     5.00    0.004550  qoida BAJARILDI
+   10   0.10     1.00    0.019541  -
+   20   0.10     2.00    0.014509  -
+   50   0.10     5.00    0.009457  -
+  100   0.10    10.00    0.006755  -
+   10   0.30     3.00    0.042786  -
+   20   0.30     6.00    0.031016  -
+   50   0.30    15.00    0.019911  -
+  100   0.30    30.00    0.014149  -
+```
+
+### Talqin — daftaringizga yozing
+
+**T5.1** Jadvalda `maks_farq` $n$ oshgani sari kamayadi, ammo
+$p$ oʻzgarmaganda $n$ ni oshirish deyarli **yordam bermaydi**
+($p = 0{,}30$ da $0{,}0777 \to 0{,}0728$). Yaqinlashishni **qaysi
+kattalik** boshqaradi — $n$ mi, $p$ mi, yoki $\lambda$ mi? Jadvaldan
+dalil keltiring.
+
+**T5.2** `farq_P3` va `maks_farq` ustunlarini solishtiring:
+$n = 10$ da $0{,}0232$ va $0{,}0706$. Nima uchun **bitta nuqtadagi**
+farq butun taqsimotdagi eng katta farqdan kichik? Modelni faqat bitta
+nuqtada tekshirish nima uchun xavfli?
+
+**T5.3** «$n \ge 20$ va $p \le 0{,}05$» qoidasi jadvalda qanday
+ishladi? $n = 10$, $p = 0{,}05$ holatida ($\lambda = 0{,}5$) farq
+$0{,}0101$ — qoida buzilgan, ammo farq juda kichik. Qoida
+**haddan ortiq ehtiyotkormi**? Javobingizni asoslang.
+
+**T5.4** 4-topshiriqda «Jahon daromadi $>500$ mln / yil» seriyasi
+Puassonga mos keldi ($\bar{x} = 3{,}95$). Bu seriyani binomial sifatida
+ham qarash mumkinmi? Agar ha, $n$ va $p$ nima boʻlar edi va ularni
+maʼlumotdan **ajratib** olish mumkinmi?
+
+**T5.5** Puasson $n$ ni talab qilmaydi. Bu **afzallikmi yoki
+kamchilikmi**? Har biriga bittadan misol keltiring.
+
+### Qaror
+
+Bank filialiga bir soatda oʻrtacha $2$ ta yirik kredit arizasi
+keladi. Filial menejeri: «Kunlik $8$ soatda $16$ ta ariza kutamiz;
+$25$ tadan koʻp kelish ehtimoli qanchalik?» Puasson bilan hisoblang.
+Soʻng **shartni tekshiring**: bank uchun oʻzgarmas tezlik farazi
+realmi? Kunning qaysi qismida buziladi va bu bashoratni qaysi tomonga
+siljitadi?
+
+---
+
+# 6-topshiriq (ixtiyoriy, uyda). Sugʻurta, dispersiya va $\sqrt{n}$ qonuni
+
+**Qiyinlik: 6 (Tadqiqotga yoʻnaltirilgan) · Blum: Yaratish · +5 ball**
+
+### Statistik tushuncha
+
+Matematik kutilma qarorning **yarmi**; ikkinchi yarmi — dispersiya.
+Bogʻliqsiz polislar birlashtirilganda kutilma $m$ marta oshadi, ammo
+standart ogʻish faqat $\sqrt{m}$ marta — demak **nisbiy** tarqoqlik
+$\sqrt{m}$ marta kamayadi. Bu — sugʻurtaning butun mantiqi va
+7-haftadagi $\SE = \sigma/\sqrt{n}$ ning oldindan koʻrinishi.
+
+### Maʼlumot
+
+**FARAZIY** (oʻquv maqsadida tuzilgan; hech bir kompaniyaning haqiqiy
+koʻrsatkichi emas): yillik badal $1\,200\,000$ soʻm; zarar yuz bersa
+toʻlov $90\,000\,000$ soʻm; zarar ehtimoli $0{,}008$.
+
+```{r sugurta}
+# --- FARAZIY sonlar: rasmiy statistika EMAS ----------------------------
+badal <- 1200000; zarar <- 90000000; q <- 0.008
+
+E_foyda <- badal - q * zarar                 # bitta polisdan kutilma
+Var_foyda <- zarar^2 * q * (1 - q)           # Var(aX+b) = a^2 Var(X)
+SD_foyda <- sqrt(Var_foyda)
+
+cat(sprintf("bitta polis: E = %.0f soʻm ; SD = %.0f soʻm ; SD/E = %.4f\n",
+            E_foyda, SD_foyda, SD_foyda / E_foyda))
+
+for (m in c(1, 100, 10000)) {
+  cat(sprintf("m = %5d polis: E = %15.0f ; SD = %12.0f ; SD/E = %.4f\n",
+              m, m * E_foyda, sqrt(m) * SD_foyda,
+              sqrt(m) * SD_foyda / (m * E_foyda)))
+}
+cat(paste0("\nBOGʻLIQSIZLIK SHARTI: zilzila yoki inqiroz barcha polislarga\n",
+           "bir vaqtda taʼsir qilsa, birlashtirish ISHLAMAYDI.\n"))
+```
+
+### Vazifa
+
+1. `Var(aX+b) = a^2 Var(X)` xossasi bu yerda **qayerda** ishlatildi?
+   Aniq koʻrsating.
+2. Mijoz uchun kutilma $-480\,000$ soʻm. Nima uchun sugʻurta sotib
+   olish shunga qaramay **oqilona** boʻlishi mumkin? Javobingizda
+   dispersiya va «halokatli zarar» tushunchalarini ishlating.
+3. Kompaniya polislar soni $10\,000$ ga yetganda $\SD/\E$ ni
+   $0{,}167$ ga tushirdi. Uni yana $10$ barobar kamaytirish uchun
+   nechta polis kerak? Hisoblang.
+4. **Bogʻliqlikni modellashtiring.** MINSTD bilan simulyatsiya yozing:
+   $10\,000$ polis, ammo har bir yilda umumiy «ofat» hodisasi
+   ehtimoli $0{,}002$ va u yuz bersa barcha polislarda zarar ehtimoli
+   $0{,}20$ ga koʻtariladi. $\SD/\E$ qanday oʻzgaradi? Xulosangizni
+   yozing.
+
+---
+
+# Yigʻma nazorat jadvali
+
+Topshirishdan oldin natijalaringizni quyidagi qiymatlar bilan
+solishtiring. **Bitta ham son farq qilmasligi kerak** — ikkala til
+uchun ham.
+
+| Koʻrsatkich | Qiymat | Qayerda |
+|---|---|---|
+| Ishchi fazo $N$ | 2458 | 0-bosqich |
+| $p = K/N$ | 0.4528072 | 0-bosqich |
+| $p(4)$ — moda | 0.236982 | 1-topshiriq |
+| $F(3) = \Pr(X \le 3)$ | 0.260126 | 1-topshiriq |
+| $\Pr(X \ge 7)$ | 0.105289 | 1-topshiriq |
+| $\E[X]$ | 4.528072 | 2-topshiriq |
+| $\E[X^2]$ | 22.981161 | 2-topshiriq |
+| $\Var(X)$ | 2.477728 | 2-topshiriq |
+| $\SD(X)$ | 1.574080 | 2-topshiriq |
+| Qoʻlda misol: $\Var(3X+2)$ | 6.6600 | 2-topshiriq |
+| MINSTD $u_1$ | 0.0455402984 | 3-topshiriq |
+| Simulyatsiya oʻrtachasi | 4.52714 | 3-topshiriq |
+| Simulyatsiya dispersiyasi | 2.46211 | 3-topshiriq |
+| Tuzatma $(N-n)/(N-1)$ | 0.996337 | 3-topshiriq |
+| 2018: simulyatsiya dispersiyasi | 1.94497 | 3-topshiriq |
+| 2018: gipergeometrik dispersiya | 1.94293 | 3-topshiriq |
+| Horror nisbati $s^2/\bar{x}$ | 0.9487 | 4-topshiriq |
+| Distribyutor nisbati | 115.2702 | 4-topshiriq |
+| $\Bin(10\,000;\,0{,}0005)$: $\Pr(X=3)$ | 0.140367 | 5-topshiriq |
+| $\Pois(5)$: $\Pr(X=3)$ | 0.140374 | 5-topshiriq |
+
+**Agar sonlaringiz mos kelmasa.**
+(1) Avval $N$ ni tekshiring: $2\,458$ mi yoki $2\,467$ mi?
+(2) $p$ ni yaxlitlab ishlatmadingizmi? Yaxlitlash — faqat *chiqarish*
+bosqichida.
+(3) Simulyatsiya sonlari mos kelmasa: generator MINSTD mi, urugʻ
+$2026$ mi, `u[1] = 0.0455402984` mi?
+(4) 4-topshiriqda dispersiya `var()` (maxraj $n-1$) bilanmi?
+
+---
+
+# Topshirish tartibi va akademik halollik
+
+* **Fayl:** `W04-lab-<familiya>.Rmd` + undan olingan `.html`,
+  *yoki* bajarilgan `W04-lab-<familiya>.ipynb`.
+* **Kod xatosiz ishlashi shart:** *Restart and Run All* dan soʻng
+  hech bir katak xato bermasligi kerak.
+* **Talqin va qaror** har bir topshiriq uchun matn koʻrinishida
+  yozilgan boʻlishi shart.
+* **Muddat:** laboratoriyadan keyingi 48 soat ichida, Moodle.
+* **Grafiklar:** faqat Okabe–Ito ranglari; maʼnoni faqat rang bilan
+  bermang; oʻq nomlari va manba koʻrsatilishi shart.
+* **Simulyatsiya:** har bir natija yonida urugʻ (2026), generator nomi
+  (MINSTD) va takrorlar soni ($50\,000$).
+* **Faraziy sonlar** (qoʻlda hisoblash misoli, sugʻurta) shundayligicha
+  belgilanadi.
+
+**Sunʼiy intellektdan foydalanish.** Mumkin: kod xatosini topish,
+funksiya hujjatini tushuntirish, matnni tahrirlash. Mumkin emas:
+talqin va qaror bosqichlarini SIʼ ga yozdirish — aynan shu qism
+baholanadi.
+
+> **Alohida ogohlantirish.** Til modellari diskret taqsimotlarda
+> muntazam ravishda (i) modani kutilma bilan almashtiradi,
+> (ii) maʼlumot sanoq boʻlgani uchun Puassonni tanlaydi, shartni
+> tekshirmasdan, (iii) $\Var(aX+b)$ da $b$ ni saqlab qoladi.
+> Bu haftaning SI topshirigʻi (`W04-si-topshiriqlari`) aynan shu
+> xatolarni topishga bagʻishlangan.
+
+**Deklaratsiya majburiy:** ish oxirida qaysi vosita, qaysi bosqichda,
+qanday soʻrov bilan ishlatilgani va javob qanday tekshirilgani
+yoziladi.
+
+---
+
+**Manbalar:** Newbold, Carlson & Thorne, *Statistics for Business and
+Economics*, 4-bob · McClave & Sincich, *Statistics*, 4-bob ·
+Heumann, Schomaker & Shalabh, *Introduction to Statistics and Data
+Analysis*, 7- va 8-boblar · DeGroot & Schervish, *Probability and
+Statistics*, 3–4-boblar · Poisson, S. D. (1837),
+*Recherches sur la probabilité des jugements*.

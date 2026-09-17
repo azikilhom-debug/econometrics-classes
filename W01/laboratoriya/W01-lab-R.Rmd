@@ -1,0 +1,1127 @@
+---
+title: "STAT201 · 1-hafta · Kompyuter laboratoriyasi (R)"
+subtitle: "Maʼlumot, tadqiqot dizayni, tavsifiy statistika va vizualizatsiya"
+author: "Toshkent Xalqaro Universiteti · Iqtisodiyot fakulteti"
+date: "2025/2026 oʻquv yili"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    df_print: kable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,     # kodni koʻrsatish
+  message = FALSE,    # paket yuklash xabarlarini yashirish
+  warning = FALSE,
+  fig.width = 7, fig.height = 4.2, dpi = 110,
+  # dev.args: grafiklarda oʻzbekcha «ʻ» belgisi chiqishi uchun cairo
+  # mexanizmi shart (pastdagi 0-bosqich izohiga qarang).
+  dev = "png", dev.args = list(type = "cairo")
+)
+options(digits = 7)
+```
+
+<!--
+  ==================================================================
+  STAT201 · 1-hafta · Kompyuter laboratoriyasi · R versiyasi
+  Davomiyligi: 2 akademik soat (120 daqiqa)
+  CLO1 — maʼlumotni umumlashtirish va vizuallashtirish (Blum: Qoʻllash)
+  Maʼlumot: data/markaziy-osiyo-hosildorlik.csv
+            (Our World in Data / FAOSTAT, 1992-2018)
+  Har bir topshiriq bitta zanjirga boʻysunadi:
+  statistik tushuncha -> maʼlumot -> kod -> natija -> talqin -> qaror
+  Izohlar va oʻzgaruvchi nomlari — oʻzbekcha; funksiya nomlari — inglizcha.
+  ==================================================================
+-->
+
+# Laboratoriya haqida
+
+**Maqsad.** Maʼruzada qoʻlda hisoblangan tavsifiy koʻrsatkichlarni kod bilan
+takrorlash, oʻzgaruvchi turlarini toʻgʻri aniqlash, taqsimotni vizual
+tekshirish va grafikning chalgʻituvchi shaklini tanib olish.
+
+**Ish zanjiri.** Har bir topshiriqda quyidagi ketma-ketlikni yozma ravishda
+bajarasiz:
+
+> **statistik tushuncha → maʼlumot → kod → natija → talqin → qaror**
+
+Faqat kod yozib, natijani izohsiz qoldirish — topshiriq bajarilmagan
+hisoblanadi. Baholashning yarmi aynan *talqin* va *qaror* bosqichlariga
+beriladi.
+
+**Vaqt taqsimoti (120 daqiqa).**
+
+| Bosqich | Mazmun | Daqiqa |
+|---|---|---|
+| 0 | Muhitni sozlash | 5 |
+| 1 | Maʼlumotni yuklash, tuzilma, oʻzgaruvchi turlari | 15 |
+| 2 | Markaz va tarqoqlik; qoʻlda hisobni takrorlash | 20 |
+| 3 | Guruhlangan xulosa jadvali (5 mamlakat) | 15 |
+| 4 | Gistogramma va modallik | 15 |
+| 5 | Quti diagrammalari va 1,5×IQR qoidasi | 20 |
+| 6 | Vaqt qatori va chalgʻituvchi grafik | 20 |
+| 7 | Ochiq topshiriq: boshqa ekin | 10 |
+
+---
+
+# 0-bosqich. Muhitni sozlash
+
+```{r lokal}
+# --- MUHIM: UTF-8 muhitini kafolatlash --------------------------------
+# Oʻzbekcha nomlarda tutuq belgisi «ʻ» (U+02BB) bor. Agar R UTF-8
+# boʻlmagan lokalda ishga tushsa (masalan LC_CTYPE=C, yoki eski Windows),
+# kod ichidagi "Oʻzbekiston" satri va CSV dan oʻqilgan "Oʻzbekiston"
+# qiymati BAYTLARI bir xil boʻlsa ham TENG DEB HISOBLANMAYDI, chunki R
+# ularga turli kodlash bayrogʻini qoʻyadi. Natijada filter() BOʻSH jadval
+# qaytaradi va butun tahlil NaN ga aylanadi — hech qanday xato xabari
+# chiqmasdan. Quyidagi tekshiruv shu xatoni oldini oladi.
+if (!grepl("UTF-8", Sys.getlocale("LC_CTYPE"), ignore.case = TRUE)) {
+  for (lokal in c("C.UTF-8", "en_US.UTF-8", "uz_UZ.UTF-8",
+                  "Uzbek_Uzbekistan.utf8", "English_United States.utf8")) {
+    if (suppressWarnings(Sys.setlocale("LC_CTYPE", lokal)) != "") break
+  }
+}
+cat("LC_CTYPE =", Sys.getlocale("LC_CTYPE"), "\n")
+```
+
+```{r paketlar}
+# --- Kerakli paketlar -------------------------------------------------
+# readr   — CSV faylni oʻqish (kodlashni aniq belgilash imkoni bor)
+# dplyr   — maʼlumotni filtrlash, guruhlash, xulosalash
+# ggplot2 — grafiklar (grammar of graphics yondashuvi)
+library(readr)
+library(dplyr)
+library(ggplot2)
+
+# Okabe-Ito palitrasi: rang koʻrmaslikka moslashgan.
+# Kursda maʼlumot ranglari faqat shu roʻyxatdan olinadi.
+rang_palitra <- c(
+  "Oʻzbekiston"  = "#0072B2",   # oiBlue
+  "Qozogʻiston"  = "#E69F00",   # oiOrange
+  "Qirgʻiziston" = "#009E73",   # oiGreen
+  "Tojikiston"   = "#CC79A7",   # oiPink
+  "Turkmaniston" = "#D55E00"    # oiVermillion
+)
+
+# Grafiklar uchun umumiy uslub — barcha topshiriqlarda bir xil koʻrinish.
+theme_set(theme_minimal(base_size = 11))
+theme_update(
+  panel.grid.minor = element_blank(),
+  plot.title    = element_text(face = "bold"),
+  plot.subtitle = element_text(colour = "grey30")
+)
+```
+
+```{r shrift}
+# --- Grafiklarda oʻzbekcha «ʻ» belgisi -------------------------------
+# R ning standart pdf() qurilmasi eski Type 1 shriftlardan foydalanadi
+# va U+02BB belgisini CHIZA OLMAYDI: uning oʻrniga nuqta qoʻyadi va
+# «conversion failure ... mbcsToSbcs» ogohlantirishini beradi.
+# Yechim: cairo mexanizmiga asoslangan qurilma tanlash.
+cat("cairo mavjudmi:", capabilities("cairo"), "\n")
+
+options(bitmapType = "cairo")
+
+# Agar bu fayl knitr orqali emas, oddiy skript sifatida (Rscript) ishga
+# tushirilsa, R standart pdf() qurilmasini ochadi va yuqoridagi xato
+# takrorlanadi. Shu sababli oʻzimiz cairo_pdf qurilmasini ochamiz —
+# barcha grafiklar bitta faylga toʻgʻri yoziladi.
+if (!isTRUE(getOption("knitr.in.progress")) &&
+    names(dev.cur()) == "null device") {
+  cairo_pdf("W01-lab-R-grafiklar.pdf", width = 7, height = 4.2, onefile = TRUE)
+}
+
+# Grafikni faylga saqlash uchun shu funksiyadan foydalaning:
+save_plot <- function(p, fayl, kengligi = 7, balandligi = 4.2) {
+  if (grepl("\\.pdf$", fayl)) {
+    ggsave(fayl, p, width = kengligi, height = balandligi,
+           device = cairo_pdf)          # <- MUHIM: cairo_pdf, oddiy pdf emas
+  } else {
+    ggsave(fayl, p, width = kengligi, height = balandligi,
+           dpi = 150, type = "cairo")   # png uchun
+  }
+}
+```
+
+---
+
+# 1-topshiriq. Maʼlumotni yuklash va tuzilmani tekshirish
+
+**Qiyinlik: 1 (Asosiy) · Blum: Eslab qolish–Tushunish · 10 ball**
+
+### Statistik tushuncha
+
+Har qanday tahlil **kuzatuv birligi** *(observational unit)* nima ekanini
+aniqlashdan boshlanadi. Bu yerda kuzatuv birligi — bitta *mamlakat–yil*
+juftligi. Har bir ustun bitta **oʻzgaruvchi** *(variable)*, har bir qator
+bitta **kuzatuv** *(observation)*.
+
+Oʻzgaruvchilar tasnifi:
+
+* **Sonli** *(numerical)*: **uzluksiz** *(continuous)* yoki **diskret**
+  *(discrete)*;
+* **Kategorik** *(categorical)*: **nominal** yoki **tartibli** *(ordinal)*.
+
+### Maʼlumot
+
+`data/markaziy-osiyo-hosildorlik.csv` — Our World in Data / FAOSTAT.
+Hosildorlik **tonna/gektar** oʻlchovida, 1992–2018, 5 mamlakat.
+
+### Kod
+
+```{r yuklash}
+# read_csv() — readr paketining funksiyasi. Nuqta-vergul emas, vergul
+# ajratgichli faylni oʻqiydi va ustun turlarini avtomatik aniqlaydi.
+# locale(encoding = "UTF-8") — MAJBURIY: fayl ichida oʻzbekcha tutuq
+# belgisi «ʻ» (U+02BB) bor. Kodlash notoʻgʻri boʻlsa «Oʻzbekiston» soʻzi
+# «OÊ»zbekiston» koʻrinishida buziladi.
+hosildorlik <- read_csv(
+  "data/markaziy-osiyo-hosildorlik.csv",
+  locale = locale(encoding = "UTF-8"),
+  show_col_types = FALSE
+)
+
+# dim() — obyekt oʻlchami: (qatorlar soni, ustunlar soni)
+dim(hosildorlik)
+```
+
+```{r tuzilma}
+# str() — obyektning ichki tuzilmasi: har bir ustun turi va dastlabki
+# qiymatlari. Tahlilni doim shu buyruqdan boshlang.
+str(hosildorlik)
+```
+
+```{r bosh_qism}
+# head() — dastlabki n qator. Maʼlumot toʻgʻri oʻqilganini koʻz bilan
+# tekshirish uchun. Bu yerda «Oʻzbekiston» soʻzi buzilmaganini koʻring.
+head(hosildorlik, 5)
+```
+
+```{r turlar}
+# sapply(df, class) — har bir ustunga class() funksiyasini qoʻllaydi va
+# natijani nomlangan vektor sifatida qaytaradi.
+sapply(hosildorlik, class)
+
+# unique() — takrorlanmaydigan qiymatlar. Kategorik oʻzgaruvchining
+# darajalarini (levels) koʻrish uchun.
+unique(hosildorlik$mamlakat)
+
+# range() — eng kichik va eng katta qiymat.
+range(hosildorlik$yil)
+```
+
+```{r yetishmayotgan}
+# --- Yetishmayotgan qiymatlarni TEKSHIRISH (taxmin qilmang!) ----------
+# is.na(x) — har bir katak uchun TRUE/FALSE beradi.
+# colSums() — ustunlar boʻyicha yigʻindi; TRUE = 1, FALSE = 0.
+colSums(is.na(hosildorlik))
+
+# Umumiy son bitta raqamda:
+sum(is.na(hosildorlik))
+
+# Har bir mamlakat uchun necha yil bor? table() — chastota jadvali.
+table(hosildorlik$mamlakat)
+```
+
+### Natija (kutilayotgan)
+
+```
+dim               : 135 7
+mamlakat          : character (kategorik, nominal)
+yil               : numeric   (diskret, tartibli maʼnoga ega)
+bugdoy ... arpa   : numeric   (uzluksiz)
+sum(is.na(...))   : 0
+table(mamlakat)   : har bir mamlakatda 27 ta
+range(yil)        : 1992 2018
+```
+
+### Talqin — daftaringizga yozing
+
+**T1.1** Jadvaldagi har bir ustunni tasniflang:
+
+| Ustun | Sonli / Kategorik | Uzluksiz / Diskret / Nominal / Tartibli | Asos |
+|---|---|---|---|
+| `mamlakat` | | | |
+| `yil` | | | |
+| `bugdoy` | | | |
+| `sholi` | | | |
+| `makkajoxori` | | | |
+| `kartoshka` | | | |
+| `arpa` | | | |
+
+**T1.2** `yil` ustuni R da `numeric` turida saqlanadi. Bu uni **sonli
+oʻzgaruvchi** qiladimi? `mean(hosildorlik$yil)` ning qiymati statistik
+maʼnoga egami? Javobingizni asoslang.
+
+**T1.3** `sum(is.na(...))` nolga teng. Bu «maʼlumotda muammo yoʻq» degani
+emas. Yetishmayotgan qiymat `NA` sifatida emas, balki `0`, `-999` yoki
+boʻsh satr sifatida yozilgan boʻlishi mumkin. Quyidagi kod bilan tekshiring
+va natijani izohlang:
+
+```{r nol_tekshirish}
+# Nol qiymatlar bormi? Hosildorlik nolga teng boʻlishi jismonan mumkin,
+# lekin bu koʻpincha «maʼlumot yoʻq» ning yashiringan koʻrinishi boʻladi.
+sapply(hosildorlik[, 3:7], function(ustun) sum(ustun <= 0))
+
+# Eng kichik qiymatlar — mantiqan ishonarlimi?
+sapply(hosildorlik[, 3:7], min)
+```
+
+### Qaror
+
+Maʼlumot tozami? Tahlilga oʻtish mumkinmi? Agar yoʻq boʻlsa, avval nima
+qilish kerak? Bir jumlada yozing.
+
+---
+
+# 2-topshiriq. Markaz va tarqoqlik: qoʻlda hisobni kod bilan takrorlash
+
+**Qiyinlik: 3 (Amaliy) · Blum: Qoʻllash · 20 ball**
+
+### Statistik tushuncha
+
+**Oʻrtacha arifmetik** *(mean)* va **median** *(median)* — markaz
+koʻrsatkichlari; **kenglik** *(range)*, **kvartillararo kenglik (IQR)**
+*(interquartile range)*, **dispersiya** *(variance)* va **standart ogʻish**
+*(standard deviation)* — tarqoqlik koʻrsatkichlari.
+
+$$\bar{x}=\frac{1}{n}\sum_{i=1}^{n} x_i, \qquad
+s^{2}=\frac{1}{n-1}\sum_{i=1}^{n}(x_i-\bar{x})^{2}, \qquad
+s=\sqrt{s^{2}}, \qquad
+\mathrm{CV}=\frac{s}{\bar{x}}\cdot 100\%$$
+
+Maxrajdagi $n-1$ — **erkinlik darajasi** *(degrees of freedom)*: $\bar{x}$
+maʼlumotning oʻzidan hisoblangani uchun ogʻishlarning bittasi erkin emas.
+
+### Maʼlumot
+
+Oʻzbekiston, bugʻdoy, **2010–2018** ($n=9$) — maʼruzada qoʻlda hisoblangan
+aynan shu toʻplam.
+
+### Kod
+
+```{r kichik_toplam}
+# filter() — qatorlarni shart boʻyicha tanlaydi (dplyr).
+# «&» — mantiqiy VA. Vergul bilan ajratish ham xuddi shunday ishlaydi.
+uzb_bugdoy_2010 <- hosildorlik %>%
+  filter(mamlakat == "Oʻzbekiston", yil >= 2010, yil <= 2018) %>%
+  arrange(yil)          # arrange() — tartiblash
+
+# pull() — bitta ustunni oddiy vektorga aylantiradi (data.frame emas).
+x <- pull(uzb_bugdoy_2010, bugdoy)
+x
+length(x)               # n = 9 ekanini tasdiqlang
+```
+
+```{r markaz}
+# --- Markaz koʻrsatkichlari ------------------------------------------
+n_kuzatuv <- length(x)
+yigindi   <- sum(x)          # Sigma x
+ortacha   <- mean(x)         # x-chiziqcha
+median_q  <- median(x)       # median: tartiblangan qatorning oʻrtasi
+
+c(n = n_kuzatuv, yigindi = yigindi, ortacha = ortacha, median = median_q)
+```
+
+```{r tarqoqlik}
+# --- Tarqoqlik koʻrsatkichlari ---------------------------------------
+# quantile(type = 7) — R ning standart usuli. Python (numpy/pandas) ham
+# aynan shu usulni qoʻllaydi, shuning uchun natijalar bir xil chiqadi.
+kvartillar <- quantile(x, probs = c(0.25, 0.50, 0.75), type = 7)
+Q1  <- unname(kvartillar[1])
+Q3  <- unname(kvartillar[3])
+IQR_qiymat <- Q3 - Q1
+
+kenglik <- max(x) - min(x)
+
+# var() va sd() TANLANMA formulasini qoʻllaydi (maxraj n-1).
+dispersiya <- var(x)
+std_ogish  <- sd(x)
+CV         <- 100 * std_ogish / ortacha
+
+round(c(min = min(x), Q1 = Q1, median = median_q, Q3 = Q3, max = max(x),
+        IQR = IQR_qiymat, kenglik = kenglik,
+        dispersiya = dispersiya, std_ogish = std_ogish, CV = CV), 4)
+```
+
+```{r ogishlar}
+# --- Ogʻishlar jadvali: maʼruzadagi slaydni takrorlaymiz --------------
+ogishlar <- data.frame(
+  yil        = uzb_bugdoy_2010$yil,
+  x          = x,
+  ogish      = x - ortacha,             # (x_i - x-chiziqcha)
+  ogish_kvad = (x - ortacha)^2          # (x_i - x-chiziqcha)^2
+)
+ogishlar$ogish      <- round(ogishlar$ogish, 3)
+ogishlar$ogish_kvad <- round(ogishlar$ogish_kvad, 4)
+ogishlar
+
+# Ogʻishlar yigʻindisi doim nolga teng — algebraik ayniyat.
+# round(..., 12) — kompyuterdagi suzuvchi nuqtali sanoqda 1e-16 tartibida
+# «chang» qoladi; uni yaxlitlash bilan tozalaymiz.
+round(sum(x - ortacha), 12)
+
+# Kvadratlar yigʻindisi va undan dispersiya
+kvadratlar_yigindisi <- sum((x - ortacha)^2)
+c(SS = kvadratlar_yigindisi,
+  s2_qoldan = kvadratlar_yigindisi / (n_kuzatuv - 1),
+  s2_var    = var(x))            # ikkalasi bir xil boʻlishi shart
+```
+
+```{r populyatsiya_sd}
+# --- KENG TARQALGAN XATO: sd() bosh toʻplam ogʻishini bermaydi -------
+# R da bosh toʻplam standart ogʻishi uchun tayyor funksiya YOʻQ.
+# Agar 9 ta yil butun bosh toʻplam deb qaralsa, maxraj n boʻladi:
+sd_populyatsiya <- sqrt(sum((x - ortacha)^2) / n_kuzatuv)
+c(tanlanma_s = sd(x), populyatsiya_sigma = sd_populyatsiya)
+# Farq kichik koʻrinadi, lekin n kichik boʻlganda sezilarli boʻladi.
+```
+
+### Natija (kutilayotgan)
+
+```
+n = 9        Sigma x = 41.449      x-chiziqcha = 4.6054      median = 4.710
+Q1 = 4.556   Q3 = 4.782            IQR = 0.226
+min = 4.126  max = 4.818           kenglik = 0.692
+Sigma(x - x-chiziqcha)   = 0
+Sigma(x - x-chiziqcha)^2 = 0.4599
+s^2 = 0.0575   s = 0.2398   CV = 5.21 %
+tanlanma s = 0.2398   populyatsiya sigma = 0.2260
+```
+
+Maʼruzadagi qoʻlda hisob: $\bar{x}=4{,}605$, $s=0{,}240$.
+Kod: `4.6054`, `0.2398`. **Mos keladi.**
+
+### Talqin
+
+**T2.1** $\bar{x} = 4{,}605$, median $= 4{,}710$. $\bar{x} <$ median.
+Taqsimot qaysi tomonga **qiyshiq** *(skewed)*? Qaysi kuzatuv buni keltirib
+chiqaradi?
+
+**T2.2** CV $= 5{,}2\%$. Bu koʻrsatkich nima uchun $s$ dan koʻra qulayroq?
+Bugʻdoy ($s = 0{,}240$ t/ga) va kartoshka ($s \approx 8{,}42$ t/ga)
+tarqoqligini bevosita solishtirish mumkinmi?
+
+**T2.3 (barqarorlik tajribasi).** Quyidagi kodni bajaring va natijani
+izohlang:
+
+```{r barqarorlik}
+# Eng katta qiymatni (4.818) sunʼiy ravishda 12.0 ga almashtiramiz.
+# Bu — «simulyatsiya qilingan maʼlumot», haqiqiy hosildorlik emas.
+x_buzilgan <- x
+x_buzilgan[which.max(x)] <- 12.0     # which.max() — maksimum indeksi
+
+round(c(ortacha_asl      = mean(x),
+        ortacha_buzilgan = mean(x_buzilgan),
+        farq             = mean(x_buzilgan) - mean(x),
+        median_asl       = median(x),
+        median_buzilgan  = median(x_buzilgan),
+        farq_median      = median(x_buzilgan) - median(x)), 4)
+```
+
+Qaysi koʻrsatkich **barqaror** *(robust)*? Nima uchun?
+
+### Qaror
+
+Oʻzbekiston bugʻdoy hosildorligining 2010–2018 yillardagi tipik darajasini
+hisobotda **bitta** son bilan bermoqchisiz. Qaysi koʻrsatkichni tanlaysiz —
+oʻrtacha yoki median? Tanlovingizni yozing va bir jumlada asoslang.
+
+---
+
+# 3-topshiriq. Guruhlangan xulosa: beshta mamlakat
+
+**Qiyinlik: 3 (Amaliy) · Blum: Qoʻllash–Tahlil · 15 ball**
+
+### Statistik tushuncha
+
+**Beshlik xulosa** *(five-number summary)*: min, $Q_1$, median, $Q_3$, max.
+Guruhlar boʻyicha hisoblanganda u guruhlararo farqni bir jadvalda koʻrsatadi.
+
+### Maʼlumot
+
+Bugʻdoy hosildorligi, **1992–2018**, har bir mamlakatda $n = 27$.
+
+### Kod
+
+```{r guruhlangan}
+# group_by() — keyingi amallarni har bir guruh ichida bajarishni buyuradi.
+# summarise() — har bir guruhni bitta qatorga siqadi.
+# .groups = "drop" — guruhlashni natijadan olib tashlaydi (ogohlantirishni
+# oldini oladi).
+xulosa_bugdoy <- hosildorlik %>%
+  group_by(mamlakat) %>%
+  summarise(
+    n       = n(),                             # kuzatuvlar soni
+    ortacha = mean(bugdoy),
+    median  = median(bugdoy),
+    s       = sd(bugdoy),
+    min     = min(bugdoy),
+    max     = max(bugdoy),
+    Q1      = quantile(bugdoy, 0.25, type = 7),
+    Q3      = quantile(bugdoy, 0.75, type = 7),
+    .groups = "drop"
+  ) %>%
+  mutate(                                      # mutate() — yangi ustun
+    IQR = Q3 - Q1,
+    CV  = 100 * s / ortacha
+  ) %>%
+  arrange(desc(ortacha))                       # desc() — kamayish tartibi
+
+# Koʻrsatish uchun yaxlitlaymiz. across() — bir nechta ustunga bitta
+# funksiyani qoʻllaydi; where(is.numeric) — faqat sonli ustunlarni tanlaydi.
+xulosa_bugdoy %>%
+  mutate(across(where(is.numeric), ~ round(.x, 3)))
+```
+
+```{r na_rm_misol}
+# --- na.rm haqida ------------------------------------------------------
+# Bizda NA yoʻq, shuning uchun na.rm hech narsani oʻzgartirmaydi.
+# Lekin NA boʻlganda mean() BUTUN natijani NA qiladi:
+sinov <- c(1, 2, NA, 4)
+c(narm_yoq = mean(sinov), narm_bor = mean(sinov, na.rm = TRUE))
+# na.rm = TRUE ni «avtomatik» qoʻyish XAVFLI: u muammoni yashiradi.
+# Avval NA qayerdan kelganini aniqlang, keyin uni tashlash haqida qaror qiling.
+```
+
+### Natija (kutilayotgan)
+
+| mamlakat | n | ortacha | median | s | min | max | Q1 | Q3 | IQR | CV |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Oʻzbekiston | 27 | 3.605 | 4.126 | 1.179 | 1.358 | 4.901 | 2.640 | 4.578 | 1.938 | 32.720 |
+| Qirgʻiziston | 27 | 2.235 | 2.317 | 0.277 | 1.675 | 2.734 | 2.101 | 2.416 | 0.315 | 12.414 |
+| Tojikiston | 27 | 1.991 | 1.987 | 0.853 | 0.841 | 3.147 | 1.1665 | 2.971 | 1.8045 | 42.829 |
+| Turkmaniston | 27 | 1.906 | 1.600 | 0.808 | 0.776 | 3.524 | 1.235 | 2.512 | 1.277 | 42.391 |
+| Qozogʻiston | 27 | 1.027 | 1.076 | 0.260 | 0.520 | 1.661 | 0.844 | 1.203 | 0.359 | 25.315 |
+
+> **Yaxlitlash haqida ogohlantirish.** Tojikiston uchun $Q_1 = 1{,}1665$ —
+> aynan yarmi. Uch xonagacha yaxlitlaganda R `1.167`, Python esa `1.166`
+> beradi. Bu **hisob xatosi emas**: ikkala dastur ham asl qiymati bir xil
+> ($1{,}1665$), faqat «yarim» holatini turlicha yaxlitlaydi (R — juft
+> songa, Python — ikkilik suzuvchi nuqta tasviriga koʻra). Shuning uchun
+> hisobotda yaxlitlangan sonlarni emas, hisoblash usulini bayon qiling.
+
+### Talqin
+
+**T3.1** Qozogʻistonda hosildorlik mintaqadagi eng past. Shu bilan birga
+Qozogʻiston mintaqaning eng yirik bugʻdoy **eksportchisi**. Bu ziddiyat emas.
+Nima uchun? (Maslahat: hosildorlik t/ga, eksport esa tonna.)
+
+**T3.2** Oʻzbekiston uchun $\bar{x} = 3{,}605 <$ median $= 4{,}126$, lekin
+2-topshiriqda 2010–2018 kichik toʻplamida $\bar{x} = 4{,}605$ edi. Nima
+uchun butun davr oʻrtachasi bunchalik past?
+
+**T3.3** Eng katta CV — Tojikiston (42,8 %), eng kichigi — Qirgʻiziston
+(12,4 %). Bu nimani anglatadi? Qaysi mamlakat hosili yildan yilga
+barqarorroq?
+
+### Qaror
+
+Mintaqaviy oziq-ovqat xavfsizligi hisoboti uchun mamlakatlarni **qaysi**
+koʻrsatkich boʻyicha reytinglaysiz — oʻrtacha hosildorlik boʻyicha yoki CV
+boʻyicha? Har bir tanlov qanday siyosiy xulosaga olib keladi?
+
+---
+
+# 4-topshiriq. Gistogramma: taqsimot shakli va modallik
+
+**Qiyinlik: 4 (Analitik) · Blum: Tahlil · 15 ball**
+
+### Statistik tushuncha
+
+**Gistogramma** *(histogram)* — uzluksiz sonli oʻzgaruvchining taqsimotini
+koʻrsatadi. Undan **modallik** (bir choʻqqili, ikki choʻqqili) va
+**qiyshiqlik** *(skewness)* oʻqiladi. Ustunli diagrammadan farqi:
+gistogrammada ustunlar tutashadi, chunki oʻq uzluksiz.
+
+### Maʼlumot
+
+Oʻzbekiston, bugʻdoy, 1992–2018 ($n = 27$).
+
+### Kod
+
+```{r gistogramma, fig.height=4.0}
+uzb_bugdoy <- hosildorlik %>% filter(mamlakat == "Oʻzbekiston")
+
+# breaks ni ANIQ belgilaymiz: shunda R va Python bir xil ustunlar beradi.
+# seq(1, 5, by = 0.5) — 1.0, 1.5, ..., 5.0 chegaralari.
+chegaralar <- seq(1, 5, by = 0.5)
+
+ggplot(uzb_bugdoy, aes(x = bugdoy)) +
+  # geom_histogram() — gistogramma qatlami.
+  # breaks — chegaralar; boundary/binwidth oʻrniga toʻgʻridan-toʻgʻri beramiz.
+  # closed = "left" — oraliq [a, b) koʻrinishida; Python numpy ham shunday.
+  geom_histogram(breaks = chegaralar, closed = "left",
+                 fill = "#0072B2", colour = "white", linewidth = 0.4) +
+  scale_x_continuous(breaks = chegaralar) +
+  labs(
+    title    = "Oʻzbekiston: bugʻdoy hosildorligi taqsimoti, 1992–2018",
+    subtitle = "Ikki choʻqqi = ikki xil agrar rejim",
+    x = "Hosildorlik (t/ga)", y = "Chastota (yillar soni)",
+    caption  = "Manba: Our World in Data / FAOSTAT"
+  )
+```
+
+```{r gistogramma_sonlar}
+# Grafikni sonlar bilan tasdiqlaymiz.
+# cut() — sonli vektorni oraliqlarga boʻladi; right = FALSE => [a, b).
+oraliq <- cut(uzb_bugdoy$bugdoy, breaks = chegaralar, right = FALSE)
+table(oraliq)
+```
+
+```{r rejimlar}
+# Ikki choʻqqining sababini maʼlumotdan qidiramiz: yillar boʻyicha ajratamiz.
+uzb_bugdoy %>%
+  mutate(davr = ifelse(yil <= 2000, "1992–2000", "2001–2018")) %>%
+  group_by(davr) %>%
+  summarise(n = n(), ortacha = round(mean(bugdoy), 3),
+            min = min(bugdoy), max = max(bugdoy), .groups = "drop")
+```
+
+### Natija (kutilayotgan)
+
+```
+Oraliqlar (chastota):
+[1.0,1.5)  1
+[1.5,2.0)  2
+[2.0,2.5)  3
+[2.5,3.0)  3
+[3.0,3.5)  1     <- pasayish («vodiy»)
+[3.5,4.0)  2
+[4.0,4.5)  7
+[4.5,5.0)  8
+
+davr        n  ortacha  min    max
+1992–2000   9  2.104    1.358  2.717
+2001–2018  18  4.355    3.151  4.901
+```
+
+### Talqin
+
+**T4.1** Taqsimot **ikki choʻqqili** *(bimodal)*. Ikkala choʻqqi qaysi
+oraliqlarda? Ular orasidagi «vodiy» qayerda?
+
+**T4.2** Ikki choʻqqi odatda **ikki xil populyatsiyaning aralashmasi**
+belgisidir. Bu yerda ular nima? (Yuqoridagi `davr` jadvaliga qarang.)
+
+**T4.3** Ikki choʻqqili taqsimot uchun **bitta** oʻrtacha ($3{,}605$)
+hisoblash foydalimi? Bu son qaysi yilni tavsiflaydi?
+
+**T4.4 (muhim)** Chegaralar sonini oʻzgartiring va shaklga taʼsirini
+kuzating:
+
+```{r bin_tajriba, fig.height=3.2}
+# Juda kam ustun: shakl yoʻqoladi.
+ggplot(uzb_bugdoy, aes(x = bugdoy)) +
+  geom_histogram(bins = 3, fill = "#5A6470", colour = "white") +
+  labs(title = "bins = 3 — ikki choʻqqi koʻrinmaydi", x = "t/ga", y = "Chastota")
+```
+
+Gistogramma shakli tanlangan ustun kengligiga bogʻliq. Bu qanday xavf
+tugʻdiradi?
+
+### Qaror
+
+Vazirlik hisobotiga bitta grafik joylashtirasiz. Gistogrammani qoldirasizmi
+yoki vaqt qatoriga almashtirasizmi? Nima uchun?
+
+---
+
+# 5-topshiriq. Quti diagrammasi va 1,5×IQR qoidasi
+
+**Qiyinlik: 4 (Analitik) · Blum: Tahlil–Baholash · 20 ball**
+
+### Statistik tushuncha
+
+**Quti diagrammasi** *(boxplot)* beshlik xulosani chizadi. **Chetlashgan
+kuzatuv** *(outlier)* Tukey qoidasi boʻyicha aniqlanadi:
+
+$$\text{quyi chegara}=Q_1-1{,}5\cdot \mathrm{IQR},\qquad
+\text{yuqori chegara}=Q_3+1{,}5\cdot \mathrm{IQR}.$$
+
+**Muhim:** chetlashgan kuzatuv — kuzatuvning *xossasi emas*, balki uning
+**qaysi toʻplam bilan solishtirilayotganiga** bogʻliq nisbiy holat.
+
+### Maʼlumot
+
+Bugʻdoy: (a) 1992–2018, (b) faqat 2010–2018.
+
+### Kod
+
+```{r quti_toliq, fig.height=4.2}
+ggplot(hosildorlik, aes(x = reorder(mamlakat, bugdoy, FUN = median),
+                        y = bugdoy, fill = mamlakat)) +
+  # geom_boxplot() ggplot2 da quantile(type = 7) ni ishlatadi —
+  # matplotlib ham shunday, shuning uchun ikkala tilda quti bir xil.
+  geom_boxplot(width = 0.55, outlier.colour = "#D55E00",
+               outlier.shape = 17, outlier.size = 2.2) +
+  scale_fill_manual(values = rang_palitra, guide = "none") +
+  coord_flip() +                       # gorizontal joylashuv — nomlar sigʻadi
+  labs(title = "Bugʻdoy hosildorligi, 1992–2018",
+       subtitle = "Uchburchak = chetlashgan kuzatuv (1,5×IQR qoidasi)",
+       x = NULL, y = "Hosildorlik (t/ga)",
+       caption = "Manba: Our World in Data / FAOSTAT")
+```
+
+```{r outlier_funksiya}
+# --- 1,5xIQR qoidasini kod bilan yozamiz ------------------------------
+# Grafikka ishonmang — qoidani oʻzingiz hisoblang.
+find_outliers <- function(qiymatlar) {
+  Q1  <- quantile(qiymatlar, 0.25, type = 7)
+  Q3  <- quantile(qiymatlar, 0.75, type = 7)
+  iqr <- Q3 - Q1
+  quyi    <- Q1 - 1.5 * iqr
+  yuqori  <- Q3 + 1.5 * iqr
+  # which() — shartga mos elementlarning indekslarini qaytaradi.
+  list(Q1 = unname(Q1), Q3 = unname(Q3), IQR = unname(iqr),
+       quyi = unname(quyi), yuqori = unname(yuqori),
+       indeks = which(qiymatlar < quyi | qiymatlar > yuqori))
+}
+
+# (a) Butun davr, har bir mamlakat uchun
+for (mm in sort(unique(hosildorlik$mamlakat))) {
+  qiy <- hosildorlik$bugdoy[hosildorlik$mamlakat == mm]
+  yil <- hosildorlik$yil[hosildorlik$mamlakat == mm]
+  r   <- find_outliers(qiy)
+  cat(sprintf("%-13s IQR=%.4f  chegaralar=[%.3f; %.3f]  chetlashgan: %s\n",
+              mm, r$IQR, r$quyi, r$yuqori,
+              if (length(r$indeks) == 0) "yoʻq"
+              else paste(yil[r$indeks], collapse = ", ")))
+}
+```
+
+```{r outlier_qisqa_davr}
+# (b) Faqat 2010–2018 — aynan shu oynada 2018-yil koʻrinadi
+qisqa <- hosildorlik %>% filter(yil >= 2010)
+for (mm in sort(unique(qisqa$mamlakat))) {
+  qiy <- qisqa$bugdoy[qisqa$mamlakat == mm]
+  yil <- qisqa$yil[qisqa$mamlakat == mm]
+  r   <- find_outliers(qiy)
+  cat(sprintf("%-13s IQR=%.4f  chegaralar=[%.3f; %.3f]  chetlashgan: %s\n",
+              mm, r$IQR, r$quyi, r$yuqori,
+              if (length(r$indeks) == 0) "yoʻq"
+              else paste(sprintf("%d (%.3f)", yil[r$indeks], qiy[r$indeks]),
+                         collapse = ", ")))
+}
+```
+
+```{r quti_qisqa, fig.height=4.2}
+ggplot(qisqa, aes(x = reorder(mamlakat, bugdoy, FUN = median),
+                  y = bugdoy, fill = mamlakat)) +
+  geom_boxplot(width = 0.55, outlier.colour = "#D55E00",
+               outlier.shape = 17, outlier.size = 2.2) +
+  scale_fill_manual(values = rang_palitra, guide = "none") +
+  coord_flip() +
+  labs(title = "Bugʻdoy hosildorligi, 2010–2018",
+       subtitle = "Oyna torayganda chetlashgan kuzatuvlar paydo boʻldi",
+       x = NULL, y = "Hosildorlik (t/ga)")
+```
+
+### Natija (kutilayotgan)
+
+```
+(a) 1992–2018:  BARCHA mamlakatda chetlashgan kuzatuv YOʻQ.
+    Oʻzbekiston  IQR=1.9385  chegaralar=[-0.268; 7.486]
+    Qirgʻiziston IQR=0.3145  chegaralar=[ 1.630; 2.888]
+    Qozogʻiston  IQR=0.3585  chegaralar=[ 0.306; 1.740]
+    Tojikiston   IQR=1.8045  chegaralar=[-1.540; 5.678]
+    Turkmaniston IQR=1.2770  chegaralar=[-0.680; 4.427]
+
+(b) 2010–2018:
+    Oʻzbekiston  chegaralar=[4.217; 5.121]  -> 2018 (4.126)
+    Qirgʻiziston chegaralar=[1.755; 2.795]  -> 2012 (1.675), 2014 (1.689)
+    Qozogʻiston  chegaralar=[0.848; 1.456]  -> 2010 (0.734), 2011 (1.661),
+                                               2012 (0.793)
+    Tojikiston   chegaralar=[2.848; 3.168]  -> 2011 (2.336), 2012 (2.676)
+    Turkmaniston chegaralar=[1.038; 1.386]  -> 2010 (1.700)
+```
+
+### Talqin
+
+**T5.1** 1992–2018 davrida hech bir chetlashgan kuzatuv topilmadi, garchi
+Oʻzbekistonda hosildorlik 1,358 dan 4,901 gacha, yaʼni 3,6 barobar
+oʻzgargan boʻlsa ham. Nima uchun? (Maslahat: quyi chegara $-0{,}268$ —
+manfiy hosildorlik mumkinmi?)
+
+**T5.2** 2010–2018 oynasida 2018-yil (4,126 t/ga) chetlashgan deb
+belgilandi. Xuddi shu qiymat butun davr uchun *median*ga teng (4,126).
+Bir sonning ham median, ham chetlashgan kuzatuv boʻlishi qanday mumkin?
+
+**T5.3** Chetlashgan kuzatuv topilganda uni **oʻchirish** kerakmi? 2018-yil
+Oʻzbekistonda qurgʻoqchilik yili edi. Bu maʼlumot xatosimi yoki haqiqiy
+hodisami? Qaysi holatda oʻchirish mumkin?
+
+### Qaror
+
+2018-yil kuzatuvi bilan nima qilasiz: qoldirasiz, oʻchirasiz yoki alohida
+izohlaysiz? Qarorni yozing va uni himoya qiling.
+
+---
+
+# 6-topshiriq. Vaqt qatori va chalgʻituvchi grafik
+
+**Qiyinlik: 5 (Ilgʻor) · Blum: Baholash · 20 ball**
+
+### Statistik tushuncha
+
+Vaqt qatorida $y$ oʻqining boshlanish nuqtasi — **dizayn qarori**, va u
+oʻquvchining xulosasini oʻzgartiradi. **Oʻq kesilishi** *(truncated axis)* —
+chalgʻituvchi grafikning eng keng tarqalgan shakli.
+
+### Maʼlumot
+
+Oʻzbekiston, bugʻdoy, 2010–2018.
+
+### Kod
+
+```{r halol_grafik, fig.height=3.6}
+# --- (a) Halol grafik: y oʻqi noldan boshlanadi -----------------------
+ggplot(uzb_bugdoy_2010, aes(x = yil, y = bugdoy)) +
+  geom_line(colour = "#0072B2", linewidth = 0.9) +
+  geom_point(colour = "#0072B2", size = 2) +
+  # expand_limits(y = 0) — oʻqni 0 gacha choʻzadi.
+  expand_limits(y = 0) +
+  scale_x_continuous(breaks = 2010:2018) +
+  labs(title = "(a) HALOL: y oʻqi noldan boshlanadi",
+       subtitle = "Oʻzbekiston, bugʻdoy, 2010–2018",
+       x = "Yil", y = "Hosildorlik (t/ga)")
+```
+
+```{r chalgituvchi_grafik, fig.height=3.6}
+# --- (b) Chalgʻituvchi grafik: y oʻqi 4.0 dan boshlanadi --------------
+# coord_cartesian(ylim = ...) — maʼlumotni kesmaydi, faqat koʻrinishni
+# oʻzgartiradi. Aynan shuning uchun u xavfli: hech qanday ogohlantirish yoʻq.
+ggplot(uzb_bugdoy_2010, aes(x = yil, y = bugdoy)) +
+  geom_line(colour = "#D55E00", linewidth = 0.9) +
+  geom_point(colour = "#D55E00", size = 2) +
+  coord_cartesian(ylim = c(4.0, 4.9)) +
+  scale_x_continuous(breaks = 2010:2018) +
+  labs(title = "(b) CHALGʻITUVCHI: y oʻqi 4,0 dan boshlanadi",
+       subtitle = "Xuddi shu maʼlumot — butunlay boshqa taassurot",
+       x = "Yil", y = "Hosildorlik (t/ga)")
+```
+
+```{r kesish_olchovi}
+# --- Buzilishni son bilan oʻlchaymiz ----------------------------------
+haqiqiy_pasayish <- (4.126 - 4.818) / 4.818 * 100    # 2015 -> 2018, %
+
+# Grafikdagi vertikal masofaning oʻqqa nisbati:
+kesilgan_ulush <- (4.818 - 4.126) / (4.9 - 4.0) * 100   # kesilgan oʻqda
+toliq_ulush    <- (4.818 - 4.126) / (4.9 - 0.0) * 100   # noldan boshlanganda
+
+round(c(haqiqiy_pasayish_foiz = haqiqiy_pasayish,
+        kesilgan_oqda_balandlik_foiz = kesilgan_ulush,
+        toliq_oqda_balandlik_foiz    = toliq_ulush,
+        bortirish_koeffitsiyenti     = kesilgan_ulush / toliq_ulush), 2)
+```
+
+```{r uzun_qator, fig.height=3.8}
+# --- Butun davr: kontekst nimani oʻzgartiradi? ------------------------
+ggplot(hosildorlik, aes(x = yil, y = bugdoy, colour = mamlakat)) +
+  geom_line(linewidth = 0.8) +
+  scale_colour_manual(values = rang_palitra, name = NULL) +
+  expand_limits(y = 0) +
+  labs(title = "Bugʻdoy hosildorligi, 1992–2018",
+       x = "Yil", y = "Hosildorlik (t/ga)",
+       caption = "Manba: Our World in Data / FAOSTAT") +
+  theme(legend.position = "bottom")
+```
+
+### Natija (kutilayotgan)
+
+```
+haqiqiy_pasayish_foiz         = -14.36   (2015 -> 2018)
+kesilgan_oqda_balandlik_foiz  =  76.89
+toliq_oqda_balandlik_foiz     =  14.12
+bortirish_koeffitsiyenti      =   5.44
+```
+
+### Talqin
+
+**T6.1** Ikkala grafik **bir xil maʼlumot**dan chizilgan. Bir jumla bilan
+tavsiflang: (a) grafikni koʻrgan odam nima deydi? (b) grafikni koʻrgan odam
+nima deydi?
+
+**T6.2** Boʻrtirish koeffitsiyenti 5,44 — yaʼni kesilgan oʻqda pasayish
+qariyb 5,4 barobar kattaroq koʻrinadi. Shu bilan birga *hech qanday raqam
+soxtalashtirilmagan*. Bu qanday qilib «yolgʻon aytmasdan aldash» mumkinligini
+koʻrsatadi. Qanday holatlarda oʻqni kesish **maqbul**?
+
+**T6.3** Uchinchi grafikda 1992–2018 butun davri koʻrsatilgan. 2010–2018
+dagi pasayish shu kontekstda qanday koʻrinadi? Kontekst xulosani
+oʻzgartiradimi?
+
+### Qaror
+
+Siz Qishloq xoʻjaligi vazirligining tahlilchisisiz. Matbuot anjumaniga
+qaysi grafikni tanlaysiz va nima uchun? Endi siz mustaqil jurnalistsiz —
+tanlovingiz oʻzgaradimi? Ikkala javobni yozing.
+
+---
+
+# 7-topshiriq. Ochiq topshiriq: boshqa ekinni tahlil qiling
+
+**Qiyinlik: 6 (Tadqiqotga yoʻnaltirilgan) · Blum: Yaratish · 20 ball**
+
+### Vazifa
+
+`sholi`, `makkajoxori`, `kartoshka` yoki `arpa` ustunlaridan **bittasini**
+tanlang va toʻliq tavsifiy tahlil oʻtkazing. Har bir qadamda **nima uchun**
+aynan shu tanlovni qilganingizni yozing.
+
+Talab qilinadi:
+
+1. Ekin tanlovi va uning iqtisodiy ahamiyati (2–3 jumla).
+2. Beshta mamlakat boʻyicha xulosa jadvali (3-topshiriq uslubida).
+3. **Bitta** grafik — turini oʻzingiz tanlaysiz va tanlovni asoslaysiz.
+4. Kamida bitta chetlashgan kuzatuvni topib, uni tekshiring: bu maʼlumot
+   xatosimi yoki haqiqiy hodisami?
+5. Bitta amaliy tavsiya (siyosat yoki biznes qarori).
+
+### Boshlangʻich kod
+
+```{r ochiq_topshiriq}
+# «ekin» oʻzgaruvchisini oʻzingiz oʻzgartiring: "sholi", "makkajoxori",
+# "kartoshka" yoki "arpa".
+ekin <- "kartoshka"
+
+# .data[[ekin]] — dplyr ichida ustunni MATN nomi orqali tanlash usuli.
+xulosa_ekin <- hosildorlik %>%
+  group_by(mamlakat) %>%
+  summarise(
+    n       = n(),
+    ortacha = round(mean(.data[[ekin]]), 3),
+    median  = round(median(.data[[ekin]]), 3),
+    s       = round(sd(.data[[ekin]]), 3),
+    min     = min(.data[[ekin]]),
+    max     = max(.data[[ekin]]),
+    CV      = round(100 * sd(.data[[ekin]]) / mean(.data[[ekin]]), 2),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(ortacha))
+
+xulosa_ekin
+```
+
+```{r ochiq_outlier}
+# Chetlashgan kuzatuvlarni qidirish (find_outliers 5-topshiriqda yozilgan)
+for (mm in sort(unique(hosildorlik$mamlakat))) {
+  qiy <- hosildorlik[[ekin]][hosildorlik$mamlakat == mm]
+  yil <- hosildorlik$yil[hosildorlik$mamlakat == mm]
+  r   <- find_outliers(qiy)
+  cat(sprintf("%-13s chegaralar=[%.3f; %.3f]  chetlashgan: %s\n",
+              mm, r$quyi, r$yuqori,
+              if (length(r$indeks) == 0) "yoʻq"
+              else paste(sprintf("%d (%.3f)", yil[r$indeks], qiy[r$indeks]),
+                         collapse = ", ")))
+}
+```
+
+### Nazorat natijasi (kartoshka uchun — oʻqituvchi tekshiruvi)
+
+```
+Oʻzbekiston  ortacha=20.238  median=18.554  s=8.416  min=8.512  max=35.702  CV=41.59
+Tojikiston   ortacha=18.356  median=19.432  s=5.477  min=10.029 max=27.900  CV=29.84
+Turkmaniston ortacha=16.336  median=17.748  s=5.415  min=2.308  max=22.252  CV=33.15
+Qirgʻiziston ortacha=15.163  median=15.822  s=2.821  min=9.091  max=23.787  CV=18.60
+Qozogʻiston  ortacha=13.954  median=14.319  s=3.784  min=7.668  max=19.794  CV=27.12
+
+Chetlashgan kuzatuvlar:
+Qirgʻiziston  1994 (9.091), 1995 (9.853), 2002 (23.787)
+Turkmaniston  1994 (2.308)
+```
+
+---
+
+# Nazorat barmoq izi (R ↔ Python tengligini tekshirish)
+
+Bu boʻlim laboratoriya natijalarining **ikkala tilda bir xil** ekanini
+tasdiqlaydi. R va Python versiyalari aynan shu jadvalni chiqarishi shart —
+satrma-satr, belgi-belgi.
+
+```{r barmoq_izi}
+# --- Mamlakat nomlari: kodlashdan mustaqil yozuv ----------------------
+# "ʻ" — Unicode belgisini raqamli kod bilan yozish. Fayl qanday
+# kodlashda saqlanganidan qatʼi nazar bir xil satr hosil boʻladi.
+kodlar <- c("UZB", "KAZ", "KGZ", "TJK", "TKM")
+nomlar <- c("Oʻzbekiston", "Qozogʻiston", "Qirgʻiziston",
+            "Tojikiston", "Turkmaniston")
+
+# print_row() — nomni chapga, sonni oʻngga tekislab chiqaradi.
+print_row <- function(nom, qiymat) {
+  cat(sprintf("%-34s %16.6f\n", nom, qiymat))
+}
+
+cat("=== STAT201 W01 LAB · NUMERIC FINGERPRINT ===\n")
+cat("--- A. Uzbekistan wheat 2010-2018 (n=9) ---\n")
+print_row("A01_n",                  length(x))
+print_row("A02_sum",                sum(x))
+print_row("A03_mean",               mean(x))
+print_row("A04_median",             median(x))
+print_row("A05_Q1",                 unname(quantile(x, .25, type = 7)))
+print_row("A06_Q3",                 unname(quantile(x, .75, type = 7)))
+print_row("A07_IQR",                unname(quantile(x, .75, type = 7) -
+                                           quantile(x, .25, type = 7)))
+print_row("A08_min",                min(x))
+print_row("A09_max",                max(x))
+print_row("A10_range",              max(x) - min(x))
+print_row("A11_sum_deviations",     round(sum(x - mean(x)), 10))
+print_row("A12_sum_sq_deviations",  sum((x - mean(x))^2))
+print_row("A13_variance_s2",        var(x))
+print_row("A14_sd_sample",          sd(x))
+print_row("A15_cv_percent",         100 * sd(x) / mean(x))
+print_row("A16_sd_population",      sqrt(sum((x - mean(x))^2) / length(x)))
+print_row("A17_fence_low",          unname(quantile(x, .25, type = 7) -
+                                     1.5 * (quantile(x, .75, type = 7) -
+                                            quantile(x, .25, type = 7))))
+print_row("A18_fence_high",         unname(quantile(x, .75, type = 7) +
+                                     1.5 * (quantile(x, .75, type = 7) -
+                                            quantile(x, .25, type = 7))))
+print_row("A19_mean_contaminated",  mean(x_buzilgan))
+print_row("A20_median_contaminated", median(x_buzilgan))
+
+cat("--- B. Wheat by country 1992-2018 (n=27 each) ---\n")
+for (i in seq_along(kodlar)) {
+  v <- hosildorlik$bugdoy[hosildorlik$mamlakat == nomlar[i]]
+  print_row(paste0("B_", kodlar[i], "_mean"),   mean(v))
+  print_row(paste0("B_", kodlar[i], "_median"), median(v))
+  print_row(paste0("B_", kodlar[i], "_sd"),     sd(v))
+  print_row(paste0("B_", kodlar[i], "_min"),    min(v))
+  print_row(paste0("B_", kodlar[i], "_max"),    max(v))
+  print_row(paste0("B_", kodlar[i], "_Q1"),     unname(quantile(v, .25, type = 7)))
+  print_row(paste0("B_", kodlar[i], "_Q3"),     unname(quantile(v, .75, type = 7)))
+  print_row(paste0("B_", kodlar[i], "_cv"),     100 * sd(v) / mean(v))
+}
+
+cat("--- C. Uzbekistan wheat histogram, breaks 1.0(0.5)5.0 ---\n")
+hist_chastota <- as.integer(table(cut(uzb_bugdoy$bugdoy,
+                                      breaks = chegaralar, right = FALSE)))
+for (j in seq_along(hist_chastota)) {
+  print_row(sprintf("C_bin%02d_[%.1f,%.1f)", j, chegaralar[j], chegaralar[j + 1]),
+            hist_chastota[j])
+}
+
+cat("--- D. Outlier counts (1.5 x IQR) ---\n")
+count_outliers <- function(df, ustun) {
+  jami <- 0
+  for (nm in nomlar) {
+    v <- df[[ustun]][df$mamlakat == nm]
+    jami <- jami + length(find_outliers(v)$indeks)
+  }
+  jami
+}
+print_row("D01_wheat_1992_2018_outliers", count_outliers(hosildorlik, "bugdoy"))
+print_row("D02_wheat_2010_2018_outliers", count_outliers(qisqa, "bugdoy"))
+print_row("D03_potato_1992_2018_outliers", count_outliers(hosildorlik, "kartoshka"))
+
+cat("--- E. Truncated-axis distortion ---\n")
+print_row("E01_real_change_pct",     (4.126 - 4.818) / 4.818 * 100)
+print_row("E02_height_truncated_pct", (4.818 - 4.126) / (4.9 - 4.0) * 100)
+print_row("E03_height_full_pct",      (4.818 - 4.126) / (4.9 - 0.0) * 100)
+print_row("E04_exaggeration_factor",
+          ((4.818 - 4.126) / 0.9) / ((4.818 - 4.126) / 4.9))
+
+cat("--- F. Potato by country 1992-2018 ---\n")
+for (i in seq_along(kodlar)) {
+  v <- hosildorlik$kartoshka[hosildorlik$mamlakat == nomlar[i]]
+  print_row(paste0("F_", kodlar[i], "_mean"), mean(v))
+  print_row(paste0("F_", kodlar[i], "_sd"),   sd(v))
+}
+
+cat("--- G. Data integrity ---\n")
+print_row("G01_rows",         nrow(hosildorlik))
+print_row("G02_cols",         ncol(hosildorlik))
+print_row("G03_missing_cells", sum(is.na(hosildorlik)))
+print_row("G04_year_min",     min(hosildorlik$yil))
+print_row("G05_year_max",     max(hosildorlik$yil))
+print_row("G06_countries",    length(unique(hosildorlik$mamlakat)))
+print_row("G07_uzb_change_pct_1992_2018",
+          100 * (hosildorlik$bugdoy[hosildorlik$mamlakat == nomlar[1] &
+                                    hosildorlik$yil == 2018] -
+                 hosildorlik$bugdoy[hosildorlik$mamlakat == nomlar[1] &
+                                    hosildorlik$yil == 1992]) /
+          hosildorlik$bugdoy[hosildorlik$mamlakat == nomlar[1] &
+                             hosildorlik$yil == 1992])
+cat("=== END FINGERPRINT ===\n")
+```
+
+---
+
+# Baholash mezonlari (jami 120 ball)
+
+| Topshiriq | Kod ishlaydi | Toʻgʻri natija | Talqin | Qaror | Jami |
+|---|---|---|---|---|---|
+| 1 | 3 | 3 | 3 | 1 | **10** |
+| 2 | 5 | 6 | 6 | 3 | **20** |
+| 3 | 4 | 4 | 5 | 2 | **15** |
+| 4 | 4 | 3 | 5 | 3 | **15** |
+| 5 | 5 | 5 | 7 | 3 | **20** |
+| 6 | 4 | 4 | 8 | 4 | **20** |
+| 7 | 5 | 4 | 6 | 5 | **20** |
+| | | | | | **120** |
+
+Faqat kod va sonlar → maksimal 45 %. Talqin va qarorsiz ish toʻliq
+baholanmaydi.
+
+---
+
+# Keng tarqalgan xatolar
+
+1. **Kodlash (encoding).** `read.csv()` ni `encoding` koʻrsatmasdan
+   ishlatish. `Oʻzbekiston` `OÊ»zbekiston` boʻlib buziladi va `filter()`
+   hech nima topmaydi. **Yechim:** `read_csv(..., locale = locale(encoding
+   = "UTF-8"))`.
+2. **`sd()` bosh toʻplam ogʻishi emas.** R ning `sd()` va `var()`
+   funksiyalari **tanlanma** formulasini ($n-1$) qoʻllaydi. Bosh toʻplam
+   uchun tayyor funksiya yoʻq: `sqrt(sum((x-mean(x))^2)/length(x))`.
+3. **`na.rm = TRUE` ni avtomatik yozish.** U muammoni yashiradi. Avval
+   `colSums(is.na(df))` bilan tekshiring.
+4. **`character` va `factor` farqi.** `read_csv()` matnni `character`
+   qilib oʻqiydi. `ggplot2` kategoriyalarni alifbo tartibida chizadi;
+   tartibni oʻzgartirish uchun `factor(..., levels = ...)` yoki
+   `reorder()` kerak.
+5. **`quantile()` turi.** R da 9 xil usul bor. `type = 7` — standart va
+   Python bilan mos. `fivenum()` va `boxplot.stats()` esa Tukey
+   *hinge*larini beradi — natija biroz farq qilishi mumkin.
+6. **`=` va `==`.** `filter(mamlakat = "...")` xato beradi; solishtirish
+   uchun `==` kerak.
+7. **Vergul va nuqta.** Kodda **nuqta** (`4.605`), oʻzbekcha matnda
+   **vergul** (`4,605`). Kodga vergul yozilsa argument ajratgichga
+   aylanadi.
+8. **`sum(is.na(x)) == 0` ni «maʼlumot toza» deb tushunish.** Yashiringan
+   yoʻqolishlar `0`, `-999`, `""` boʻlishi mumkin.
+9. **Grafikda «ʻ» oʻrniga nuqta chiqishi.** R ning standart `pdf()`
+   qurilmasi U+02BB belgisini chiza olmaydi:
+   `conversion failure ... in 'mbcsToSbcs': dot substituted for <ca>`.
+   Sarlavhada `Oʻzbekiston` oʻrniga `O..zbekiston` koʻrinadi.
+   **Yechim:** `ggsave(..., device = cairo_pdf)` yoki
+   `png(type = "cairo")`; knitr uchun
+   `opts_chunk$set(dev = "png", dev.args = list(type = "cairo"))`.
+   Sinovda: standart `pdf()` — 54 ta xato; `cairo_pdf` — 0 ta.
+10. **Lokal (locale) tuzogʻi.** R UTF-8 boʻlmagan lokalda ishga tushsa,
+   `"Oʻzbekiston" == maʼlumotdagi qiymat` **FALSE** qaytaradi, garchi
+   baytlari bir xil boʻlsa ham (biriga UTF-8 bayrogʻi qoʻyilgan,
+   ikkinchisiga yoʻq). `filter()` boʻsh jadval beradi va barcha
+   koʻrsatkichlar `NaN` boʻladi — hech qanday xato xabari chiqmaydi.
+   **Yechim:** 0-bosqichdagi `Sys.setlocale("LC_CTYPE", "C.UTF-8")`
+   tekshiruvi. Tekshirish: `Encoding(x)` va `Sys.getlocale("LC_CTYPE")`.
+
+---
+
+# Topshirish
+
+* Fayl: `W01-lab-<familiya>.Rmd` **va** undan olingan `.html`.
+* Kod ishlashi shart: `Session → Restart R and Run All Chunks` xatosiz
+  oʻtishi kerak.
+* Har bir topshiriq uchun talqin va qaror matnda yozilgan boʻlishi shart.
+* Muddat: laboratoriyadan keyingi 48 soat, Moodle.
+* Sunʼiy intellektdan foydalansangiz, qaysi qismda va qanday
+  foydalanganingizni oxirida deklaratsiya qiling.
+
+```{r sessiya}
+# Ishning takrorlanuvchanligi uchun sessiya maʼlumotini ilova qiling.
+sessionInfo()
+```

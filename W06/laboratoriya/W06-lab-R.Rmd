@@ -1,0 +1,1779 @@
+---
+title: "STAT201 · 6-hafta · Kompyuter laboratoriyasi (R)"
+subtitle: "Birgalikdagi taqsimotlar, kovariatsiya va korrelyatsiya"
+author: "Toshkent Xalqaro Universiteti · Iqtisodiyot fakulteti"
+date: "2025/2026 oʻquv yili"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    df_print: kable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,     # kodni koʻrsatish
+  message = FALSE,    # paket yuklash xabarlarini yashirish
+  warning = FALSE,
+  fig.width = 7, fig.height = 4.2, dpi = 110,
+  # dev.args: grafiklarda oʻzbekcha «ʻ» belgisi chiqishi uchun cairo
+  # mexanizmi shart (0-bosqichdagi izohga qarang). Shunga qaramay
+  # YORLIQLARDA faqat ASCII ishlatamiz — qoida 2-haftadan beri bir xil.
+  dev = "png", dev.args = list(type = "cairo")
+)
+options(digits = 7)
+```
+
+<!--
+  ==================================================================
+  STAT201 · 6-hafta · Kompyuter laboratoriyasi · R versiyasi
+  Davomiyligi: 2 akademik soat (120 daqiqa)
+  CLO4 — birgalikdagi taqsimotlar, kovariatsiya va korrelyatsiyani
+         tahlil qilish (Blum: Qoʻllash–Tahlil–Baholash)
+  Maʼlumot: data/markaziy-osiyo-hosildorlik.csv (5 mamlakat x 27 yil)
+            data/kinolar-byudjet.csv  (2 467 film, 2000–2018)
+  Har bir topshiriq bitta zanjirga boʻysunadi:
+  statistik tushuncha -> maʼlumot -> kod -> natija -> talqin -> qaror
+  Izohlar va oʻzgaruvchi nomlari — oʻzbekcha; funksiya nomlari — inglizcha.
+  Simulyatsiya generatori: MINSTD (2–5-haftadagi bilan AYNAN bir xil),
+  urugʻ 2026. Shu sababli R va Python daftarlari BELGI-MA-BELGI bir xil
+  matn chiqaradi.
+  ==================================================================
+-->
+
+$$
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\SD}{\operatorname{SD}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\Corr}{\operatorname{Corr}}
+$$
+
+# Laboratoriya haqida
+
+**Maqsad.** Maʼruzada keltirib chiqarilgan **birgalikdagi taqsimot**,
+**bogʻliqsizlik**, **kovariatsiya**, **korrelyatsiya**, **korrelyatsiya
+matritsasi** va $\Var(aX+bY)$ formulasini haqiqiy maʼlumot ustida
+*birinchi tamoyillardan* qurish; soʻng bitta korrelyatsiya soni
+**nimani yashirishini** oʻz maʼlumotingizda oʻlchash.
+
+**Haftaning markaziy gʻoyasi — bitta son deyarli hamma narsani
+yashiradi.** Bugun siz $r$ ni toʻrt marta hisoblaysiz va toʻrt marta
+unga ishonmaslikka asos topasiz:
+
+1. **Anskomb kvarteti.** Toʻrtta toʻplamda $\bar x$, $s_x$, $\bar y$,
+   $s_y$ va $r$ deyarli aynan bir xil, ammo toʻrttasi butunlay boshqa
+   koʻrinishga ega. Hisoblashdan oldin chizing.
+2. **Umumiy trend.** Oʻzbekiston va Tojikiston bugʻdoy hosildorligi
+   $r=0{,}9166$ bilan bogʻlangan. Har ikkala seriyadan chiziqli vaqt
+   trendi olib tashlansa, qoldiq korrelyatsiyasi **0,3786** ga tushadi.
+   Bogʻlanishning $58{,}69\,\%$ i shunchaki umumiy trend edi.
+3. **Bogʻliqsizlik farazi.** $\Cov$ ni nolga tenglashtirish
+   $\Var(0{,}5X+0{,}5Y)$ ni $14{,}61\,\%$ ga past baholaydi, portfel
+   standart ogʻishini esa $28{,}20\,\%$ ga ortiqcha baholaydi.
+4. **Oʻlchov tanlash.** Ayni bir maʼlumotda Pirson $0{,}6995$,
+   logarifmdagi Pirson $0{,}5961$, Spirmen $0{,}7340$, Kendall
+   $0{,}5478$ beradi. Toʻrtta son, bitta maʼlumot.
+
+> **Qoida.** $r$ — bu **chiziqli** bogʻlanishning **oʻlchovsiz**
+> koʻrsatkichi, xolos. U sabab-oqibat haqida hech narsa aytmaydi,
+> egri bogʻlanishni koʻrmaydi va bitta chetlashgan kuzatuvdan
+> qattiq taʼsirlanadi. **Sochma diagrammani koʻrmasdan chiqarilgan
+> xulosa — xulosa emas.**
+
+**Ish zanjiri.** Har bir topshiriqda quyidagi ketma-ketlikni yozma
+ravishda bajarasiz:
+
+> **statistik tushuncha → maʼlumot → kod → natija → talqin → qaror**
+
+Faqat kod yozib, natijani izohsiz qoldirish — topshiriq bajarilmagan
+hisoblanadi. Baholashning yarmidan koʻpi aynan *talqin* va *qaror*
+bosqichlariga beriladi.
+
+**Vaqt va ball taqsimoti (120 daqiqa, 110 ball + 5 bonus).**
+
+| # | Mazmun | Daqiqa | Blum | Qiyinlik | Ball |
+|---|---|---|---|---|---|
+| 0 | Muhitni sozlash | 5 | — | — | — |
+| 1 | Birgalikdagi taqsimot va bogʻliqsizlik (barcha katakda) | 20 | Qoʻllash | 3 (Amaliy) | 20 |
+| 2 | Kovariatsiya va korrelyatsiya — qoʻlda va tayyor funksiya bilan | 20 | Qoʻllash | 3 (Amaliy) | 20 |
+| 3 | Korrelyatsiya matritsasi va sochma diagrammalar matritsasi | 15 | Tahlil | 4 (Analitik) | 15 |
+| 4 | $\Var(aX+bY)$ va bogʻliqsizlik farazining narxi | 20 | Tahlil | 4 (Analitik) | 20 |
+| 5 | Minimal dispersiyali portfel va diversifikatsiya | 20 | Baholash | 5 (Ilgʻor) | 20 |
+| 6 | Anskomb kvarteti va umumiy trend | 20 | Baholash | 5 (Ilgʻor) | 15 |
+| 7 | Ixtiyoriy: uchta korrelyatsiya oʻlchovi | uyda | Yaratish | 6 (Tadqiqot) | +5 |
+
+**Oldingi bilim.** Sizga quyidagilar allaqachon maʼlum boʻlishi kerak:
+sochma diagramma va uni oʻqish (1-hafta); dispersiya va standart ogʻish,
+$n-1$ maxraji (1-hafta); shartli ehtimollik va bogʻliqsizlik taʼrifi
+$\Prob(A\cap B)=\Prob(A)\Prob(B)$ (3-hafta); tasodifiy miqdorning
+kutilma va dispersiyasi, $\E[X^2]-(\E[X])^2$ ayniyati (4-hafta);
+MINSTD generatori va urugʻ tushunchasi (2-hafta).
+
+**Bu hafta nimani qilmaymiz.** Tanlanma taqsimoti, markaziy limit
+teoremasi va standart xatolar — 7-haftada. Chiziqli regressiya
+koeffitsiyentlari — 12-haftada. Sababiy xulosa apparati — 13-haftada.
+Bugun biz **tasvirlash** bilan cheklanamiz: maʼlumotda nima bor va
+bitta son uni qanchalik toʻliq bayon qiladi.
+
+> **Diqqat: bu haftada Nazorat ishi 2 topshiriladi** (4–6-haftalar
+> materiali). Ushbu laboratoriya — nazorat ishiga tayyorgarlikning
+> asosiy qismi.
+
+---
+
+# 0-bosqich. Muhitni sozlash
+
+```{r lokal}
+# --- MUHIM: UTF-8 muhitini kafolatlash --------------------------------
+# Oʻzbekcha nomlarda tutuq belgisi «ʻ» (U+02BB) bor. Agar R UTF-8
+# boʻlmagan lokalda ishga tushsa (masalan LC_CTYPE=C), kod ichidagi
+# oʻzbekcha satr va CSV dan oʻqilgan qiymat BAYTLARI bir xil boʻlsa ham
+# TENG DEB HISOBLANMAYDI: filter() BOʻSH jadval qaytaradi va butun
+# tahlil NaN ga aylanadi — hech qanday xato xabari chiqmasdan.
+# QOIDA (2-haftadan): toifa nomlarini kod ichida literal yozmang —
+# ularni unique(...) orqali FAYLDAN oling va POZITSIYA boʻyicha tanlang.
+if (!grepl("UTF-8", Sys.getlocale("LC_CTYPE"), ignore.case = TRUE)) {
+  for (lokal in c("C.UTF-8", "en_US.UTF-8", "uz_UZ.UTF-8",
+                  "Uzbek_Uzbekistan.utf8", "English_United States.utf8")) {
+    if (suppressWarnings(Sys.setlocale("LC_CTYPE", lokal)) != "") break
+  }
+}
+cat("LC_CTYPE =", Sys.getlocale("LC_CTYPE"), "\n")
+```
+
+```{r paketlar}
+# --- Kerakli paketlar -------------------------------------------------
+library(readr)     # CSV oʻqish, kodlashni aniq belgilash imkoni bilan
+library(dplyr)     # maʼlumotni filtrlash va xulosalash
+library(ggplot2)   # grafiklar
+
+# Okabe–Ito palitrasi: rang koʻrmaslikka moslashgan.
+oiBlue <- "#0072B2"; oiOrange <- "#E69F00"; oiGreen  <- "#009E73"
+oiPink <- "#CC79A7"; oiVerm   <- "#D55E00"; oiSky    <- "#56B4E9"
+
+theme_set(theme_minimal(base_size = 11))
+theme_update(
+  panel.grid.minor = element_blank(),
+  plot.title    = element_text(face = "bold"),
+  plot.subtitle = element_text(colour = "grey30")
+)
+
+# QOIDA (2-haftadan): grafik yorliqlarida faqat ASCII harflar.
+# R ning standart pdf() qurilmasi U+02BB belgisini chiza olmaydi.
+cat("cairo mavjudmi:", capabilities("cairo"), "\n")
+```
+
+```{r yordamchi}
+# --- IKKI DAFTAR BIR XIL MATN CHIQARISHI UCHUN UCHTA YORDAMCHI ---------
+# (1) tf(): R «TRUE», Python esa «True» yozadi. Mantiqiy qiymatni
+#     OʻZIMIZ formatlaymiz.
+tf <- function(b) if (isTRUE(as.logical(b))) "TRUE" else "FALSE"
+
+# (2) pad()/padl(): R ning sprintf("%-16s") formati satrni BAYT boʻyicha
+#     toʻldiradi, Python esa BELGI boʻyicha. «Oʻzbekiston» da 11 ta belgi,
+#     ammo 12 ta bayt bor — shu sababli oʻzbekcha yorliqlarni sprintf ga
+#     bermay, kenglikni OʻZIMIZ hisoblaymiz.
+pad  <- function(s, n) {           # chapga tekislash (oʻngdan boʻshliq)
+  s <- enc2utf8(s); k <- n - nchar(s, type = "chars")
+  if (k > 0) paste0(s, strrep(" ", k)) else s
+}
+padl <- function(s, n) {           # oʻngga tekislash (chapdan boʻshliq)
+  s <- enc2utf8(s); k <- n - nchar(s, type = "chars")
+  if (k > 0) paste0(strrep(" ", k), s) else s
+}
+
+# (3) P_(): sprintf + cat qisqartmasi. Har bir son QOʻLDA formatlanadi
+#     («%.6f»), tilning avtomatik chiqarish mexanizmiga tayanmaymiz.
+P_ <- function(...) cat(sprintf(...), "\n", sep = "")
+```
+
+```{r malumot}
+# --- Ikkita haqiqiy maʼlumot toʻplami ---------------------------------
+# A. markaziy-osiyo-hosildorlik.csv — 5 mamlakat x 27 yil (1992–2018),
+#    hosildorlik t/ga. Manba: FAOSTAT / Our World in Data.
+# B. kinolar-byudjet.csv — 2 467 film (2000–2018), byudjet va jahon
+#    daromadi AQSh dollarida. Manba: The Numbers / Kaggle.
+DATA <- "data"
+kino  <- read_csv(file.path(DATA, "kinolar-byudjet.csv"),
+                  locale = locale(encoding = "UTF-8"), show_col_types = FALSE)
+hosil <- read_csv(file.path(DATA, "markaziy-osiyo-hosildorlik.csv"),
+                  locale = locale(encoding = "UTF-8"), show_col_types = FALSE)
+
+# Mamlakat nomlari FAYLDAN olinadi — kod ichida literal yozilmaydi.
+mamlakatlar <- unique(hosil$mamlakat)
+kod <- c("UZB", "KGZ", "KAZ", "TJK", "TKM")   # ASCII qisqartma (grafiklar uchun)
+
+# KENG jadval: 27 qator (yil) x 5 ustun (mamlakat), bugʻdoy hosildorligi.
+# Ustunlar POZITSIYA boʻyicha tartiblanadi: mamlakatlar[i] <-> kod[i].
+yillar <- sort(unique(hosil$yil))
+B <- sapply(mamlakatlar, function(mm) {
+  d <- hosil[hosil$mamlakat == mm, ]; d <- d[order(d$yil), ]; d$bugdoy })
+dimnames(B) <- NULL
+
+P_("=== 0-BOSQICH ===")
+P_("hosildorlik : %d qator = %d mamlakat x %d yil (%d-%d)",
+   nrow(hosil), length(mamlakatlar), length(yillar), min(yillar), max(yillar))
+for (i in seq_along(mamlakatlar))
+  P_("  [%d] %s = %s   bugdoy: %.3f - %.3f t/ga",
+     i, kod[i], pad(mamlakatlar[i], 13), min(B[, i]), max(B[, i]))
+P_("kinolar     : n = %d   (%d-%d)", nrow(kino), min(kino$yil), max(kino$yil))
+```
+
+> **Toʻplamlarning chegaralarini darhol yozib qoʻying.** Hosildorlik
+> toʻplamida $n=27$ — bu **kichik** tanlanma; bitta yil natijani sezilarli
+> oʻzgartiradi (2-topshiriqda buni oʻlchaymiz). Kinolar toʻplamida
+> byudjet $175$ mln \$ da kesilgan va $31$ ta filmning jahon daromadi
+> nol deb yozilgan (bonus topshiriqda buning narxini koʻrasiz).
+> **Bu ikkala chegara ham maʼlumot qanday yigʻilganining xossasi**, olamning
+> emas.
+
+---
+
+# 1-topshiriq. Birgalikdagi taqsimot va bogʻliqsizlik
+
+**Qiyinlik: 3 (Amaliy) · Blum: Qoʻllash · 20 ball · 20 daqiqa**
+
+### Statistik tushuncha
+
+Ikki diskret tasodifiy miqdor uchun **birgalikdagi taqsimot**
+$p(x,y)=\Prob(X=x,\ Y=y)$ har bir *juftlik* ehtimolini beradi.
+**Chekka taqsimotlar** — jadval chekkasidagi yigʻindilar:
+$$p_X(x)=\sum_y p(x,y),\qquad p_Y(y)=\sum_x p(x,y).$$
+
+$X$ va $Y$ **bogʻliqsiz** deyiladi, agar
+
+$$p(x,y)=p_X(x)\,p_Y(y)\qquad \textbf{barcha } (x,y)\ \textbf{juftliklar uchun.}$$
+
+Bu — 3-haftadagi $\Prob(A\cap B)=\Prob(A)\Prob(B)$ shartining tasodifiy
+miqdorlarga koʻchirilgan koʻrinishi. **Ikki muhim ogohlantirish:**
+
+* **Bitta katak yetarli emas.** Bogʻliqsizlik — *barcha* kataklar uchun
+  talab. Bitta katakda tenglik bajarilishi mumkin, qolganlarida esa
+  yoʻq — bunda oʻzgaruvchilar **bogʻliq**. Bugun buni kod bilan
+  tekshiramiz: sikl ichida, hamma katakda.
+* **Chekka taqsimotlar birgalikdagini aniqlamaydi.** Bir xil
+  $p_X$ va $p_Y$ ga ega, ammo butunlay boshqa $p(x,y)$ jadvallari
+  cheksiz koʻp. Shu sababli «har bir oʻzgaruvchini alohida oʻrgandim»
+  degan gap ularning *birgalikdagi* xatti-harakati haqida hech narsa
+  aytmaydi.
+
+### Maʼlumot
+
+Haqiqiy maʼlumotdan ikkita **ikkilik** oʻzgaruvchi yasaymiz:
+$X=1$ agar Oʻzbekistonning bugʻdoy hosildorligi oʻz medianasidan yuqori
+boʻlsa, $Y=1$ agar Qozogʻistonniki oʻz medianasidan yuqori boʻlsa.
+Kuzatuv birligi — **bitta yil** ($n=27$, 1992–2018).
+
+> **Nima uchun mediana?** Mediana boʻyicha boʻlish har bir oʻzgaruvchiga
+> deyarli teng ikki guruh beradi — chekka taqsimotlar **konstruktsiya
+> boʻyicha** $\approx 0{,}5$ ga yaqin boʻladi. Shu sababli jadvaldagi
+> har qanday nomutanosiblik faqat **birgalikdagi** tuzilishdan kelib
+> chiqadi. Bu — tahlilni toza qiladigan dizayn qarori.
+
+### Kod
+
+```{r t1-jadval}
+# --- 1-qadam: ikkilik oʻzgaruvchilar --------------------------------
+# B[, 1] = UZB, B[, 3] = KAZ (POZITSIYA boʻyicha, literal nom yoʻq).
+X <- as.integer(B[, 1] > median(B[, 1]))
+Y <- as.integer(B[, 3] > median(B[, 3]))
+n <- length(X)
+P_("")
+P_("=== 1-TOPSHIRIQ: BIRGALIKDAGI TAQSIMOT ===")
+P_("median UZB = %.4f   median KAZ = %.4f   n = %d",
+   median(B[, 1]), median(B[, 3]), n)
+
+# --- 2-qadam: sanoqlar jadvali (2x2) ---------------------------------
+C <- matrix(0L, 2, 2)
+for (i in 0:1) for (j in 0:1) C[i+1, j+1] <- sum(X == i & Y == j)
+P_("")
+P_("Sanoqlar:")
+P_("%8s %8s %8s %8s", "", "y=0", "y=1", "jami")
+for (i in 0:1) P_("%8s %8d %8d %8d", sprintf("x=%d", i),
+                  C[i+1, 1], C[i+1, 2], sum(C[i+1, ]))
+P_("%8s %8d %8d %8d", "jami", sum(C[, 1]), sum(C[, 2]), sum(C))
+
+# --- 3-qadam: sanoqdan ehtimollikka va chekka taqsimotlarga ----------
+Pm <- C / n
+pX <- rowSums(Pm); pY <- colSums(Pm)
+P_("")
+P_("Birgalikdagi taqsimot p(x,y):")
+P_("%8s %10s %10s %10s", "", "y=0", "y=1", "p_X(x)")
+for (i in 0:1) P_("%8s %10.6f %10.6f %10.6f", sprintf("x=%d", i),
+                  Pm[i+1, 1], Pm[i+1, 2], pX[i+1])
+P_("%8s %10.6f %10.6f %10.6f", "p_Y(y)", pY[1], pY[2], sum(Pm))
+```
+
+```{r t1-bogliqsizlik}
+# --- 4-qadam: BOGʻLIQSIZLIK — BARCHA KATAKDA -------------------------
+# Diqqat: sikl BARCHA (x, y) juftlikdan oʻtadi. Bitta katakni tekshirib
+# «bogʻliqsiz» deb xulosa chiqarish — bu haftaning eng koʻp uchraydigan
+# xatosi.
+P_("")
+P_("BOGʻLIQSIZLIK BARCHA KATAKDA: p(x,y) = p_X(x) p_Y(y) ?")
+P_("%5s %5s %11s %11s %11s %8s", "x", "y", "p(x,y)", "p_X p_Y", "farq", "mos")
+maxfarq <- 0
+for (i in 0:1) for (j in 0:1) {
+  e <- pX[i+1] * pY[j+1]; d <- Pm[i+1, j+1] - e
+  maxfarq <- max(maxfarq, abs(d))
+  P_("%5d %5d %11.6f %11.6f %11.6f %8s", i, j, Pm[i+1, j+1], e, d,
+     tf(abs(d) < 1e-12))
+}
+P_("barcha 4 katak mos keladi   : %s", tf(maxfarq < 1e-12))
+P_("eng katta |farq|            : %.6f", maxfarq)
+
+# --- 5-qadam: shartli taqsimot — bogʻliqlikning «maʼnoli» koʻrinishi --
+# Agar bogʻliqsiz boʻlsa, p(Y|X=0) va p(Y|X=1) qatorlari BIR XIL va
+# shartsiz p_Y ga teng boʻlishi kerak edi.
+P_("")
+P_("SHARTLI TAQSIMOT: p(Y=y | X=x)")
+P_("%8s %10s %10s", "", "y=0", "y=1")
+for (i in 0:1) P_("%8s %10.6f %10.6f", sprintf("x=%d", i),
+                  Pm[i+1, 1]/pX[i+1], Pm[i+1, 2]/pX[i+1])
+P_("%8s %10.6f %10.6f", "shartsiz", pY[1], pY[2])
+
+# --- 6-qadam: ikkilik oʻzgaruvchilar uchun Cov va r -------------------
+# 0/1 oʻzgaruvchida E[X] = p va Var(X) = p(1-p) = E[X] - E[X]^2.
+EX <- sum(c(0, 1) * pX); EY <- sum(c(0, 1) * pY)
+EXY <- 0; for (i in 0:1) for (j in 0:1) EXY <- EXY + i*j*Pm[i+1, j+1]
+kov <- EXY - EX*EY
+sdX <- sqrt(EX - EX^2); sdY <- sqrt(EY - EY^2)
+P_("")
+P_("E[X]   = %.6f", EX)
+P_("E[Y]   = %.6f", EY)
+P_("E[XY]  = %.6f", EXY)
+P_("Cov    = E[XY] - E[X]E[Y] = %.6f - %.6f = %.6f", EXY, EX*EY, kov)
+P_("SD(X)  = %.6f   SD(Y) = %.6f", sdX, sdY)
+P_("r      = %.6f", kov/(sdX*sdY))
+```
+
+```{r t1-3x3}
+# --- 7-qadam: KENGAYTMA — 2x2 dan 3x3 ga -----------------------------
+# Ikkilik boʻlish maʼlumotning koʻp qismini yoʻqotadi. Terzillar
+# (uchdan bir qismlar) boʻyicha 3x3 jadval quramiz va bogʻliqsizlikni
+# 9 ta katakda tekshiramiz. EʼTIBOR BERING: kataklar mayda boʻlgani
+# sari kutilgan sanoq kichrayadi — bu 11-haftadagi xi-kvadrat testining
+# shartiga bevosita bogʻliq.
+P_("")
+P_("KENGAYTMA: 3x3 jadval (terzillar boʻyicha)")
+qx <- as.numeric(quantile(B[, 1], c(1/3, 2/3), type = 7))
+qy <- as.numeric(quantile(B[, 3], c(1/3, 2/3), type = 7))
+X3 <- as.integer(B[, 1] > qx[1]) + as.integer(B[, 1] > qx[2])
+Y3 <- as.integer(B[, 3] > qy[1]) + as.integer(B[, 3] > qy[2])
+C3 <- matrix(0L, 3, 3)
+for (i in 0:2) for (j in 0:2) C3[i+1, j+1] <- sum(X3 == i & Y3 == j)
+P3 <- C3/n; pX3 <- rowSums(P3); pY3 <- colSums(P3)
+P_("%8s %8s %8s %8s", "", "y=past", "y=orta", "y=yuq")
+nomx <- c("x=past", "x=orta", "x=yuq")
+for (i in 1:3) P_("%8s %8d %8d %8d", nomx[i], C3[i, 1], C3[i, 2], C3[i, 3])
+E3 <- outer(pX3, pY3)
+P_("eng katta |p(x,y) - p_X p_Y| : %.6f", max(abs(P3 - E3)))
+P_("kutilgan sanogʻi 5 dan kichik katakchalar soni : %d", sum(E3*n < 5))
+P_("9 katakning nechtasida mos   : %d", sum(abs(P3 - E3) < 1e-12))
+```
+
+```{r t1-grafik, fig.height=3.6}
+# --- 8-qadam: koʻrish — kuzatilgan va bogʻliqsizlik bashorati --------
+# Yorliqlar ASCII (R ning standart qurilmasi «ʻ» ni chiza olmaydi).
+kat <- data.frame(
+  katak = rep(c("(0,0)", "(0,1)", "(1,0)", "(1,1)"), 2),
+  tur   = rep(c("kuzatilgan p(x,y)", "bogliqsizlik: p_X p_Y"), each = 4),
+  qiy   = c(as.vector(t(Pm)), as.vector(t(outer(pX, pY)))))
+ggplot(kat, aes(katak, qiy, fill = tur)) +
+  geom_col(position = position_dodge(width = 0.72), width = 0.64) +
+  geom_text(aes(label = sprintf("%.3f", qiy)),
+            position = position_dodge(width = 0.72),
+            vjust = -0.35, size = 2.9, colour = "grey25") +
+  scale_fill_manual(values = c("kuzatilgan p(x,y)" = oiBlue,
+                               "bogliqsizlik: p_X p_Y" = oiOrange), name = NULL) +
+  ylim(0, 0.40) +
+  labs(title = "Bogliqsizlik BARCHA katakda buziladi",
+       subtitle = "X = UZB bugdoy > median, Y = KAZ bugdoy > median, n = 27",
+       x = "katak (x, y)", y = "ehtimollik",
+       caption = "Manba: markaziy-osiyo-hosildorlik.csv (FAOSTAT / OWID)") +
+  theme(legend.position = "top")
+```
+
+### Natija (kutilayotgan)
+
+```
+=== 1-TOPSHIRIQ: BIRGALIKDAGI TAQSIMOT ===
+median UZB = 4.1260   median KAZ = 1.0760   n = 27
+
+Sanoqlar:
+              y=0      y=1     jami
+     x=0        9        5       14
+     x=1        5        8       13
+    jami       14       13       27
+
+Birgalikdagi taqsimot p(x,y):
+                y=0        y=1     p_X(x)
+     x=0   0.333333   0.185185   0.518519
+     x=1   0.185185   0.296296   0.481481
+  p_Y(y)   0.518519   0.481481   1.000000
+
+BOGʻLIQSIZLIK BARCHA KATAKDA: p(x,y) = p_X(x) p_Y(y) ?
+    x     y      p(x,y)     p_X p_Y        farq      mos
+    0     0    0.333333    0.268861    0.064472    FALSE
+    0     1    0.185185    0.249657   -0.064472    FALSE
+    1     0    0.185185    0.249657   -0.064472    FALSE
+    1     1    0.296296    0.231824    0.064472    FALSE
+barcha 4 katak mos keladi   : FALSE
+eng katta |farq|            : 0.064472
+
+SHARTLI TAQSIMOT: p(Y=y | X=x)
+                y=0        y=1
+     x=0   0.642857   0.357143
+     x=1   0.384615   0.615385
+shartsiz   0.518519   0.481481
+
+E[X]   = 0.481481
+E[Y]   = 0.481481
+E[XY]  = 0.296296
+Cov    = E[XY] - E[X]E[Y] = 0.296296 - 0.231824 = 0.064472
+SD(X)  = 0.499657   SD(Y) = 0.499657
+r      = 0.258242
+
+KENGAYTMA: 3x3 jadval (terzillar boʻyicha)
+           y=past   y=orta    y=yuq
+  x=past        6        1        2
+  x=orta        1        6        2
+   x=yuq        2        2        5
+eng katta |p(x,y) - p_X p_Y| : 0.111111
+kutilgan sanogʻi 5 dan kichik katakchalar soni : 9
+9 katakning nechtasida mos   : 0
+```
+
+### Talqin — daftaringizga yozing
+
+**T1.1** $p(1,1)=0{,}296296$, ammo $p_X(1)p_Y(1)=0{,}231824$. Farq
+$0{,}064472$. Endi jadvalning **toʻrtta** qatoriga qarang: farqning
+*kattaligi* hamma katakda bir xil, *ishorasi* esa oʻzgaradi
+($+,-,-,+$). Nima uchun $2\times 2$ jadvalda shunday boʻlishi
+**shart**? (Maslahat: chekka yigʻindilar qanday cheklov qoʻyadi?)
+
+**T1.2** Talaba: «$p(0,1)=0{,}185185$ va $p_X(0)p_Y(1)=0{,}249657$ —
+bular teng emas, lekin farq kichik, demak oʻzgaruvchilar *deyarli*
+bogʻliqsiz». Bu jumlada **ikkita** muammo bor: biri mantiqiy, biri
+statistik. Ikkalasini ham nomlang.
+
+**T1.3** $\Prob(Y=1\mid X=1)=0{,}615385$, $\Prob(Y=1)=0{,}481481$.
+Bu ikki sonni **bir jumlada**, oddiy oʻzbek tilida, dehqonchilik
+kontekstida tushuntiring. Jumlangizda «sabab» soʻzi boʻlmasin.
+
+**T1.4** $r=0{,}258242$ — «zaif» bogʻlanish. Ammo siz maʼlumotning
+katta qismini **atayin yoʻqotdingiz**: uzluksiz hosildorlikni 0/1 ga
+aylantirdingiz. 3-topshiriqda ayni bir juftlik uchun $r=0{,}4070$
+chiqadi. Qaysi son «toʻgʻri»? Savolning oʻzi nima uchun notoʻgʻri
+qoʻyilgan?
+
+**T1.5** $3\times 3$ jadvalda $9$ ta katakning **hech biri** mos
+kelmadi, va kutilgan sanogʻi $5$ dan kichik katakchalar soni $9$.
+Bu ikkinchi son nima uchun ogohlantirish? (11-haftada xi-kvadrat
+testining sharti aynan shu.)
+
+### Qaror
+
+Qishloq xoʻjaligi vazirligi mintaqaviy gʻalla zaxirasini rejalashtirmoqda.
+Tahlilchi: «Oʻzbekiston va Qozogʻiston hosili bogʻliqsiz, shuning uchun
+biri yomon boʻlsa, ikkinchisi qoplaydi». Jadvalingizga tayanib
+**ikki jumlalik** javob yozing: (a) bu faraz maʼlumot bilan mos keladimi;
+(b) faraz notoʻgʻri boʻlsa, zaxira hajmi kam baholanadimi yoki koʻp?
+Javobingizda $\Prob(Y=1\mid X=1)$ va $\Prob(Y=1)$ ni taqqoslang.
+
+---
+
+# 2-topshiriq. Kovariatsiya va korrelyatsiya — qoʻlda va tayyor funksiya bilan
+
+**Qiyinlik: 3 (Amaliy) · Blum: Qoʻllash · 20 ball · 20 daqiqa**
+
+### Statistik tushuncha
+
+**Kovariatsiya** — ikki oʻzgaruvchining *birgalikda* oʻz oʻrtachasidan
+qanday chetlashishini oʻlchaydi:
+
+$$\Cov(X,Y)=\E\bigl[(X-\mu_X)(Y-\mu_Y)\bigr]
+          =\E[XY]-\E[X]\E[Y],$$
+
+tanlanma uchun esa
+
+$$s_{xy}=\frac{1}{n-1}\sum_{i=1}^{n}(x_i-\bar x)(y_i-\bar y)
+       =\frac{\sum x_iy_i-n\bar x\bar y}{n-1}.$$
+
+Har bir kuzatuv **ishorali hissa** qoʻshadi: agar ikkala chetlanish bir
+xil ishorali boʻlsa (ikkalasi ham oʻrtachadan yuqori yoki ikkalasi ham
+past) — hissa **musbat**; ishoralar qarama-qarshi boʻlsa — **manfiy**.
+
+**Birlik muammosi.** $\Cov$ ning oʻlchov birligi — $[X]\cdot[Y]$.
+Agar $X$ ni t/ga dan kg/ga ga aylantirsangiz, kovariatsiya $1000$ marta
+oʻzgaradi, garchi *bogʻlanish* umuman oʻzgarmagan boʻlsa ham. Shu
+sababli kovariatsiyaning **kattaligi** talqin qilinmaydi — faqat
+**ishorasi**.
+
+**Korrelyatsiya** — standartlashtirilgan kovariatsiya:
+
+$$r=\frac{s_{xy}}{s_x\,s_y},\qquad -1\le r\le 1 .$$
+
+U **oʻlchovsiz** va **masshtabga bogʻliq emas**: $X\to aX+b$ ($a>0$)
+almashtirishida $r$ oʻzgarmaydi. $r^2$ — «umumiy oʻzgaruvchanlikning
+ulushi» sifatida talqin qilinadi (aniq maʼnosi 12-haftada).
+
+### Maʼlumot
+
+Oʻzbekiston, **2010–2018** ($n=9$): $X$ — bugʻdoy, $Y$ — arpa
+hosildorligi (t/ga). Bu davr ataylab tanlandi: uning ichida
+**2017–2018 qurgʻoqchiligi** bor.
+
+### Kod
+
+```{r t2-qolda}
+# --- 1-qadam: toʻqqiz yillik qatorni ajratamiz -----------------------
+# Mamlakat nomi FAYLDAN (mamlakatlar[1]) — literal yozilmaydi.
+uz  <- hosil[hosil$mamlakat == mamlakatlar[1], ]; uz <- uz[order(uz$yil), ]
+uz9 <- uz[uz$yil >= 2010 & uz$yil <= 2018, ]
+yil9 <- uz9$yil; x <- uz9$bugdoy; y <- uz9$arpa
+m <- length(x)
+
+# --- 2-qadam: TOʻLIQ QOʻL HISOBI — har bir qatorning hissasi ----------
+xb <- mean(x); yb <- mean(y)
+dx <- x - xb; dy <- y - yb; pr <- dx*dy
+P_("")
+P_("=== 2-TOPSHIRIQ: KOVARIATSIYA VA KORRELYATSIYA QOʻLDA ===")
+P_("Oʻzbekiston 2010-2018:  X = bugʻdoy, Y = arpa (t/ga),  n = %d", m)
+P_("%6s %8s %8s %10s %10s %14s", "yil", "x", "y", "x-xb", "y-yb", "(x-xb)(y-yb)")
+for (i in 1:m) P_("%6d %8.3f %8.3f %10.4f %10.4f %14.6f",
+                  yil9[i], x[i], y[i], dx[i], dy[i], pr[i])
+P_("%6s %8.4f %8.4f %10s %10s %14.6f", "jami", xb, yb, "", "", sum(pr))
+
+sxy <- sum(pr)/(m-1); sx <- sd(x); sy <- sd(y); r <- sxy/(sx*sy)
+P_("")
+P_("xbar = %.4f   ybar = %.4f   yigʻindi = %.6f", xb, yb, sum(pr))
+P_("s_xy = %.6f / %d = %.6f", sum(pr), m-1, sxy)
+P_("s_x  = %.6f   s_y = %.6f", sx, sy)
+P_("r    = %.6f / (%.6f x %.6f) = %.6f", sxy, sx, sy, r)
+P_("r^2  = %.6f", r^2)
+```
+
+```{r t2-tekshiruv}
+# --- 3-qadam: UCH YOʻL BILAN TEKSHIRISH ------------------------------
+# (i) taʼrif boʻyicha; (ii) «hisob formulasi»; (iii) tayyor funksiya.
+# Uchalasi mos kelishi SHART. Suzuvchi nuqtali qoldiqni SON sifatida
+# emas, DOPUSK sifatida chop etamiz (4-haftadagi qoida).
+sxy2 <- (sum(x*y) - m*xb*yb)/(m-1)
+P_("")
+P_("HISOB FORMULASI  (sum(xy) - n xb yb)/(n-1) = %.6f", sxy2)
+P_("ikki yoʻl mos (1e-12)        : %s", tf(abs(sxy - sxy2) < 1e-12))
+P_("tayyor funksiya bilan mos    : %s", tf(abs(sxy - cov(x, y)) < 1e-12))
+P_("tayyor r bilan mos           : %s", tf(abs(r - cor(x, y)) < 1e-12))
+
+# --- 4-qadam: kovariatsiya QAYERDAN keldi? ---------------------------
+# Toʻqqiz qatordan ikkitasi (2017, 2018) yigʻindining qancha qismini
+# beradi? Bu — barqarorlik (robustness) savoli.
+P_("")
+P_("2017-2018 ning hissasi = %.6f / %.6f = %.4f%%",
+   sum(pr[(m-1):m]), sum(pr), 100*sum(pr[(m-1):m])/sum(pr))
+P_("2017-2018 siz r        = %.6f  (edi %.6f)",
+   cor(x[1:(m-2)], y[1:(m-2)]), r)
+
+# --- 5-qadam: BIRLIK MUAMMOSI ----------------------------------------
+P_("")
+P_("BIRLIK MUAMMOSI: x ni kg/ga ga aylantiramiz (x1000)")
+sxy_kg <- cov(x*1000, y); r_kg <- cor(x*1000, y)
+P_("s_xy (t/ga)  = %.6f", sxy)
+P_("s_xy (kg/ga) = %.6f   -> %.1f marta oʻzgardi", sxy_kg, sxy_kg/sxy)
+P_("r (t/ga)     = %.6f", r)
+P_("r (kg/ga)    = %.6f   -> oʻzgarmadi : %s", r_kg, tf(abs(r - r_kg) < 1e-12))
+```
+
+```{r t2-grafik, fig.height=4.4}
+# --- 6-qadam: kovariatsiyani KOʻRISH ---------------------------------
+# Oʻrtachalar boʻyicha chizilgan ikki chiziq tekislikni toʻrt chorakka
+# boʻladi. I va III chorakdagi nuqtalar musbat hissa, II va IV
+# chorakdagilar manfiy hissa qoʻshadi.
+d2 <- data.frame(yil = yil9, x = x, y = y, pr = pr,
+                 ishora = ifelse(pr >= 0, "musbat hissa (+)", "manfiy hissa (-)"))
+ggplot(d2, aes(x, y)) +
+  geom_vline(xintercept = xb, colour = oiVerm, linetype = "dashed") +
+  geom_hline(yintercept = yb, colour = oiVerm, linetype = "dashed") +
+  geom_point(aes(colour = ishora, shape = ishora, size = abs(pr))) +
+  geom_text(aes(label = yil), vjust = -1.05, size = 2.9, colour = "grey30") +
+  scale_colour_manual(values = c("musbat hissa (+)" = oiBlue,
+                                 "manfiy hissa (-)" = oiOrange), name = NULL) +
+  scale_shape_manual(values = c("musbat hissa (+)" = 16,
+                                "manfiy hissa (-)" = 17), name = NULL) +
+  scale_size_continuous(range = c(2, 7), guide = "none") +
+  annotate("text", x = xb - 0.006, y = yb + 0.20, label = "xbar = 4.6054",
+           colour = oiVerm, size = 3, angle = 90, hjust = 0) +
+  labs(title = "Kovariatsiya = ishorali hissalarning ortacha yigindisi",
+       subtitle = "Uzbekiston 2010-2018; nuqta olchami |(x-xb)(y-yb)| ga proporsional",
+       x = "bugdoy hosildorligi, t/ga", y = "arpa hosildorligi, t/ga",
+       caption = "Manba: markaziy-osiyo-hosildorlik.csv (FAOSTAT / OWID), n = 9") +
+  theme(legend.position = "top")
+```
+
+### Natija (kutilayotgan)
+
+```
+=== 2-TOPSHIRIQ: KOVARIATSIYA VA KORRELYATSIYA QOʻLDA ===
+Oʻzbekiston 2010-2018:  X = bugʻdoy, Y = arpa (t/ga),  n = 9
+   yil        x        y       x-xb       y-yb   (x-xb)(y-yb)
+  2010    4.600    1.914    -0.0054     0.3909      -0.002128
+  2011    4.556    1.282    -0.0494    -0.2411       0.011922
+  2012    4.710    1.658     0.1046     0.1349       0.014103
+  2013    4.739    1.496     0.1336    -0.0271      -0.003621
+  2014    4.782    1.514     0.1766    -0.0091      -0.001609
+  2015    4.818    1.631     0.2126     0.1079       0.022932
+  2016    4.802    1.625     0.1966     0.1019       0.020027
+  2017    4.316    1.349    -0.2894    -0.1741       0.050395
+  2018    4.126    1.239    -0.4794    -0.2841       0.136215
+  jami   4.6054   1.5231                             0.248238
+
+xbar = 4.6054   ybar = 1.5231   yigʻindi = 0.248238
+s_xy = 0.248238 / 8 = 0.031030
+s_x  = 0.239759   s_y = 0.213013
+r    = 0.031030 / (0.239759 x 0.213013) = 0.607570
+r^2  = 0.369142
+
+HISOB FORMULASI  (sum(xy) - n xb yb)/(n-1) = 0.031030
+ikki yoʻl mos (1e-12)        : TRUE
+tayyor funksiya bilan mos    : TRUE
+tayyor r bilan mos           : TRUE
+
+2017-2018 ning hissasi = 0.186611 / 0.248238 = 75.1744%
+2017-2018 siz r        = 0.096457  (edi 0.607570)
+
+BIRLIK MUAMMOSI: x ni kg/ga ga aylantiramiz (x1000)
+s_xy (t/ga)  = 0.031030
+s_xy (kg/ga) = 31.029694   -> 1000.0 marta oʻzgardi
+r (t/ga)     = 0.607570
+r (kg/ga)    = 0.607570   -> oʻzgarmadi : TRUE
+```
+
+### Talqin — daftaringizga yozing
+
+**T2.1** Toʻqqiz qatorning **ikkitasi** ($2017$, $2018$) yigʻindining
+$75{,}17\,\%$ ini beradi. Ularsiz $r$ $0{,}6076$ dan $0{,}0965$ ga
+tushadi. Bu **xatomi**, yoki **maʼlumot shunday**mi? Javobingizni
+qurgʻoqchilik hodisasi bilan bogʻlang va **chetlashgan kuzatuvni olib
+tashlash** haqidagi qarorni asoslang (yoki rad eting).
+
+**T2.2** $s_{xy}$ t/ga da $0{,}031030$, kg/ga da $31{,}029694$ — aynan
+$1000$ marta. $r$ esa ikkala holda ham $0{,}607570$. Formuladagi
+**qaysi** amal masshtabni yoʻq qiladi? Bir qatorda koʻrsating.
+
+**T2.3** $r=0{,}6076$, $r^2=0{,}3691$. Talaba: «Bugʻdoy arpa
+hosilining $37\,\%$ ini *tushuntiradi*». Bu jumlada **ikkita** xato bor:
+biri sababiyat haqida, biri esa $r^2$ ning maʼnosi haqida
+($n=9$ ekanini unutmang). Ikkalasini ham tuzating.
+
+**T2.4** Ikki oʻzgaruvchi ham bir xil yillardagi **ob-havoga** bogʻliq.
+Bu holda ob-havo — **chalgʻituvchi omil** (1-haftadagi atama).
+Bugʻdoy va arpa oʻrtasidagi $r$ ni «bugʻdoy arpaga taʼsir qiladi» deb
+oʻqib boʻlmasligini bir jumlada asoslang.
+
+**T2.5** «Hisob formulasi» $(\sum x_iy_i-n\bar x\bar y)/(n-1)$ taʼrif
+formulasi bilan $10^{-12}$ aniqlikda mos keldi. Kompyuterda bu ikki
+formuladan **qaysi biri xavfliroq** va nima uchun? (Maslahat: $x$ va $y$
+juda katta, ammo bir-biriga yaqin sonlar boʻlsa nima boʻladi?)
+
+### Qaror
+
+Fermer xoʻjaligi keyingi mavsumga ekin rejasini tuzmoqda: maydonni
+faqat bugʻdoyga bermoqchi. Sizning $r=0{,}6076$ natijangizga tayanib
+**ikki jumlalik** tavsiya yozing: (a) bugʻdoy va arpani birga ekish
+xavfni kamaytiradimi; (b) $r$ ning bu qiymati diversifikatsiya uchun
+**yetarlicha past**mi? Javobingizni 5-topshiriqda sonli tekshirasiz.
+
+---
+
+# 3-topshiriq. Korrelyatsiya matritsasi va sochma diagrammalar matritsasi
+
+**Qiyinlik: 4 (Analitik) · Blum: Tahlil · 15 ball · 15 daqiqa**
+
+### Statistik tushuncha
+
+Ikkitadan koʻp oʻzgaruvchi boʻlganda barcha juftliklarni bittalab
+koʻrib chiqish mumkin emas: $k$ ta oʻzgaruvchi uchun $k(k-1)/2$ ta
+juftlik bor ($k=5$ da $10$ ta). **Korrelyatsiya matritsasi** $\mathbf{R}$
+barcha juftliklarni bitta jadvalga jamlaydi:
+
+$$R_{ij}=\frac{s_{ij}}{s_i s_j},\qquad
+R_{ii}=1,\qquad R_{ij}=R_{ji}.$$
+
+**Kovariatsiya matritsasi** $\mathbf{S}$ ham xuddi shunday tuziladi,
+diagonalida esa dispersiyalar turadi: $S_{ii}=s_i^2$. Ikkalasi
+$R = D^{-1} S D^{-1}$ munosabati bilan bogʻlangan, bunda $D$ —
+standart ogʻishlardan tuzilgan diagonal matritsa.
+
+**Ammo matritsa ham bitta sondan tuzilgan.** Shuning uchun uni har doim
+**sochma diagrammalar matritsasi** bilan birga oʻqiymiz: matritsa
+*qanchalik* kuchli ekanini, diagrammalar esa *qanday shakl* ekanini
+aytadi.
+
+### Maʼlumot
+
+Beshta Markaziy Osiyo mamlakatining bugʻdoy hosildorligi, **1992–2018**
+($27$ yil, $5$ ustun). Kuzatuv birligi — bitta yil.
+
+### Kod
+
+```{r t3-matritsa}
+# --- 1-qadam: ikkala matritsa ----------------------------------------
+K <- cor(B); V <- cov(B)
+P_("")
+P_("=== 3-TOPSHIRIQ: KORRELYATSIYA MATRITSASI ===")
+P_("Kovariatsiya matritsasi (t/ga)^2:")
+P_("%6s %10s %10s %10s %10s %10s", "", kod[1], kod[2], kod[3], kod[4], kod[5])
+for (i in 1:5) P_("%6s %10.4f %10.4f %10.4f %10.4f %10.4f", kod[i],
+                  V[i,1], V[i,2], V[i,3], V[i,4], V[i,5])
+P_("")
+P_("Korrelyatsiya matritsasi:")
+P_("%6s %10s %10s %10s %10s %10s", "", kod[1], kod[2], kod[3], kod[4], kod[5])
+for (i in 1:5) P_("%6s %10.4f %10.4f %10.4f %10.4f %10.4f", kod[i],
+                  K[i,1], K[i,2], K[i,3], K[i,4], K[i,5])
+
+# --- 2-qadam: matritsaning UCH XOSSASINI tekshiramiz -----------------
+P_("")
+P_("diagonal aynan 1 : %s", tf(all(abs(diag(K) - 1) < 1e-12)))
+P_("simmetrik        : %s", tf(all(abs(K - t(K)) < 1e-12)))
+s_ <- sqrt(diag(V))
+P_("r = Cov/(SD SD) tekshiruv (barcha juftlik) : %s",
+   tf(all(abs(K - V/outer(s_, s_)) < 1e-12)))
+
+# --- 3-qadam: 10 ta juftlikni tartiblab oʻqiymiz ---------------------
+ju_nom <- character(0); ju_r <- numeric(0)
+for (i in 1:4) for (j in (i+1):5) {
+  ju_nom <- c(ju_nom, paste0(kod[i], "-", kod[j])); ju_r <- c(ju_r, K[i, j]) }
+o <- order(-ju_r)
+P_("")
+P_("10 ta juftlik, r boʻyicha tartiblangan:")
+P_("%12s %10s %10s", "juftlik", "r", "r^2")
+for (k in o) P_("%12s %10.4f %10.4f", ju_nom[k], ju_r[k], ju_r[k]^2)
+```
+
+```{r t3-issiqxarita, fig.height=4.2}
+# --- 4-qadam: korrelyatsiya matritsasining issiqlik xaritasi ---------
+# QOIDA: maʼnoni FAQAT rang bilan bermaymiz — har bir katakda son ham
+# yozilgan. Rang koʻrmaydigan oʻquvchi ham jadvalni toʻliq oʻqiy oladi.
+hm <- expand.grid(A = kod, Bq = kod, KEEP.OUT.ATTRS = FALSE)
+hm$r <- as.vector(K)
+hm$A  <- factor(hm$A,  levels = kod)
+hm$Bq <- factor(hm$Bq, levels = rev(kod))
+ggplot(hm, aes(A, Bq, fill = r)) +
+  geom_tile(colour = "white", linewidth = 0.8) +
+  geom_text(aes(label = sprintf("%.3f", r)), size = 3.1, colour = "grey15") +
+  scale_fill_gradient2(low = oiOrange, mid = "white", high = oiBlue,
+                       midpoint = 0, limits = c(-1, 1), name = "r") +
+  labs(title = "Korrelyatsiya matritsasi: bugdoy hosildorligi, 1992-2018",
+       subtitle = "UZB-TJK = 0.917 (eng kuchli), TJK-TKM = -0.392 (eng manfiy)",
+       x = NULL, y = NULL,
+       caption = "Manba: markaziy-osiyo-hosildorlik.csv (FAOSTAT / OWID), n = 27")
+```
+
+```{r t3-sochma, fig.height=6.2, fig.width=6.6}
+# --- 5-qadam: SOCHMA DIAGRAMMALAR MATRITSASI -------------------------
+# Matritsa «qanchalik», diagramma «qanday» degan savolga javob beradi.
+# Yuqori uchburchakka r ni yozamiz, pastki uchburchakka nuqtalarni.
+Bm <- B; colnames(Bm) <- kod
+yuqori <- function(x, y, ...) {
+  usr <- par("usr"); on.exit(par(usr = usr)); par(usr = c(0, 1, 0, 1))
+  rr <- cor(x, y)
+  text(0.5, 0.5, sprintf("%.3f", rr), cex = 0.8 + 1.5*abs(rr),
+       col = if (rr >= 0) oiBlue else oiOrange)
+}
+pastki <- function(x, y, ...) {
+  points(x, y, pch = 16, col = adjustcolor(oiBlue, 0.65), cex = 0.8)
+  abline(lm(y ~ x), col = oiVerm, lwd = 1.4)
+}
+pairs(Bm, upper.panel = yuqori, lower.panel = pastki, gap = 0.3,
+      main = "Sochma diagrammalar matritsasi: bugdoy hosildorligi (t/ga)")
+```
+
+### Natija (kutilayotgan)
+
+```
+=== 3-TOPSHIRIQ: KORRELYATSIYA MATRITSASI ===
+Kovariatsiya matritsasi (t/ga)^2:
+              UZB        KGZ        KAZ        TJK        TKM
+   UZB     1.3912    -0.0313     0.1248     0.9220    -0.2032
+   KGZ    -0.0313     0.0770     0.0247     0.0029     0.0351
+   KAZ     0.1248     0.0247     0.0676     0.0884    -0.0279
+   TJK     0.9220     0.0029     0.0884     0.7273    -0.2702
+   TKM    -0.2032     0.0351    -0.0279    -0.2702     0.6529
+
+Korrelyatsiya matritsasi:
+              UZB        KGZ        KAZ        TJK        TKM
+   UZB     1.0000    -0.0956     0.4070     0.9166    -0.2132
+   KGZ    -0.0956     1.0000     0.3428     0.0124     0.1564
+   KAZ     0.4070     0.3428     1.0000     0.3989    -0.1328
+   TJK     0.9166     0.0124     0.3989     1.0000    -0.3922
+   TKM    -0.2132     0.1564    -0.1328    -0.3922     1.0000
+
+diagonal aynan 1 : TRUE
+simmetrik        : TRUE
+r = Cov/(SD SD) tekshiruv (barcha juftlik) : TRUE
+
+10 ta juftlik, r boʻyicha tartiblangan:
+     juftlik          r        r^2
+     UZB-TJK     0.9166     0.8402
+     UZB-KAZ     0.4070     0.1656
+     KAZ-TJK     0.3989     0.1591
+     KGZ-KAZ     0.3428     0.1175
+     KGZ-TKM     0.1564     0.0245
+     KGZ-TJK     0.0124     0.0002
+     UZB-KGZ    -0.0956     0.0091
+     KAZ-TKM    -0.1328     0.0176
+     UZB-TKM    -0.2132     0.0455
+     TJK-TKM    -0.3922     0.1538
+```
+
+### Talqin — daftaringizga yozing
+
+**T3.1** $r(\text{UZB},\text{TJK})=0{,}9166$ — juda kuchli. Sochma
+diagrammada bu juftlikning shakliga qarang. Ikkala mamlakatning
+hosildorligi $1992$ dan $2018$ gacha **oʻsgan**. Bu $0{,}9166$ ni
+qanday tushuntirishi mumkin? (6-topshiriqda buni **oʻlchaysiz** —
+hozircha faqat gipoteza yozing.)
+
+**T3.2** $r(\text{KGZ},\text{TJK})=0{,}0124$ — deyarli nol. Bu
+«Qirgʻiziston va Tojikiston hosili **bogʻliqsiz**» degani emas.
+Nima uchun emasligini **ikki** sabab bilan tushuntiring (biri
+1-topshiriqdan, biri Anskomb kvartetidan oldindan sezilishi mumkin).
+
+**T3.3** Kovariatsiya matritsasida $\mathrm{Cov}(\text{UZB},\text{TJK})=0{,}9220$,
+$\mathrm{Cov}(\text{KGZ},\text{KAZ})=0{,}0247$. Korrelyatsiyada esa
+$0{,}9166$ va $0{,}3428$. Nima uchun kovariatsiyalar tartibi
+korrelyatsiyalar tartibi bilan **mos kelmaydi**? Diagonaldagi
+dispersiyalarga qarang.
+
+**T3.4** $10$ ta juftlikning eng kattasi $r^2=0{,}8402$, eng kichigi
+$0{,}0002$. Agar siz $10$ ta juftlikdan **eng kuchlisini** tanlab,
+uni «kashfiyot» sifatida eʼlon qilsangiz, qanday metodologik xato
+qilgan boʻlasiz? (Bu xatoning nomi bor; 11-haftada uni uchratasiz.)
+
+**T3.5** Turkmaniston boshqa toʻrt mamlakat bilan uch marta **manfiy**
+korrelyatsiyada. Sochma diagrammalarda TKM ustuniga qarang: bu manfiy
+qiymatlar bir necha nuqtaga bogʻliqmi yoki umumiy tendensiyami?
+
+### Qaror
+
+Mintaqaviy oziq-ovqat xavfsizligi jamgʻarmasi **ikki** mamlakatdan
+gʻalla sotib oladi va yetkazib berish xavfini kamaytirmoqchi.
+Matritsangizga tayanib **qaysi juftlikni** tavsiya qilasiz va nima
+uchun? Tavsiyangizda **korrelyatsiyadan tashqari** yana bitta omilni
+(dispersiya) eslatib oʻting — 5-topshiriqda buni sonli hisoblaysiz.
+
+---
+
+# 4-topshiriq. $\Var(aX+bY)$ va bogʻliqsizlik farazining narxi
+
+**Qiyinlik: 4 (Analitik) · Blum: Tahlil · 20 ball · 20 daqiqa**
+
+### Statistik tushuncha
+
+Kutilma **chiziqli**: $\E[aX+bY]=a\E[X]+b\E[Y]$ — har doim, hech qanday
+shartsiz. Dispersiya esa **chiziqli emas**:
+
+$$\Var(aX+bY)=a^2\Var(X)+b^2\Var(Y)+2ab\,\Cov(X,Y).$$
+
+Uchinchi had — **kovariatsiya hadi** — ana shu yerda yashaydi.
+Faqat $\Cov(X,Y)=0$ boʻlgandagina u yoʻqoladi.
+
+**Uch natija darhol kelib chiqadi:**
+
+* $\Var(X+Y)=\Var(X)+\Var(Y)+2\Cov(X,Y)$;
+* $\Var(X-Y)=\Var(X)+\Var(Y)-2\Cov(X,Y)$ — **ayirmada ham qoʻshiladi**,
+  ishorasi manfiy boʻlgani uchun musbat kovariatsiya ayirma
+  dispersiyasini **kamaytiradi**;
+* kovariatsiya hadi tushirib qoldirilsa, xato **ishorali**: $ab\Cov>0$
+  boʻlsa dispersiya **past** baholanadi, $ab\Cov<0$ boʻlsa **yuqori**.
+
+> **Nima uchun bu muhim.** Amaliyotda «oʻzgaruvchilar bogʻliqsiz» degan
+> faraz koʻpincha *qulaylik uchun* qilinadi. Bugun bu qulaylikning
+> **narxini foizda** oʻlchaymiz.
+
+### Maʼlumot
+
+$X$ — Oʻzbekiston, $Y$ — Qozogʻiston bugʻdoy hosildorligi, $1992$–$2018$
+($n=27$). $r=0{,}4070$ — oʻrtacha kuchli musbat bogʻlanish.
+
+### Kod
+
+```{r t4-tekshiruv}
+# --- 1-qadam: uchta asosiy koʻrsatkich --------------------------------
+xv <- B[, 1]; yv <- B[, 3]
+VX <- var(xv); VY <- var(yv); CXY <- cov(xv, yv)
+P_("")
+P_("=== 4-TOPSHIRIQ: Var(aX+bY) ===")
+P_("X = UZB, Y = KAZ bugʻdoy hosildorligi, n = %d", length(xv))
+P_("Var(X) = %.6f   Var(Y) = %.6f   Cov = %.6f   r = %.6f",
+   VX, VY, CXY, CXY/sqrt(VX*VY))
+
+# --- 2-qadam: formulani OLTI (a, b) juftligida tekshiramiz -----------
+# «bevosita» — a*X + b*Y yangi qatorini yasab, uning dispersiyasi;
+# «formula» — a^2 V(X) + b^2 V(Y) + 2ab Cov;
+# «bogʻliqsiz» — kovariatsiya hadi TUSHIRIB QOLDIRILGAN (xato variant).
+P_("")
+P_("%6s %6s %14s %14s %8s %s %10s",
+   "a", "b", "bevosita", "formula", "mos", padl("bogʻliqsiz", 14), "xato %")
+ab <- list(c(1,1), c(1,-1), c(0.5,0.5), c(0.7,0.3), c(2,-1), c(0,1))
+for (p in ab) {
+  a <- p[1]; b <- p[2]
+  dv <- var(a*xv + b*yv); fv <- a*a*VX + b*b*VY + 2*a*b*CXY; iv <- a*a*VX + b*b*VY
+  P_("%6.1f %6.1f %14.6f %14.6f %8s %14.6f %10.2f",
+     a, b, dv, fv, tf(abs(dv - fv) < 1e-10), iv, 100*(iv - fv)/fv)
+}
+
+# --- 3-qadam: bitta holat uchun toʻliq yoyilma ------------------------
+P_("")
+P_("a = b = 0,5 uchun toʻliq yoyilma:")
+P_("  a^2 Var(X)   = %.6f", 0.25*VX)
+P_("  b^2 Var(Y)   = %.6f", 0.25*VY)
+P_("  2ab Cov(X,Y) = %.6f", 2*0.25*CXY)
+P_("  yigʻindi     = %.6f", 0.25*VX + 0.25*VY + 0.5*CXY)
+P_("  bevosita     = %.6f", var(0.5*xv + 0.5*yv))
+P_("  bogʻliqsizlik farazi = %.6f  ->  %.2f%% past baho",
+   0.25*VX + 0.25*VY,
+   100*((0.25*VX + 0.25*VY) - (0.25*VX + 0.25*VY + 0.5*CXY))/(0.25*VX + 0.25*VY + 0.5*CXY))
+```
+
+```{r t4-grafik, fig.height=4.0}
+# --- 4-qadam: xatoni butun a oraligʻida koʻrsatamiz -------------------
+# b = 1 - a deb olamiz (ogʻirliklar yigʻindisi 1). Ikki egri chiziq:
+# toʻgʻri formula va bogʻliqsizlik farazi.
+aa <- seq(-0.5, 1.5, by = 0.01)
+d4 <- data.frame(
+  a = rep(aa, 2),
+  V = c(aa^2*VX + (1-aa)^2*VY + 2*aa*(1-aa)*CXY,
+        aa^2*VX + (1-aa)^2*VY),
+  tur = rep(c("togri: 2ab Cov hisobga olingan",
+              "xato: bogliqsizlik farazi"), each = length(aa)))
+ggplot(d4, aes(a, V, colour = tur, linetype = tur)) +
+  geom_line(linewidth = 0.95) +
+  geom_vline(xintercept = 0.5, colour = "grey55", linetype = "dotted") +
+  scale_colour_manual(values = c("togri: 2ab Cov hisobga olingan" = oiBlue,
+                                 "xato: bogliqsizlik farazi" = oiOrange), name = NULL) +
+  scale_linetype_manual(values = c("togri: 2ab Cov hisobga olingan" = "solid",
+                                   "xato: bogliqsizlik farazi" = "22"), name = NULL) +
+  annotate("text", x = 0.5, y = 0.44, label = "a = b = 0.5", size = 3,
+           colour = "grey35", hjust = -0.06) +
+  labs(title = "Kovariatsiya hadini tushirib qoldirishning narxi",
+       subtitle = "Var(aX + (1-a)Y), X = UZB, Y = KAZ, r = 0.4070",
+       x = "a (X ning ulushi; b = 1 - a)", y = "Var(aX + bY)",
+       caption = "Manba: markaziy-osiyo-hosildorlik.csv (FAOSTAT / OWID), n = 27") +
+  theme(legend.position = "top")
+```
+
+### Natija (kutilayotgan)
+
+```
+=== 4-TOPSHIRIQ: Var(aX+bY) ===
+X = UZB, Y = KAZ bugʻdoy hosildorligi, n = 27
+Var(X) = 1.391187   Var(Y) = 0.067560   Cov = 0.124771   r = 0.406983
+
+     a      b       bevosita        formula      mos     bogʻliqsiz     xato %
+   1.0    1.0       1.708289       1.708289     TRUE       1.458747     -14.61
+   1.0   -1.0       1.209205       1.209205     TRUE       1.458747      20.64
+   0.5    0.5       0.427072       0.427072     TRUE       0.364687     -14.61
+   0.7    0.3       0.740166       0.740166     TRUE       0.687762      -7.08
+   2.0   -1.0       5.133225       5.133225     TRUE       5.632308       9.72
+   0.0    1.0       0.067560       0.067560     TRUE       0.067560       0.00
+
+a = b = 0,5 uchun toʻliq yoyilma:
+  a^2 Var(X)   = 0.347797
+  b^2 Var(Y)   = 0.016890
+  2ab Cov(X,Y) = 0.062385
+  yigʻindi     = 0.427072
+  bevosita     = 0.427072
+  bogʻliqsizlik farazi = 0.364687  ->  -14.61% past baho
+```
+
+### Talqin — daftaringizga yozing
+
+**T4.1** Oltita $(a,b)$ juftligining hammasida «bevosita» va «formula»
+ustunlari **aynan** mos keldi. Bu nimani isbotlaydi va nimani
+**isbotlamaydi**? (Ehtiyot boʻling: sonli tasdiq — isbot emas.)
+
+**T4.2** $a=b=1$ da xato $-14{,}61\,\%$, $a=1$, $b=-1$ da esa
+$+20{,}64\,\%$. **Ishora nima uchun oʻzgardi?** $2ab\Cov$ hadidagi qaysi
+koʻpaytuvchi buni belgilaydi?
+
+**T4.3** $a=0$, $b=1$ satrida xato **aynan nol**. Nima uchun? Bu
+satr nima uchun jadvalda kerak (u «nazorat» vazifasini bajaradi)?
+
+**T4.4** $a=2$, $b=-1$ da dispersiya $5{,}133225$ — boshqa barcha
+juftliklardan katta. Iqtisodiy maʼnoda bu qanday pozitsiya
+(«$X$ dan ikki barobar, $Y$ dan manfiy»)? Nima uchun uning
+oʻzgaruvchanligi shuncha yuqori?
+
+**T4.5** Grafikda ikki egri chiziq $a=0$ va $a=1$ da **kesishadi**.
+Nima uchun aynan shu ikki nuqtada? Formuladan koʻrsating.
+
+### Qaror
+
+Agrofirma ikki mamlakatdagi yerlarni **teng** ulushda ijaraga olgan
+($a=b=0{,}5$). Moliya boʻlimi umumiy hosilning dispersiyasini
+bogʻliqsizlik farazi bilan hisoblab, zaxira fondini shunga qarab
+belgilagan. **Bir jumlada** ayting: zaxira **yetarli** boʻladimi yoki
+kam; va **necha foizga** xato qilingan? Soʻng bitta ehtiyot jumla
+qoʻshing: bu baho $27$ yillik maʼlumotga tayanadi — bu qanday
+cheklov?
+
+---
+
+# 5-topshiriq. Minimal dispersiyali portfel va diversifikatsiya
+
+**Qiyinlik: 5 (Ilgʻor) · Blum: Baholash · 20 ball · 20 daqiqa**
+
+### Statistik tushuncha
+
+Ikki aktivdan $w$ va $1-w$ ulushlar bilan tuzilgan **portfel**ning
+dispersiyasi — 4-topshiriqdagi formulaning aynan oʻzi:
+
+$$\Var_p(w)=w^2\Var(X)+(1-w)^2\Var(Y)+2w(1-w)\Cov(X,Y).$$
+
+Bu — $w$ ga nisbatan **kvadrat** funksiya, va uning koeffitsiyenti
+$\Var(X)+\Var(Y)-2\Cov(X,Y)=\Var(X-Y)\ge 0$. Demak parabola yuqoriga
+ochiladi va **yagona minimumga** ega. Hosilani nolga tenglab:
+
+$$w^{*}=\frac{\Var(Y)-\Cov(X,Y)}{\Var(X)+\Var(Y)-2\Cov(X,Y)} .$$
+
+Bu — Markovitsning $1952$-yildagi maqolasidan kelib chiqadigan eng
+sodda natija va butun zamonaviy portfel nazariyasining boshlanishi.
+
+**Diversifikatsiya foydasi** — portfelning minimal standart ogʻishi
+eng yaxshi *yakka* aktivning standart ogʻishidan necha foizga past
+ekani:
+
+$$\text{foyda}=\frac{\min_i \SD(X_i)-\SD_{\min}}{\min_i \SD(X_i)}\times 100\,\% .$$
+
+> **Diqqat.** Bu — statistik mashq, **investitsiya maslahati emas**.
+> Hosildorlik qatorlari aktiv daromadi emas; formulaning oʻzi esa
+> $\Var$ va $\Cov$ *kelajakda ham shunday qoladi* degan kuchli farazga
+> tayanadi. Bu farazni har doim ochiq aytish shart.
+
+### Maʼlumot
+
+$X$ — Tojikiston, $Y$ — Turkmaniston bugʻdoy hosildorligi
+($n=27$). Bu juftlik **manfiy** korrelyatsiyaga ega:
+$r=-0{,}392153$ — mintaqadagi eng manfiy qiymat.
+
+### Kod
+
+```{r t5-portfel}
+# --- 1-qadam: juftlikning uchta koʻrsatkichi --------------------------
+iX <- 4; iY <- 5                       # POZITSIYA boʻyicha: TJK va TKM
+px <- B[, iX]; py <- B[, iY]
+VpX <- var(px); VpY <- var(py); CpXY <- cov(px, py); rp <- CpXY/sqrt(VpX*VpY)
+P_("")
+P_("=== 5-TOPSHIRIQ: MINIMAL DISPERSIYALI PORTFEL ===")
+P_("X = %s (%s), Y = %s (%s)", kod[iX], mamlakatlar[iX], kod[iY], mamlakatlar[iY])
+P_("Var(X) = %.6f  Var(Y) = %.6f  Cov = %.6f  r = %.6f", VpX, VpY, CpXY, rp)
+P_("SD(X)  = %.6f  SD(Y)  = %.6f", sqrt(VpX), sqrt(VpY))
+
+# --- 2-qadam: optimal ulush -------------------------------------------
+ws <- (VpY - CpXY)/(VpX + VpY - 2*CpXY)
+Vmin <- ws^2*VpX + (1-ws)^2*VpY + 2*ws*(1-ws)*CpXY
+P_("")
+P_("w* = (Var(Y) - Cov) / (Var(X) + Var(Y) - 2Cov)")
+P_("   = (%.6f - (%.6f)) / (%.6f + %.6f - 2(%.6f))", VpY, CpXY, VpX, VpY, CpXY)
+P_("   = %.6f", ws)
+P_("Var(min) = %.6f   SD(min) = %.6f", Vmin, sqrt(Vmin))
+
+# --- 3-qadam: butun chegara (frontier) --------------------------------
+P_("")
+P_("%8s %14s %12s", "w", "Var(portfel)", "SD")
+for (w in seq(0, 1, by = 0.1)) {
+  vv <- w^2*VpX + (1-w)^2*VpY + 2*w*(1-w)*CpXY
+  P_("%8.1f %14.6f %12.6f", w, vv, sqrt(vv))
+}
+P_("%8s %14.6f %12.6f", "w* ", Vmin, sqrt(Vmin))
+```
+
+```{r t5-foyda}
+# --- 4-qadam: diversifikatsiya foydasi va bogʻliqsizlik farazi --------
+eng <- min(sqrt(VpX), sqrt(VpY))
+P_("")
+P_("eng past yakka aktiv SD  = %.6f", eng)
+P_("portfel SD(min)          = %.6f", sqrt(Vmin))
+P_("diversifikatsiya foydasi = %.2f%%", 100*(eng - sqrt(Vmin))/eng)
+V5050   <- 0.25*VpX + 0.25*VpY + 0.5*CpXY
+V5050_0 <- 0.25*VpX + 0.25*VpY          # r = 0 deb faraz qilingan holat
+P_("")
+P_("50/50 portfel: Var = %.6f  SD = %.6f", V5050, sqrt(V5050))
+P_("agar r = 0 deb faraz qilinsa: SD = %.6f", sqrt(V5050_0))
+P_("ortiqcha baho = %.2f%%", 100*(sqrt(V5050_0) - sqrt(V5050))/sqrt(V5050))
+
+# --- 5-qadam: BARCHA 10 juftlik uchun bir vaqtda ----------------------
+# w* < 0 yoki w* > 1 boʻlishi mumkin: bu «qarzga olib sotish» (short)
+# degan maʼnoni beradi va amalda koʻpincha taqiqlanadi.
+P_("")
+P_("BARCHA 10 JUFTLIK UCHUN:")
+P_("%12s %9s %9s %10s %10s %10s", "juftlik", "r", "w*", "SD(min)", "min SD_i", "foyda %")
+for (i in 1:4) for (j in (i+1):5) {
+  vi <- V[i,i]; vj <- V[j,j]; cij <- V[i,j]
+  w <- (vj - cij)/(vi + vj - 2*cij)
+  vm <- w^2*vi + (1-w)^2*vj + 2*w*(1-w)*cij
+  e <- min(sqrt(vi), sqrt(vj))
+  P_("%12s %9.4f %9.4f %10.4f %10.4f %10.2f",
+     paste0(kod[i], "-", kod[j]), K[i,j], w, sqrt(vm), e, 100*(e - sqrt(vm))/e)
+}
+```
+
+```{r t5-grafik, fig.height=4.2}
+# --- 6-qadam: chegarani chizamiz --------------------------------------
+wgrid <- seq(-0.2, 1.2, by = 0.005)
+d5 <- data.frame(
+  w  = rep(wgrid, 2),
+  SD = c(sqrt(wgrid^2*VpX + (1-wgrid)^2*VpY + 2*wgrid*(1-wgrid)*CpXY),
+         sqrt(wgrid^2*VpX + (1-wgrid)^2*VpY)),
+  tur = rep(c("haqiqiy r = -0.392", "xato faraz: r = 0"), each = length(wgrid)))
+ggplot(d5, aes(w, SD, colour = tur, linetype = tur)) +
+  geom_line(linewidth = 0.95) +
+  geom_point(data = data.frame(w = ws, SD = sqrt(Vmin)),
+             aes(w, SD), inherit.aes = FALSE, colour = oiVerm, size = 3) +
+  geom_segment(aes(x = ws, xend = ws, y = 0.40, yend = sqrt(Vmin)),
+               inherit.aes = FALSE, colour = oiVerm, linetype = "dashed") +
+  annotate("text", x = ws, y = 0.415, size = 3, colour = oiVerm, hjust = -0.08,
+           label = "w* = 0.4806, SD = 0.4574") +
+  annotate("point", x = c(0, 1), y = c(sqrt(VpY), sqrt(VpX)),
+           colour = oiGreen, size = 2.4, shape = 15) +
+  annotate("text", x = 0, y = sqrt(VpY), label = "faqat TKM", size = 2.9,
+           colour = oiGreen, vjust = -1.1) +
+  annotate("text", x = 1, y = sqrt(VpX), label = "faqat TJK", size = 2.9,
+           colour = oiGreen, vjust = -1.1) +
+  scale_colour_manual(values = c("haqiqiy r = -0.392" = oiBlue,
+                                 "xato faraz: r = 0" = oiOrange), name = NULL) +
+  scale_linetype_manual(values = c("haqiqiy r = -0.392" = "solid",
+                                   "xato faraz: r = 0" = "22"), name = NULL) +
+  labs(title = "Minimal dispersiyali portfel chegarasi",
+       subtitle = "TJK va TKM bugdoy hosildorligi; manfiy korrelyatsiya chegarani pastga tortadi",
+       x = "w (TJK ulushi; TKM ulushi = 1 - w)", y = "portfel SD (t/ga)",
+       caption = "Statistik mashq. Manba: markaziy-osiyo-hosildorlik.csv, n = 27") +
+  theme(legend.position = "top")
+```
+
+### Natija (kutilayotgan)
+
+```
+=== 5-TOPSHIRIQ: MINIMAL DISPERSIYALI PORTFEL ===
+X = TJK (Tojikiston), Y = TKM (Turkmaniston)
+Var(X) = 0.727255  Var(Y) = 0.652908  Cov = -0.270224  r = -0.392153
+SD(X)  = 0.852792  SD(Y)  = 0.808027
+
+w* = (Var(Y) - Cov) / (Var(X) + Var(Y) - 2Cov)
+   = (0.652908 - (-0.270224)) / (0.727255 + 0.652908 - 2(-0.270224))
+   = 0.480645
+Var(min) = 0.209209   SD(min) = 0.457394
+
+       w   Var(portfel)           SD
+     0.0       0.652908     0.808027
+     0.1       0.487487     0.698203
+     0.2       0.360479     0.600399
+     0.3       0.271883     0.521424
+     0.4       0.221700     0.470850
+     0.5       0.209928     0.458179
+     0.6       0.236569     0.486384
+     0.7       0.301622     0.549201
+     0.8       0.405088     0.636465
+     0.9       0.546965     0.739571
+     1.0       0.727255     0.852792
+     w*        0.209209     0.457394
+
+eng past yakka aktiv SD  = 0.808027
+portfel SD(min)          = 0.457394
+diversifikatsiya foydasi = 43.39%
+
+50/50 portfel: Var = 0.209928  SD = 0.458179
+agar r = 0 deb faraz qilinsa: SD = 0.587402
+ortiqcha baho = 28.20%
+
+BARCHA 10 JUFTLIK UCHUN:
+     juftlik         r        w*    SD(min)   min SD_i    foyda %
+     UZB-KGZ   -0.0956    0.0707     0.2633     0.2774       5.10
+     UZB-KAZ    0.4070   -0.0473     0.2547     0.2599       2.02
+     UZB-TJK    0.9166   -0.7096     0.7675     0.8528      10.00
+     UZB-TKM   -0.2132    0.3494     0.5948     0.8080      26.39
+     KGZ-KAZ    0.3428    0.4506     0.2197     0.2599      15.48
+     KGZ-TJK    0.0124    0.9073     0.2648     0.2774       4.56
+     KGZ-TKM    0.1564    0.9365     0.2726     0.2774       1.74
+     KAZ-TJK    0.3989    1.0338     0.2586     0.2599       0.52
+     KAZ-TKM   -0.1328    0.8770     0.2363     0.2599       9.10
+     TJK-TKM   -0.3922    0.4806     0.4574     0.8080      43.39
+```
+
+### Talqin — daftaringizga yozing
+
+**T5.1** $w^{*}=0{,}4806$ va $50/50$ portfelning $\SD$ i $0{,}458179$,
+optimal portfelniki esa $0{,}457394$. Farq $0{,}000785$, yaʼni
+$0{,}17\,\%$. Optimizatsiya **arziydimi**? Javobingizni parabolaning
+minimum atrofidagi **yassiligi** bilan bogʻlang.
+
+**T5.2** $r=0$ deb faraz qilinsa, portfel $\SD$ i $0{,}587402$ chiqadi —
+haqiqiy $0{,}458179$ dan $28{,}20\,\%$ yuqori. Diqqat: bu safar xato
+**ortiqcha baho**. 4-topshiriqda esa xato **past baho** edi. Ikki
+holatning farqi nimadan? (Ishoraga qarang.)
+
+**T5.3** Jadvalda UZB–KAZ juftligi uchun $w^{*}=-0{,}0473$ — **manfiy**
+ulush. Bu amalda nimani anglatadi va nima uchun koʻpchilik institutsional
+qoidalarda taqiqlanadi? Agar $w\ge 0$ cheklovi qoʻyilsa, bu juftlik
+uchun eng yaxshi yechim qanday boʻladi?
+
+**T5.4** $10$ juftlikda foyda $0{,}52\,\%$ dan $43{,}39\,\%$ gacha.
+Jadvalni $r$ ustuni boʻyicha oʻqing: foyda **faqat** $r$ ga bogʻliqmi?
+KGZ–KAZ ($r=0{,}3428$, foyda $15{,}48\,\%$) va UZB–TJK
+($r=0{,}9166$, foyda $10{,}00\,\%$) juftliklarini solishtiring — yana
+qaysi kattalik ishtirok etadi?
+
+**T5.5** Butun hisob $\Var$ va $\Cov$ ning **kelajakda ham oʻzgarmasligi**
+farazi ustiga qurilgan. $2017$–$2018$ qurgʻoqchiligi bu farazga qanday
+zarba beradi? (2-topshiriqda ayni bir hodisa $r$ ni $0{,}61$ dan $0{,}10$
+ga tushirgan edi.)
+
+### Qaror
+
+Oziq-ovqat jamgʻarmasi $27$ yillik maʼlumotga tayanib TJK–TKM juftligini
+tanladi va $w=0{,}48$ ulushni belgiladi. Sizga **uch jumlalik** xuloso
+yozish topshirildi: (a) tanlovning statistik asosi;
+(b) diversifikatsiya foydasining **soni**; (c) bitta ochiq
+ogohlantirish — qaysi faraz buzilsa, butun hisob kuchini yoʻqotadi.
+
+---
+
+# 6-topshiriq. Anskomb kvarteti va umumiy trend
+
+**Qiyinlik: 5 (Ilgʻor) · Blum: Baholash · 15 ball · 20 daqiqa**
+
+## 6A. Anskomb kvarteti: bir xil sonlar, boshqa dunyolar
+
+### Statistik tushuncha
+
+$1973$-yilda Frank Anskomb toʻrtta kichik toʻplam eʼlon qildi. Ularning
+$\bar x$, $s_x$, $\bar y$, $s_y$, $r$ **va** moslashtirilgan toʻgʻri
+chizigʻi amalda bir xil. Sochma diagrammalari esa butunlay boshqacha:
+biri chiziqli, biri **egri**, biri bitta **chetlashgan kuzatuv** bilan
+buzilgan, toʻrtinchisida esa $x$ ning atigi **ikkita** qiymati bor.
+
+Xulosa: **jamlovchi statistika maʼlumot shaklini aniqlamaydi.**
+Zamonaviy davomi — Matejka va Fitzmaurice ($2017$) ning «Datasaurus»
+toʻplami: bir xil statistikaga ega, ammo dinozavr shaklidagi maʼlumot.
+
+### Maʼlumot
+
+Anskomb ($1973$) ning original toʻrt toʻplami, har birida $n=11$.
+Bu **oʻquv maqsadida yaratilgan** maʼlumot — hech qanday mamlakat yoki
+kompaniyaning rasmiy statistikasi emas. Manbasi maqolada aniq
+koʻrsatilgan.
+
+### Kod
+
+```{r t6a-anskomb}
+# --- 1-qadam: toʻrt toʻplam (Anscombe 1973, jadval 1) ----------------
+ax  <- c(10, 8, 13, 9, 11, 14, 6, 4, 12, 7, 5)
+a4  <- c(8, 8, 8, 8, 8, 8, 8, 19, 8, 8, 8)
+ay1 <- c(8.04, 6.95, 7.58, 8.81, 8.33, 9.96, 7.24, 4.26, 10.84, 4.82, 5.68)
+ay2 <- c(9.14, 8.14, 8.74, 8.77, 9.26, 8.10, 6.13, 3.10, 9.13, 7.26, 4.74)
+ay3 <- c(7.46, 6.77, 12.74, 7.11, 7.81, 8.84, 6.08, 5.39, 8.15, 6.42, 5.73)
+ay4 <- c(6.58, 5.76, 7.71, 8.84, 8.47, 7.04, 5.25, 12.50, 5.56, 7.91, 6.89)
+AX <- list(ax, ax, ax, a4); AY <- list(ay1, ay2, ay3, ay4)
+nom <- c("I", "II", "III", "IV")
+
+P_("")
+P_("=== 6-TOPSHIRIQ (A): ANSKOMB KVARTETI ===")
+P_("%6s %8s %8s %8s %8s %9s %9s %9s",
+   "toplam", "xbar", "s_x", "ybar", "s_y", "s_xy", "r", "r^2")
+for (k in 1:4) {
+  xx <- AX[[k]]; yy <- AY[[k]]
+  P_("%6s %8.3f %8.3f %8.3f %8.3f %9.4f %9.4f %9.4f", nom[k],
+     mean(xx), sd(xx), mean(yy), sd(yy), cov(xx, yy), cor(xx, yy), cor(xx, yy)^2)
+}
+rr <- sapply(1:4, function(k) cor(AX[[k]], AY[[k]]))
+P_("")
+P_("r larning maksimal farqi : %.6f", max(rr) - min(rr))
+
+# --- 2-qadam: Spirmen rho — chiziqlilikka bogʻliq boʻlmagan oʻlchov ---
+# Pirson deyarli bir xil, Spirmen esa toʻrt xil javob beradi.
+P_("Spirmen rho (chiziqlilikka bogʻliq emas):")
+P_("%6s %10s %10s", "toplam", "Pirson", "Spirmen")
+for (k in 1:4) P_("%6s %10.4f %10.4f", nom[k], cor(AX[[k]], AY[[k]]),
+                  cor(AX[[k]], AY[[k]], method = "spearman"))
+
+# --- 3-qadam: IV toʻplamda korrelyatsiya UMUMAN aniqlanmaydi ----------
+P_("")
+P_("IV toʻplam: chetlashgan kuzatuvni olib tashlaymiz (x = 19)")
+keep <- AX[[4]] != 19
+P_("qolgan x lar hammasi 8 ga teng : %s", tf(all(AX[[4]][keep] == 8)))
+P_("SD(x) = %.6f -> r ni umuman hisoblab boʻlmaydi", sd(AX[[4]][keep]))
+```
+
+```{r t6a-grafik, fig.height=5.4, fig.width=6.8}
+# --- 4-qadam: TOʻRTTASINI BIRGA CHIZAMIZ ------------------------------
+# Bir xil koʻk chiziq — bir xil moslashtirilgan toʻgʻri chiziq
+# (y = 3.00 + 0.50x) — toʻrt panelda ham.
+d6 <- data.frame(
+  toplam = factor(rep(paste0(nom, "  (r = ", sprintf("%.4f", rr), ")"), each = 11),
+                  levels = paste0(nom, "  (r = ", sprintf("%.4f", rr), ")")),
+  x = unlist(AX), y = unlist(AY))
+ggplot(d6, aes(x, y)) +
+  geom_abline(intercept = 3.00, slope = 0.50, colour = oiOrange,
+              linewidth = 0.9, linetype = "22") +
+  geom_point(colour = oiBlue, size = 2.1) +
+  facet_wrap(~ toplam, ncol = 2) +
+  labs(title = "Anskomb kvarteti: bir xil statistika, tort xil malumot",
+       subtitle = "Har tort panelda xbar = 9.00, s_x = 3.317, ybar = 7.50, s_y = 2.03, r = 0.816",
+       x = "x", y = "y",
+       caption = "Manba: Anscombe (1973), The American Statistician 27(1), 17-21") +
+  theme(strip.text = element_text(face = "bold", colour = "grey20"))
+```
+
+## 6B. Umumiy trend: korrelyatsiyaning qancha qismi shunchaki vaqt?
+
+### Statistik tushuncha
+
+Ikki qator **vaqt boʻyicha oʻssa**, ular bir-biri bilan yuqori
+korrelyatsiyada boʻladi — hech qanday oʻzaro aloqasiz ham. Buni
+tekshirishning eng sodda usuli — **detrendlash**: har bir qatordan
+uning chiziqli vaqt trendini ayirib, **qoldiqlar** korrelyatsiyasini
+hisoblash.
+
+$$v_t = b_0+b_1 t+e_t,\qquad e_t = v_t-(b_0+b_1t),\qquad
+r_{\text{qoldiq}}=\Corr(e^{(1)},e^{(2)}).$$
+
+Agar $r_{\text{qoldiq}}\ll r_{\text{xom}}$ boʻlsa — bogʻlanishning katta
+qismi **umumiy trend** edi, oʻzaro aloqa emas.
+
+> **Eslatma.** Bu yerda $b_0$ va $b_1$ faqat *trendni olib tashlash*
+> uchun texnik vosita sifatida ishlatiladi. Ularning statistik
+> xossalari (standart xato, ishonch oraligʻi, gipoteza testi) —
+> **12-hafta** materiali; bugun ular haqida hech narsa daʼvo qilmaymiz.
+
+### Maʼlumot
+
+Oʻzbekiston va Tojikiston bugʻdoy hosildorligi, $1992$–$2018$ ($n=27$) —
+3-topshiriqdagi eng kuchli juftlik ($r=0{,}9166$). Nazorat sifatida
+KGZ–TKM juftligi (trendsiz) va **MINSTD** generatori bilan yaratilgan
+ikkita **atayin bogʻliqsiz** simulyatsiya qatori.
+
+### Kod
+
+```{r t6b-trend}
+# --- 1-qadam: xom korrelyatsiyalar ------------------------------------
+u <- B[, 1]; tt <- B[, 4]; yr <- as.numeric(yillar)
+P_("")
+P_("=== 6-TOPSHIRIQ (B): UMUMIY TREND VA SOXTA KORRELYATSIYA ===")
+P_("r(UZB, TJK)  = %.6f", cor(u, tt))
+P_("r(yil, UZB)  = %.6f", cor(yr, u))
+P_("r(yil, TJK)  = %.6f", cor(yr, tt))
+
+# --- 2-qadam: detrendlash — qoʻlda, ikki qatorda ----------------------
+# b1 = Cov(t, v)/Var(t), b0 = mean(v) - b1 mean(t). Bu — trendni
+# olib tashlash uchun TEXNIK vosita (12-haftadagi regressiya emas).
+trendsiz <- function(v, t0) {
+  b1 <- cov(t0, v)/var(t0); b0 <- mean(v) - b1*mean(t0)
+  list(q = v - (b0 + b1*t0), b0 = b0, b1 = b1)
+}
+ru <- trendsiz(u, yr); rt <- trendsiz(tt, yr)
+P_("")
+P_("chiziqli trend: UZB  y = %.4f + %.6f * yil", ru$b0, ru$b1)
+P_("chiziqli trend: TJK  y = %.4f + %.6f * yil", rt$b0, rt$b1)
+P_("qoldiqlar oʻrtachasi ~ 0 : %s",
+   tf(max(abs(mean(ru$q)), abs(mean(rt$q))) < 1e-10))
+P_("qoldiq korrelyatsiyasi   = %.6f", cor(ru$q, rt$q))
+P_("xom korrelyatsiya        = %.6f", cor(u, tt))
+P_("yoʻqolgan ulush          = %.2f%%", 100*(cor(u, tt) - cor(ru$q, rt$q))/cor(u, tt))
+
+# --- 3-qadam: muqobil usul — birinchi farqlar -------------------------
+du <- diff(u); dtt <- diff(tt)
+P_("")
+P_("MUQOBIL: birinchi farqlar (yildan yilga oʻzgarish), n = %d", length(du))
+P_("r(dUZB, dTJK) = %.6f", cor(du, dtt))
+
+# --- 4-qadam: NAZORAT — trendi boʻlmagan juftlik ----------------------
+P_("")
+P_("NAZORAT: trend bilan bogʻliq boʻlmagan juftlik")
+k2 <- B[, 2]; tk <- B[, 5]
+P_("r(yil, KGZ)  = %.6f", cor(yr, k2))
+P_("r(yil, TKM)  = %.6f", cor(yr, tk))
+rk <- trendsiz(k2, yr); rtk <- trendsiz(tk, yr)
+P_("r(KGZ, TKM) xom = %.6f   trendsiz = %.6f", cor(k2, tk), cor(rk$q, rtk$q))
+```
+
+```{r t6b-simulyatsiya}
+# --- 5-qadam: SIMULYATSIYA NAZORATI -----------------------------------
+# MINSTD (Lehmer) generatori — 2–5-haftalarda ishlatilgan generatorning
+# AYNAN oʻzi, qayta keltirib chiqarilmaydi:
+#     x <- (48271 * x) mod 2147483647,   u <- x / 2147483647,   urugʻ 2026.
+# Nazorat qiymati u_1 = 0.0455402984 (2-haftadagi bilan bir xil).
+# Ikki qator ATAYIN bogʻliqsiz: ularning yagona umumiy jihati — trend.
+minstd <- function(urug) {
+  x <- urug
+  function(n) {
+    out <- numeric(n)
+    for (i in 1:n) { x <<- (48271*x) %% 2147483647; out[i] <- x/2147483647 }
+    out
+  }
+}
+gen <- minstd(2026); ua <- gen(27); ub <- gen(27)
+tsim <- 1:27
+Asim <- 1.00 + 0.10*tsim + 0.8*ua
+Bsim <- 2.00 + 0.08*tsim + 0.8*ub
+ra <- trendsiz(Asim, tsim); rb <- trendsiz(Bsim, tsim)
+P_("")
+P_("SIMULYATSIYA NAZORATI (MINSTD, urugʻ 2026 - 2-haftadagi generator)")
+P_("ATAYIN bogʻliqsiz ikki seriya, faqat umumiy chiziqli trend qoʻshilgan:")
+P_("  A_t = 1.00 + 0.10 t + 0.8 u_t     B_t = 2.00 + 0.08 t + 0.8 v_t")
+P_("nazorat qiymati u_1     = %.10f", ua[1])
+P_("r(A, B) xom             = %.6f", cor(Asim, Bsim))
+P_("r(A, B) trendsiz        = %.6f", cor(ra$q, rb$q))
+P_("simulyatsiya qilingan maʼlumot - rasmiy statistika emas")
+```
+
+```{r t6b-grafik, fig.height=3.9}
+# --- 6-qadam: xom va qoldiq sochma diagrammalari yonma-yon ------------
+d6b <- data.frame(
+  panel = rep(c("XOM: r = 0.9167", "TRENDSIZ QOLDIQ: r = 0.3786"), each = 27),
+  x = c(u, ru$q), y = c(tt, rt$q))
+d6b$panel <- factor(d6b$panel, levels = c("XOM: r = 0.9167",
+                                          "TRENDSIZ QOLDIQ: r = 0.3786"))
+ggplot(d6b, aes(x, y)) +
+  geom_point(colour = oiBlue, size = 1.9) +
+  facet_wrap(~ panel, scales = "free") +
+  labs(title = "Korrelyatsiyaning 58.69 % i shunchaki umumiy vaqt trendi edi",
+       subtitle = "UZB va TJK bugdoy hosildorligi, 1992-2018 (n = 27)",
+       x = "Uzbekiston (t/ga yoki qoldiq)", y = "Tojikiston (t/ga yoki qoldiq)",
+       caption = "Manba: markaziy-osiyo-hosildorlik.csv (FAOSTAT / OWID)") +
+  theme(strip.text = element_text(face = "bold", colour = "grey20"))
+```
+
+### Natija (kutilayotgan)
+
+```
+=== 6-TOPSHIRIQ (A): ANSKOMB KVARTETI ===
+toplam     xbar      s_x     ybar      s_y      s_xy         r       r^2
+     I    9.000    3.317    7.501    2.032    5.5010    0.8164    0.6665
+    II    9.000    3.317    7.501    2.032    5.5000    0.8162    0.6662
+   III    9.000    3.317    7.500    2.030    5.4970    0.8163    0.6663
+    IV    9.000    3.317    7.501    2.031    5.4990    0.8165    0.6667
+
+r larning maksimal farqi : 0.000285
+Spirmen rho (chiziqlilikka bogʻliq emas):
+toplam     Pirson    Spirmen
+     I     0.8164     0.8182
+    II     0.8162     0.6909
+   III     0.8163     0.9909
+    IV     0.8165     0.5000
+
+IV toʻplam: chetlashgan kuzatuvni olib tashlaymiz (x = 19)
+qolgan x lar hammasi 8 ga teng : TRUE
+SD(x) = 0.000000 -> r ni umuman hisoblab boʻlmaydi
+
+=== 6-TOPSHIRIQ (B): UMUMIY TREND VA SOXTA KORRELYATSIYA ===
+r(UZB, TJK)  = 0.916631
+r(yil, UZB)  = 0.907559
+r(yil, TJK)  = 0.962415
+
+chiziqli trend: UZB  y = -266.7984 + 0.134864 * yil
+chiziqli trend: TJK  y = -205.3330 + 0.103404 * yil
+qoldiqlar oʻrtachasi ~ 0 : TRUE
+qoldiq korrelyatsiyasi   = 0.378649
+xom korrelyatsiya        = 0.916631
+yoʻqolgan ulush          = 58.69%
+
+MUQOBIL: birinchi farqlar (yildan yilga oʻzgarish), n = 26
+r(dUZB, dTJK) = 0.371635
+
+NAZORAT: trend bilan bogʻliq boʻlmagan juftlik
+r(yil, KGZ)  = -0.053957
+r(yil, TKM)  = -0.418347
+r(KGZ, TKM) xom = 0.156449   trendsiz = 0.147610
+
+SIMULYATSIYA NAZORATI (MINSTD, urugʻ 2026 - 2-haftadagi generator)
+ATAYIN bogʻliqsiz ikki seriya, faqat umumiy chiziqli trend qoʻshilgan:
+  A_t = 1.00 + 0.10 t + 0.8 u_t     B_t = 2.00 + 0.08 t + 0.8 v_t
+nazorat qiymati u_1     = 0.0455402984
+r(A, B) xom             = 0.908172
+r(A, B) trendsiz        = -0.010074
+simulyatsiya qilingan maʼlumot - rasmiy statistika emas
+```
+
+### Talqin — daftaringizga yozing
+
+**T6.1** Toʻrt toʻplamda $r$ larning maksimal farqi $0{,}000285$ —
+yaʼni amalda bir xil. Ammo Spirmen $\rho$ $0{,}5000$ dan $0{,}9909$
+gacha oʻzgaradi. **Nima uchun** Spirmen farqni koʻrdi, Pirson esa
+koʻrmadi? Har bir toʻplam uchun bitta jumla yozing.
+
+**T6.2** IV toʻplamda chetlashgan kuzatuv olib tashlansa, $\SD(x)=0$ va
+$r$ **umuman aniqlanmaydi**. Bu $r$ ning formulasidagi qaysi qismidan
+kelib chiqadi? Bu — «$r$ bitta nuqtaga bogʻliq» degan gapning eng
+keskin koʻrinishi. Nima uchun?
+
+**T6.3** $r(\text{UZB},\text{TJK})$: xom $0{,}9166$, trendsiz
+$0{,}3786$ — $58{,}69\,\%$ yoʻqoldi. Ammo **qolgan** $0{,}3786$ ham nol
+emas. Bu qoldiq bogʻlanishning **ikkita** ishonarli izohini bering
+(biri iqlim, biri esa mintaqaviy).
+
+**T6.4** Birinchi farqlar usuli $r=0{,}3716$, detrendlash esa $0{,}3786$
+berdi — juda yaqin. Ikki usul **turli** narsani oʻlchaydi. Har birining
+maʼnosini bir jumlada ayting. Qaysi biri qisqa muddatli hodisalarga
+(qurgʻoqchilik) sezgirroq?
+
+**T6.5** Simulyatsiyada ikki qator **taʼrifi boʻyicha** bogʻliqsiz
+edi, ammo xom $r=0{,}908172$ chiqdi; trendsiz esa $-0{,}010074$.
+Bu nima uchun butun mashgʻulotning eng muhim natijasi? Nazorat
+juftligi KGZ–TKM ($0{,}1564\to0{,}1476$) bilan solishtiring va
+farqni tushuntiring.
+
+**T6.6** «Korrelyatsiya sababiyat emas» iborasi koʻp takrorlanadi.
+Bugun siz uni **oʻlchadingiz**. Buni oʻz soʻzlaringiz bilan, songa
+tayangan holda, uch jumlada bayon qiling.
+
+### Qaror
+
+Xalqaro tashkilot hisobotida shunday jumla bor: «Oʻzbekiston va
+Tojikiston bugʻdoy hosildorligi kuchli bogʻlangan ($r=0{,}92$), bu esa
+mintaqaviy agrotexnologiya almashinuvining samarasini koʻrsatadi».
+Sizga bu jumlani **tahrir qilish** topshirildi. Yangi versiyani yozing:
+(a) qaysi son qoladi; (b) qaysi son **qoʻshiladi**; (c) qaysi soʻz
+olib tashlanadi va nima uchun.
+
+---
+
+# 7-topshiriq (ixtiyoriy, uyda). Uchta korrelyatsiya oʻlchovi — uchta javob
+
+**Qiyinlik: 6 (Tadqiqotga yoʻnaltirilgan) · Blum: Yaratish · +5 bonus ball**
+
+### Statistik tushuncha
+
+Pirson $r$ — **chiziqli** bogʻlanish oʻlchovi. Agar bogʻlanish
+**monoton**, ammo chiziqli boʻlmasa, u pastroq qiymat beradi.
+Bunday holatlar uchun tartibga tayanuvchi oʻlchovlar bor:
+
+* **Spirmen** $\rho$ — qiymatlar oʻrniga **rangalar** (tartib raqamlari)
+  ustidan hisoblangan Pirson korrelyatsiyasi;
+* **Kendall** $\tau$ — mos va nomos juftliklar sonining nisbati.
+
+Ikkalasi ham monoton almashtirishga (masalan, logarifmga) **butunlay
+befarq**, chetlashgan kuzatuvlarga esa ancha **barqaror**.
+
+### Maʼlumot
+
+$2\,467$ film ($2000$–$2018$): $X$ — byudjet, $Y$ — jahon daromadi
+(ikkalasi mln \$). Diqqat: $31$ ta filmda jahon daromadi **nol** deb
+yozilgan — bu «daromad boʻlmagan» degani emas, balki **maʼlumot
+yoʻq** degani. Logarifm oldidan bu nollarni qanday ishlash — sof
+**qaror**, va u natijani oʻzgartiradi.
+
+### Kod
+
+```{r t7-bonus}
+# --- 1-qadam: uchta oʻlchov + logarifmning ikki varianti --------------
+bud <- kino$byudjet/1e6; gro <- kino$jahon_daromadi/1e6
+P_("")
+P_("=== 7-TOPSHIRIQ (BONUS): UCH XIL KORRELYATSIYA OʻLCHOVI ===")
+P_("n = %d", length(bud))
+P_("Cov(byudjet, daromad) = %.4f (mln $)^2", cov(bud, gro))
+P_("s_byudjet = %.4f   s_daromad = %.4f", sd(bud), sd(gro))
+p1 <- cor(bud, gro)
+# Maʼruzadagi konventsiya: nol daromad log oldidan 1e-6 ga almashtiriladi.
+p2 <- cor(log(bud), log(pmax(gro, 1e-6)))
+# Halolroq muqobil: nol daromadli filmlarni umuman chiqarib tashlash.
+msk <- gro > 0
+p3 <- cor(log(bud[msk]), log(gro[msk]))
+sp <- cor(bud, gro, method = "spearman")
+kt <- cor(bud, gro, method = "kendall")
+P_("")
+P_("%30s %10s %10s", pad("olchov", 30), "qiymat", "r^2")
+P_("%30s %10.4f %10.4f", pad("Pirson r", 30), p1, p1^2)
+P_("%30s %10.4f %10.4f", pad("Pirson r (log, nol->1e-6)", 30), p2, p2^2)
+P_("%30s %10.4f %10.4f", pad("Pirson r (log, nollar olib)", 30), p3, p3^2)
+P_("%30s %10.4f %10s", pad("Spirmen rho", 30), sp, "-")
+P_("%30s %10.4f %10s", pad("Kendall tau", 30), kt, "-")
+P_("")
+P_("jahon daromadi = 0 boʻlgan filmlar : %d", sum(!msk))
+P_("nollarni qanday ishlashimiz r ni %.4f dan %.4f ga oʻzgartirdi", p2, p3)
+P_("Spirmen > Pirson : %s", tf(sp > p1))
+P_("farq             = %.4f", sp - p1)
+```
+
+### Natija (kutilayotgan)
+
+```
+=== 7-TOPSHIRIQ (BONUS): UCH XIL KORRELYATSIYA OʻLCHOVI ===
+n = 2467
+Cov(byudjet, daromad) = 3816.7134 (mln $)^2
+s_byudjet = 37.4124   s_daromad = 145.8439
+
+olchov                             qiymat        r^2
+Pirson r                           0.6995     0.4893
+Pirson r (log, nol->1e-6)          0.5961     0.3553
+Pirson r (log, nollar olib)        0.6831     0.4667
+Spirmen rho                        0.7340          -
+Kendall tau                        0.5478          -
+
+jahon daromadi = 0 boʻlgan filmlar : 31
+nollarni qanday ishlashimiz r ni 0.5961 dan 0.6831 ga oʻzgartirdi
+Spirmen > Pirson : TRUE
+farq             = 0.0345
+```
+
+### Talqin va yaratish topshirigʻi
+
+**T7.1** Spirmen ($0{,}7340$) Pirsondan ($0{,}6995$) **katta**. Bu
+nimani anglatadi? (Maslahat: monotonlik va chiziqlilik bir xil narsa
+emas.)
+
+**T7.2** Nol daromadli $31$ ta filmni $10^{-6}$ bilan almashtirish
+$r$ ni $0{,}5961$, ularni olib tashlash esa $0{,}6831$ qiladi.
+$2\,467$ tadan $31$ tasi — atigi $1{,}26\,\%$. Nima uchun shuncha
+kichik ulush natijani bunchalik oʻzgartirdi?
+
+**T7.3 (yaratish).** Toʻrtta oʻlchovning qaysi birini hisobotga
+kiritish kerak? **Bitta abzats** yozing: qaysi oʻlchovni tanladingiz,
+nima uchun, va qanday ogohlantirish bilan. Abzatsingizda toʻrtala
+sonni ham keltiring — **oʻquvchi tanlovingizni tekshira olishi shart**.
+
+---
+
+# Yigʻma nazorat jadvali
+
+Topshirishdan oldin natijalaringizni solishtiring. **Bitta ham son farq
+qilmasligi kerak** — ikkala til uchun ham.
+
+| Koʻrsatkich | Qiymat | # | Koʻrsatkich | Qiymat | # |
+|---|---|---|---|---|---|
+| $p(1,1)$ | 0.296296 | 1 | $\Var(0{,}5X+0{,}5Y)$ | 0.427072 | 4 |
+| $p_X(1)p_Y(1)$ | 0.231824 | 1 | bogʻliqsizlik farazi | 0.364687 | 4 |
+| eng katta \|farq\| | 0.064472 | 1 | xato, $a=b=0{,}5$ | $-14{,}61\,\%$ | 4 |
+| $\Prob(Y{=}1\mid X{=}1)$ | 0.615385 | 1 | xato, $a=1$, $b=-1$ | $+20{,}64\,\%$ | 4 |
+| $r$ (ikkilik) | 0.258242 | 1 | $w^{*}$ (TJK–TKM) | 0.480645 | 5 |
+| $3\times3$: mos kataklar | 0 | 1 | $\SD_{\min}$ | 0.457394 | 5 |
+| $\sum(x-\bar x)(y-\bar y)$ | 0.248238 | 2 | diversifikatsiya foydasi | $43{,}39\,\%$ | 5 |
+| $s_{xy}$ | 0.031030 | 2 | $r=0$ farazi: ortiqcha baho | $28{,}20\,\%$ | 5 |
+| $r$ (bugʻdoy–arpa) | 0.607570 | 2 | Anskomb $r$ farqi | 0.000285 | 6 |
+| 2017–2018 hissasi | $75{,}1744\,\%$ | 2 | Anskomb IV: $\SD(x)$ | 0.000000 | 6 |
+| $r$ ularsiz | 0.096457 | 2 | $r$(UZB,TJK) xom | 0.916631 | 6 |
+| $r$(UZB,TJK) | 0.9166 | 3 | $r$ trendsiz | 0.378649 | 6 |
+| $r$(TJK,TKM) | $-0.3922$ | 3 | yoʻqolgan ulush | $58{,}69\,\%$ | 6 |
+| $r$(UZB,KAZ) | 0.4070 | 3 | MINSTD $u_1$ | 0.0455402984 | 6 |
+| $\Cov$(UZB,TJK) | 0.9220 | 3 | simulyatsiya: xom / trendsiz | 0.908172 / $-0.010074$ | 6 |
+| $\Var$(UZB) | 1.391187 | 4 | Pirson / Spirmen (kino) | 0.6995 / 0.7340 | 7 |
+
+---
+
+# Talabalar koʻp uchratadigan xatolar
+
+| Xato | Nima uchun notoʻgʻri | Toʻgʻri yoʻl |
+|---|---|---|
+| **Bitta katakni tekshirib «bogʻliqsiz» deyish** | Bogʻliqsizlik — *barcha* $(x,y)$ juftliklar uchun talab. Bitta katakda tenglik tasodifan bajarilishi mumkin | Sikl ichida hamma katakni tekshirish; eng katta \|farq\| ni chop etish |
+| **$\Cov$ ning kattaligini talqin qilish** | Birlikka bogʻliq: t/ga dan kg/ga ga oʻtishda $0{,}031$ → $31{,}03$ | Faqat **ishorasini** oʻqish; kattalik uchun $r$ ga oʻtish |
+| **$r=0$ ni «bogʻliqsiz» deb oʻqish** | $r$ faqat **chiziqli** bogʻlanishni koʻradi. Anskomb II toʻplami aniq egri chiziq, ammo $r=0{,}816$ | Har doim sochma diagramma; kerak boʻlsa Spirmen |
+| **$r$ ni sabab sifatida oʻqish** | UZB–TJK $r=0{,}9166$ ning $58{,}69\,\%$ i shunchaki umumiy vaqt trendi | Detrendlash yoki birinchi farqlar; chalgʻituvchi omilni nomlash |
+| **Kovariatsiya hadini tushirib qoldirish** | $a{=}b{=}0{,}5$ da dispersiya $14{,}61\,\%$ past baholanadi; portfelda $\SD$ $28{,}20\,\%$ ortiqcha | $2ab\Cov$ ni **har doim** yozish; faraz qilinsa — ochiq aytish |
+| **$\Var(X-Y)=\Var(X)-\Var(Y)$ deb yozish** | Dispersiya chiziqli emas; ayirmada ham **qoʻshiladi**: $+\Var(Y)-2\Cov$ | $\Var(aX+bY)$ formulasini $a=1$, $b=-1$ bilan qoʻllash |
+| **$r^2$ ni «tushuntirdi» deb oʻqish** | $r^2$ — birgalikdagi oʻzgaruvchanlik ulushi, sababiy taʼsir emas; $n=9$ da u juda beqaror | «$r^2$ shuncha ulushga **mos keladi**» deb yozish; $n$ ni birga keltirish |
+| **$w^{*}$ ni «eng foydali» deb oʻqish** | $w^{*}$ faqat **dispersiyani** minimallashtiradi, kutilgan daromadni emas | Maqsad funksiyasini aniq aytish; farazlarni sanab oʻtish |
+| **$10$ juftlikdan eng kattasini «kashfiyot» deyish** | Koʻp taqqoslash: eng katta qiymat tasodifan ham chiqadi | Barcha $10$ tasini eʼlon qilish; oldindan gipoteza qoʻyish |
+| **Grafiksiz xulosa** | Anskomb IV da $r=0{,}8165$, ammo maʼlumotda **ikkita** $x$ qiymati bor, xolos | **Har doim** avval chizish, keyin hisoblash |
+
+---
+
+# Baholash mezonlari
+
+| Topshiriq | Kod ishlaydi | Toʻgʻri natija | Talqin | Qaror | Jami |
+|---|---|---|---|---|---|
+| 1. Birgalikdagi taqsimot | 4 | 4 | 9 | 3 | 20 |
+| 2. Kovariatsiya va korrelyatsiya | 4 | 4 | 9 | 3 | 20 |
+| 3. Korrelyatsiya matritsasi | 3 | 3 | 6 | 3 | 15 |
+| 4. $\Var(aX+bY)$ | 4 | 4 | 9 | 3 | 20 |
+| 5. Portfel va diversifikatsiya | 4 | 4 | 9 | 3 | 20 |
+| 6. Anskomb va umumiy trend | 3 | 3 | 6 | 3 | 15 |
+| **Jami** | **22** | **22** | **48** | **18** | **110** |
+| 7. Ixtiyoriy (bonus) | 1 | 1 | 2 | 1 | $+5$ |
+
+**Baholash falsafasi.** Kod va toʻgʻri sonlar birgalikda $44/110$,
+yaʼni $40\,\%$. Talqin va qaror esa $66/110$, yaʼni $60\,\%$.
+**Talqinsiz topshirilgan ish oʻta yaxshi baho ololmaydi:** kompyuter
+bajaradigan qismni bajarish kasbiy kompetensiya emas.
+
+---
+
+# Refleksiya savollari
+
+Har biriga **3–4 jumla** bilan yozma javob bering. Bu qism topshiriq
+bilan birga topshiriladi.
+
+1. **Bitta son va shakl.** Anskomb kvartetini koʻrgunga qadar siz
+   $r=0{,}816$ ni qanday tasavvur qilardingiz? Qaysi panel bu
+   tasavvurni eng koʻp buzdi?
+2. **Oʻlchangan skeptitsizm.** «Korrelyatsiya sababiyat emas» iborasini
+   ilgari ham eshitgansiz. Bugun uni **son bilan** koʻrdingiz
+   ($0{,}9166\to0{,}3786$). Iboraning vazni siz uchun oʻzgardimi?
+3. **Qulaylik farazining narxi.** $\Cov=0$ deb faraz qilish qulay.
+   Bugun uning narxi $14{,}61\,\%$ va $28{,}20\,\%$ boʻlib chiqdi.
+   Kasbiy amaliyotda yana qanday «qulay» farazlar shunday narxga ega?
+4. **Simulyatsiya nazorati.** Taʼrifi boʻyicha bogʻliqsiz ikki qator
+   $r=0{,}908$ berdi. Agar bu sonni haqiqiy maʼlumotda koʻrganingizda
+   nima deb oʻylagan boʻlardingiz? Bu tajriba sizning ish uslubingizni
+   qanday oʻzgartiradi?
+5. **Ikki til.** Sizning sonlaringiz boshqa tildagi talabaning sonlari
+   bilan mos tushdimi? Mos tushmagan boʻlsa, sababni **qaysi qadamda**
+   topdingiz?
+6. **Koʻchirish.** Oʻz mutaxassisligingizda bir-biri bilan yuqori
+   korrelyatsiyada boʻlgan, ammo **umumiy trendga** ega ikkita
+   koʻrsatkichni ayting (masalan narx va ish haqi). Ular uchun qanday
+   nazorat oʻtkazgan boʻlardingiz?
+
+---
+
+# Topshirish tartibi va akademik halollik
+
+* **Fayl:** `W06-lab-<familiya>.Rmd` $+$ undan olingan `.html`,
+  *yoki* bajarilgan `W06-lab-<familiya>.ipynb`.
+* **Kod xatosiz ishlashi shart:** *Session → Restart R and Run All Chunks*
+  dan soʻng hech bir katak xato bermasligi kerak.
+* **Talqin va qaror** har bir topshiriq uchun matn koʻrinishida
+  yozilgan boʻlishi shart.
+* **Muddat:** laboratoriyadan keyingi 48 soat ichida, Moodle.
+* **Grafiklar:** faqat Okabe–Ito ranglari; maʼnoni faqat rang bilan
+  bermang (shakl yoki yorliq qoʻshing); oʻq nomlari va manba
+  koʻrsatilishi shart.
+* **Maʼlumot halolligi:** ikkala toʻplam ham **haqiqiy** (FAOSTAT /
+  Our World in Data; The Numbers / Kaggle). Anskomb kvarteti — **oʻquv
+  maqsadida yaratilgan** maʼlumot, manbasi Anscombe (1973).
+  6B dagi $A_t$ va $B_t$ qatorlari — **simulyatsiya qilingan maʼlumot**,
+  generatsiya qoidasi kodda yozilgan. Bularni rasmiy statistika
+  sifatida keltirish akademik halollik buzilishi hisoblanadi.
+
+**Sunʼiy intellekt: nima mumkin va nima mumkin emas.**
+*Mumkin:* kod xatosini topish; funksiya hujjatini tushuntirish; matnni
+tahrirlash; muqobil yondashuvni soʻrash.
+*Mumkin emas:* talqin va qaror bosqichlarini SIʼ ga yozdirish — aynan
+shu qism baholanadi.
+
+**Ogohlantirish.** Til modellari korrelyatsiya mavzusida muntazam
+ravishda: (i) $r=0$ ni «bogʻliqsiz» deb ataydi; (ii) korrelyatsiyani
+sababiy tilda bayon qiladi; (iii) $\Var(aX+bY)$ da $2ab\Cov$ hadini
+tushirib qoldiradi; (iv) $\Var(X-Y)=\Var(X)-\Var(Y)$ deb yozadi;
+(v) $r^2$ ni «tushuntirdi» deb talqin qiladi. Bu haftaning SI
+topshirigʻi aynan shu besh xatoni topishga bagʻishlangan.
+
+**Deklaratsiya majburiy:** ish oxirida qaysi vosita, qaysi bosqichda,
+qanday soʻrov bilan ishlatilgani va javob qanday tekshirilgani
+yoziladi. Oshkor qilingan foydalanish *hech qachon* oʻz-oʻzidan ball
+kamaytirmaydi; oshkor qilinmagani esa akademik halollik buzilishi
+hisoblanadi.
+
+---
+
+**Manbalar.** Newbold, Carlson & Thorne, *Statistics for Business and
+Economics*, §4.4–4.7 va §5.7 · McClave & Sincich, *Statistics*, 6-bob ·
+Heumann, Schomaker & Shalabh, *Introduction to Statistics and Data
+Analysis*, 9-bob · Anscombe, F. J. (1973), *Graphs in Statistical
+Analysis*, The American Statistician 27(1), 17–21 · Markowitz, H.
+(1952), *Portfolio Selection*, Journal of Finance 7(1), 77–91 ·
+Matejka, J. & Fitzmaurice, G. (2017), *Same Stats, Different Graphs*,
+CHI '17 · Maʼlumot: FAOSTAT / Our World in Data; The Numbers / Kaggle.

@@ -1,0 +1,1350 @@
+---
+title: "STAT201 · 5-hafta · Kompyuter laboratoriyasi (R)"
+subtitle: "Uzluksiz taqsimotlar va normal taqsimot"
+author: "Toshkent Xalqaro Universiteti · Iqtisodiyot fakulteti"
+date: "2025/2026 oʻquv yili"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    df_print: kable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,     # kodni koʻrsatish
+  message = FALSE,    # paket yuklash xabarlarini yashirish
+  warning = FALSE,
+  fig.width = 7, fig.height = 4.2, dpi = 110,
+  # dev.args: grafiklarda oʻzbekcha «ʻ» belgisi chiqishi uchun cairo
+  # mexanizmi shart (0-bosqichdagi izohga qarang).
+  dev = "png", dev.args = list(type = "cairo")
+)
+options(digits = 7)
+```
+
+<!--
+  ==================================================================
+  STAT201 · 5-hafta · Kompyuter laboratoriyasi · R versiyasi
+  Davomiyligi: 2 akademik soat (120 daqiqa)
+  CLO3 — uzluksiz tasodifiy miqdorlar, zichlik funksiyasi va normal
+         taqsimot bilan ishlash (Blum: Qoʻllash–Tahlil–Baholash)
+  Maʼlumot: data/kinolar-byudjet.csv  (2 467 film, 2000–2018)
+            data/markaziy-osiyo-hosildorlik.csv (5 mamlakat x 27 yil)
+  Har bir topshiriq bitta zanjirga boʻysunadi:
+  statistik tushuncha -> maʼlumot -> kod -> natija -> talqin -> qaror
+  Izohlar va oʻzgaruvchi nomlari — oʻzbekcha; funksiya nomlari — inglizcha.
+  Simulyatsiya generatori: MINSTD (2–4-haftadagi bilan AYNAN bir xil),
+  urugʻ 2026. Shu sababli R va Python daftarlari BELGI-MA-BELGI bir xil
+  matn chiqaradi.
+  ==================================================================
+-->
+
+# Laboratoriya haqida
+
+**Maqsad.** Maʼruzada keltirib chiqarilgan **zichlik funksiyasi**,
+**ehtimollik = yuza** tengligi, **normal taqsimot**, **standartlashtirish**
+va **normallikni tekshirish** vositalarini haqiqiy maʼlumot ustida
+*birinchi tamoyillardan* qurish; soʻng modelning **qayerda ishlashi va
+qayerda buzilishini** son bilan aniqlash.
+
+**Haftaning markaziy gʻoyasi — model markazda aʼlo, quyruqda esa notoʻgʻri
+boʻlishi mumkin.** Bugun bitta maʼlumot toʻplamiga bitta modelni
+qoʻllaymiz. Model taqsimotning oʻrtasida $0{,}6$ protsentil punkti
+aniqlikda ishlaydi; $99$-protsentilda esa $151\,\%$ xato beradi. Ikkala
+raqam ham bitta modelga tegishli. **Qaror esa deyarli har doim quyruqda
+qabul qilinadi.**
+
+> **Qoida.** Normallikni *bitta son* hal qilmaydi. Qiyshiqlik, Q--Q
+> korrelyatsiyasi va Shapiro--Wilk testi **bir-biriga zid** javob
+> berishi mumkin — va bugun ular aynan shunday qiladi. Grafikni
+> koʻrmasdan chiqarilgan xulosa — xulosa emas.
+
+**Ish zanjiri.** Har bir topshiriqda quyidagi ketma-ketlikni yozma
+ravishda bajarasiz:
+
+> **statistik tushuncha → maʼlumot → kod → natija → talqin → qaror**
+
+Faqat kod yozib, natijani izohsiz qoldirish — topshiriq bajarilmagan
+hisoblanadi. Baholashning yarmidan koʻpi aynan *talqin* va *qaror*
+bosqichlariga beriladi.
+
+**Vaqt va ball taqsimoti (120 daqiqa, 110 ball + 5 bonus).**
+
+| # | Mazmun | Daqiqa | Blum | Ball |
+|---|---|---|---|---|
+| 0 | Muhitni sozlash | 5 | — | — |
+| 1 | Zichlik funksiyasi: yigʻindidan integralga | 20 | Qoʻllash | 20 |
+| 2 | Normal ehtimolliklar: ikki yoʻnalishda | 20 | Qoʻllash | 20 |
+| 3 | Q--Q grafik: bitta son yetarli emas | 25 | Tahlil | 25 |
+| 4 | Logarifmik almashtirish: nima yaxshilanadi, nima buziladi | 20 | Baholash | 20 |
+| 5 | Binomialning normal yaqinlashishi va uzluksizlik tuzatmasi | 25 | Baholash | 25 |
+| 6 | Ixtiyoriy: koʻrsatkichli taqsimot va xotirasizlik | uyda | Yaratish | +5 |
+
+**Oldingi bilim.** Sizga quyidagilar allaqachon maʼlum boʻlishi kerak:
+gistogramma va quti diagrammasi (1-hafta); qiyshiqlik va uning ishorasi
+(1-hafta); ehtimollik massasi funksiyasi va taqsimot funksiyasi
+(4-hafta); binomial va Puasson taqsimotlari, ularning shartlari
+(4-hafta); MINSTD generatori va urugʻ tushunchasi (2-hafta).
+**MATH102 dan:** aniq integral va uning yuza sifatidagi talqini —
+bu hafta u *ishchi asbob*, eslatma emas.
+
+---
+
+# 0-bosqich. Muhitni sozlash
+
+```{r lokal}
+# --- MUHIM: UTF-8 muhitini kafolatlash --------------------------------
+# Oʻzbekcha nomlarda tutuq belgisi «ʻ» (U+02BB) bor. Agar R UTF-8
+# boʻlmagan lokalda ishga tushsa (masalan LC_CTYPE=C), kod ichidagi
+# oʻzbekcha satr va CSV dan oʻqilgan qiymat BAYTLARI bir xil boʻlsa ham
+# TENG DEB HISOBLANMAYDI: filter() BOʻSH jadval qaytaradi va butun
+# tahlil NaN ga aylanadi — hech qanday xato xabari chiqmasdan.
+# QOIDA (2-haftadan): toifa nomlarini kod ichida literal yozmang —
+# ularni unique(...) orqali FAYLDAN oling va POZITSIYA boʻyicha tanlang.
+if (!grepl("UTF-8", Sys.getlocale("LC_CTYPE"), ignore.case = TRUE)) {
+  for (lokal in c("C.UTF-8", "en_US.UTF-8", "uz_UZ.UTF-8",
+                  "Uzbek_Uzbekistan.utf8", "English_United States.utf8")) {
+    if (suppressWarnings(Sys.setlocale("LC_CTYPE", lokal)) != "") break
+  }
+}
+cat("LC_CTYPE =", Sys.getlocale("LC_CTYPE"), "\n")
+```
+
+```{r paketlar}
+# --- Kerakli paketlar -------------------------------------------------
+library(readr)     # CSV oʻqish, kodlashni aniq belgilash imkoni bilan
+library(dplyr)     # maʼlumotni filtrlash va xulosalash
+library(ggplot2)   # grafiklar
+
+# Okabe–Ito palitrasi: rang koʻrmaslikka moslashgan.
+oiBlue <- "#0072B2"; oiOrange <- "#E69F00"; oiGreen  <- "#009E73"
+oiPink <- "#CC79A7"; oiVerm   <- "#D55E00"; oiSky    <- "#56B4E9"
+
+theme_set(theme_minimal(base_size = 11))
+theme_update(
+  panel.grid.minor = element_blank(),
+  plot.title    = element_text(face = "bold"),
+  plot.subtitle = element_text(colour = "grey30")
+)
+
+# QOIDA (2-haftadan): grafik yorliqlarida faqat ASCII harflar.
+# R ning standart pdf() qurilmasi U+02BB belgisini chiza olmaydi.
+cat("cairo mavjudmi:", capabilities("cairo"), "\n")
+
+# --- MANTIQIY QIYMATNI BIR XIL CHOP ETISH -----------------------------
+# R «TRUE», Python esa «True» yozadi. Ikkala daftar matni belgi-ma-belgi
+# bir xil boʻlishi uchun mantiqiy qiymatni OʻZIMIZ formatlaymiz.
+tf <- function(b) if (isTRUE(as.logical(b))) "TRUE" else "FALSE"
+```
+
+```{r yuklash}
+# --- Ikkita haqiqiy maʼlumot toʻplami ---------------------------------
+# A. kinolar-byudjet.csv — 2 467 film (2000–2018), byudjet AQSh dollarida.
+# B. markaziy-osiyo-hosildorlik.csv — 5 mamlakat x 27 yil (1992–2018),
+#    hosildorlik t/ga. Manba: FAOSTAT / Our World in Data.
+kino  <- read_csv("data/kinolar-byudjet.csv",
+                  locale = locale(encoding = "UTF-8"), show_col_types = FALSE)
+hosil <- read_csv("data/markaziy-osiyo-hosildorlik.csv",
+                  locale = locale(encoding = "UTF-8"), show_col_types = FALSE)
+
+byudjet     <- kino$byudjet / 1e6         # mln $ — oʻqish qulay boʻlsin
+mamlakatlar <- unique(hosil$mamlakat)     # POZITSIYA boʻyicha ishlatamiz
+
+cat(sprintf("kinolar          : n = %d   (%d-%d)\n",
+            nrow(kino), min(kino$yil), max(kino$yil)))
+cat(sprintf("byudjet oraligi  : %.2f - %.2f mln $\n", min(byudjet), max(byudjet)))
+cat(sprintf("hosildorlik      : %d qator = %d mamlakat x %d yil\n",
+            nrow(hosil), length(mamlakatlar), nrow(hosil)/length(mamlakatlar)))
+for (i in seq_along(mamlakatlar)) cat(sprintf("  [%d] %s\n", i, mamlakatlar[i]))
+```
+
+> **Toʻplamning chegarasi — darhol yozib qoʻying.** Byudjetlar
+> $0{,}25$ dan $175$ mln \$ gacha. Toʻplamda $175$ mln \$ dan qimmat film
+> **yoʻq**. Bu — toʻplam qanday yigʻilganining xossasi, kinosanoatning
+> emas. 4-topshiriqda bu chegara modelning quyruqdagi xatosini
+> tushuntirishda hal qiluvchi rol oʻynaydi.
+
+---
+
+# 1-topshiriq. Zichlik funksiyasi: yigʻindidan integralga
+
+**Qiyinlik: 3 (Amaliy) · Blum: Qoʻllash · 20 ball · 20 daqiqa**
+
+### Statistik tushuncha
+
+Diskret holda ehtimollik **massa**da toʻplangan edi: $p(x)=\Pr(X=x)$ va
+$\sum_x p(x)=1$. Uzluksiz holda alohida nuqtaning ehtimoli **nol**, shu
+sababli massa emas, **zichlik** ishlatiladi.
+
+**Zichlik funksiyasi** *(probability density function)* — shunday
+$f(x)\ge 0$ funksiyaki,
+$$\Pr(a<X<b)=\int_a^b f(x)\,dx, \qquad \int_{-\infty}^{\infty} f(x)\,dx=1 .$$
+
+Ikkala shart ham **tekshiriladi**, xuddi diskret holdagi kabi. Faqat
+yigʻindi $\sum$ oʻrnini integral $\int$ egallaydi.
+
+**Uchta natija bevosita kelib chiqadi:**
+
+1. $\Pr(X=x)=\int_x^x f=0$ — har qanday alohida nuqtaning ehtimoli nol;
+2. shu sababli $\Pr(X<a)=\Pr(X\le a)$ — uzluksiz holda qatʼiy va
+   qatʼiy boʻlmagan tengsizlik **farq qilmaydi** (diskret holda farq
+   qilardi: 4-haftada farq $p(4)=0{,}2370$ edi);
+3. $f(x)$ — **ehtimollik emas**. U $1$ dan katta boʻlishi ham mumkin.
+   $f(x)$ — ehtimollikning *zichligi*, yaʼni $\Pr(x-\delta<X<x+\delta)
+   \approx f(x)\cdot 2\delta$.
+
+**Tekis taqsimot** $X\sim\Unif(a,b)$: $f(x)=1/(b-a)$, $a\le x\le b$.
+Bu — yagona zichlik funksiyasiki, uni qoʻlda toʻliq hisoblash mumkin,
+shuning uchun undan boshlaymiz.
+
+### Maʼlumot
+
+Birinchi qism — faraziy $\Unif(10,25)$ (masalan, kutish vaqti daqiqada).
+Ikkinchi qism — haqiqiy: `kinolar-byudjet.csv` dan olingan
+$\ln(\text{byudjet})$ va unga moslangan normal model.
+
+```{r unif}
+# --- 1-qadam: tekis taqsimot — hamma narsa qoʻlda hisoblanadi ----------
+a <- 10; b <- 25
+f_unif <- function(x) ifelse(x >= a & x <= b, 1/(b-a), 0)
+
+cat(sprintf("f(x)       = 1/(b-a)      = %.6f\n", 1/(b-a)))
+cat(sprintf("E[X]       = (a+b)/2      = %.4f\n", (a+b)/2))
+cat(sprintf("Var(X)     = (b-a)^2/12   = %.4f\n", (b-a)^2/12))
+cat(sprintf("SD(X)      = sqrt(Var)    = %.4f\n", sqrt((b-a)^2/12)))
+cat(sprintf("P(12<X<18) = (18-12)/(b-a)= %.6f\n", 6/(b-a)))
+cat(sprintf("F(18)      = (18-a)/(b-a) = %.6f\n", (18-a)/(b-a)))
+cat(sprintf("P(X=15)    = 0            = %.6f\n", 0))
+
+# Ikkinchi shartni SONLI tekshiramiz: integral aynan 1 mi?
+I_unif <- integrate(f_unif, a, b)$value
+cat(sprintf("integral f = %.10f\n", I_unif))
+cat(sprintf("|integral - 1| < 1e-10   : %s\n", tf(abs(I_unif-1) < 1e-10)))
+```
+
+```{r norm_qolda}
+# --- 2-qadam: normal zichlikni QOʻLDA yozamiz --------------------------
+# Parametrlarni HAQIQIY maʼlumotdan olamiz: ln(byudjet) ning oʻrtachasi
+# va standart ogʻishi. Shu bilan model «kitobdagi misol» emas, shu
+# maʼlumotga moslangan model boʻladi.
+ln_b <- log(byudjet)
+mu   <- mean(ln_b); sig <- sd(ln_b)
+cat(sprintf("\nln(byudjet): mu = %.6f   sigma = %.6f\n", mu, sig))
+
+# f(x) = 1/(sigma sqrt(2 pi)) exp(-(x-mu)^2 / (2 sigma^2))
+f_norm <- function(x) (1/(sig*sqrt(2*pi))) * exp(-0.5*((x-mu)/sig)^2)
+
+# Nazorat: R ning dnorm() funksiyasi bilan solishtiramiz.
+xt <- seq(mu-4*sig, mu+4*sig, length.out = 9)
+cat(sprintf("maks |qolda - dnorm| < 1e-15 : %s\n",
+            tf(max(abs(f_norm(xt)-dnorm(xt,mu,sig))) < 1e-15)))
+# BIRINCHI SHART: f(x) >= 0 hamma joyda
+cat(sprintf("barcha f(x) >= 0             : %s\n",
+            tf(all(f_norm(seq(-10,15,by=0.01)) >= 0))))
+```
+
+```{r panjara}
+# --- 3-qadam: IKKINCHI SHART ikki usulda ------------------------------
+# (i) PANJARA (Riman yigʻindisi) — integralning taʼrifi boʻyicha:
+#     oraliqni n boʻlakka boʻlamiz, har birida f ni bitta nuqtada
+#     hisoblaymiz va kenglikka koʻpaytiramiz. Bu — «yigʻindidan
+#     integralga» oʻtishning aynan oʻzi.
+lo <- mu - 6*sig; hi <- mu + 6*sig
+o_nuqta <- function(n) {                 # oʻrta nuqta usuli
+  h <- (hi-lo)/n; xs <- lo + (0:(n-1))*h + h/2; sum(f_norm(xs))*h
+}
+trapets <- function(n) {                 # trapetsiya usuli
+  h <- (hi-lo)/n; xs <- lo + (0:n)*h
+  w <- rep(1, n+1); w[1] <- 0.5; w[n+1] <- 0.5; sum(w*f_norm(xs))*h
+}
+aniq <- pnorm(hi, mu, sig) - pnorm(lo, mu, sig)
+cat(sprintf("\naniq qiymat Phi(6)-Phi(-6)   = %.10f\n", aniq))
+cat(sprintf("%8s %14s %14s %14s %14s\n",
+            "n","qadam h","orta nuqta","trapetsiya","|orta - aniq|"))
+for (n in c(10,100,1000,10000)) {
+  e <- abs(o_nuqta(n)-aniq)
+  cat(sprintf("%8d %14.8f %14.10f %14.10f %14s\n", n,(hi-lo)/n,o_nuqta(n),trapets(n),
+              if (e < 1e-13) "< 1e-13" else sprintf("%.3e", e)))
+}
+# (ii) TAYYOR SONLI INTEGRALLASH — butun sonlar oʻqi boʻyicha.
+# DIQQAT: R ning integrate() va Pythonning quad() funksiyalari oxirgi
+# raqamlarda farq qilishi mumkin, shuning uchun natijani SON sifatida
+# emas, DOPUSK sifatida chop etamiz (4-haftadagi qoida).
+I_norm <- integrate(f_norm, -Inf, Inf)$value
+cat(sprintf("integrate(-Inf, Inf): |I - 1| < 1e-8 : %s\n", tf(abs(I_norm-1) < 1e-8)))
+```
+
+```{r nuqta}
+# --- 4-qadam: NIMA UCHUN P(X = x) = 0 ---------------------------------
+# x0 = 3 atrofidagi oraliqni ketma-ket toraytiramiz va ikki songa
+# qaraymiz: ehtimollikning oʻziga va uning kenglikka nisbatiga.
+cat(sprintf("\nNUQTA EHTIMOLI: x0 = 3 atrofidagi oraliq\n"))
+cat(sprintf("%12s %18s %18s\n","yarim eni d","P(3-d < X < 3+d)","P / (2d)"))
+for (d in c(0.5,0.05,0.005,0.0005,0.00005)) {
+  pp <- pnorm(3+d,mu,sig) - pnorm(3-d,mu,sig)
+  cat(sprintf("%12.5f %18.10f %18.10f\n", d, pp, pp/(2*d)))
+}
+cat(sprintf("zichlik f(3) = %.10f  <- limit shu songa intiladi\n", f_norm(3)))
+cat(sprintf("f(3) EHTIMOLLIK EMAS; f(3) > 0.3 ammo P(X=3) = 0\n"))
+```
+
+```{r yuza}
+# --- 5-qadam: EHTIMOLLIK = YUZA (uch mustaqil yoʻl) --------------------
+P1 <- pnorm(4,mu,sig) - pnorm(2,mu,sig)            # taqsimot funksiyasi
+P2 <- integrate(f_norm, 2, 4)$value                # sonli integrallash
+h3 <- (4-2)/20000                                  # tor panjara
+P3 <- sum(f_norm(2 + (0:19999)*h3 + h3/2))*h3
+
+cat(sprintf("\nP(2 < lnB < 4) uch yol bilan:\n"))
+cat(sprintf("  (i)   Phi farqi          = %.10f\n", P1))
+cat(sprintf("  (ii)  sonli integrallash = %.10f\n", P2))
+cat(sprintf("  (iii) tor panjara (20000)= %.10f\n", P3))
+cat(sprintf("  uchalasi 1e-9 aniqlikda mos : %s\n",
+            tf(max(abs(c(P1-P2,P1-P3))) < 1e-9)))
+# Va endi ENG MUHIM taqqoslash: model nima deydi va maʼlumot nima deydi?
+cat(sprintf("  haqiqiy ulush (maʼlumotda)  = %.10f\n", mean(ln_b>2 & ln_b<4)))
+```
+
+```{r yuza_grafik, fig.height=3.9}
+# --- 6-qadam: yuzani KOʻRSATISH ---------------------------------------
+gx  <- seq(mu-4*sig, mu+4*sig, length.out = 600)
+gdf <- data.frame(x = gx, y = f_norm(gx))
+sdf <- subset(gdf, x >= 2 & x <= 4)
+ggplot(gdf, aes(x, y)) +
+  geom_area(data = sdf, fill = oiSky, alpha = 0.55) +
+  geom_line(colour = oiBlue, linewidth = 0.9) +
+  geom_vline(xintercept = mu, colour = oiVerm, linetype = "dashed") +
+  annotate("text", x = 3.0, y = 0.10, label = "P(2 < X < 4) = 0.5528",
+           colour = "grey20", size = 3.5) +
+  annotate("text", x = mu, y = 0.315, label = "mu = 2.939",
+           colour = oiVerm, size = 3.2, hjust = -0.08) +
+  labs(title = "Ehtimollik = zichlik ostidagi YUZA",
+       subtitle = "Model: ln(byudjet) ~ N(2.939, 1.314^2)",
+       x = "ln(byudjet), byudjet mln $ da", y = "zichlik f(x)",
+       caption = "Manba: kinolar-byudjet.csv, n = 2467")
+```
+
+### Natija (kutilayotgan)
+
+```
+f(x)       = 1/(b-a)      = 0.066667
+E[X]       = (a+b)/2      = 17.5000
+Var(X)     = (b-a)^2/12   = 18.7500
+SD(X)      = sqrt(Var)    = 4.3301
+P(12<X<18) = (18-12)/(b-a)= 0.400000
+F(18)      = (18-a)/(b-a) = 0.533333
+P(X=15)    = 0            = 0.000000
+integral f = 1.0000000000
+|integral - 1| < 1e-10   : TRUE
+
+ln(byudjet): mu = 2.938942   sigma = 1.314131
+maks |qolda - dnorm| < 1e-15 : TRUE
+barcha f(x) >= 0             : TRUE
+
+aniq qiymat Phi(6)-Phi(-6)   = 0.9999999980
+       n        qadam h     orta nuqta     trapetsiya  |orta - aniq|
+      10     1.57695668   0.9999977722   1.0000022202      2.226e-06
+     100     0.15769567   0.9999999981   0.9999999979      4.315e-11
+    1000     0.01576957   0.9999999980   0.9999999980      4.375e-13
+   10000     0.00157696   0.9999999980   0.9999999980        < 1e-13
+integrate(-Inf, Inf): |I - 1| < 1e-8 : TRUE
+
+NUQTA EHTIMOLI: x0 = 3 atrofidagi oraliq
+ yarim eni d   P(3-d < X < 3+d)           P / (2d)
+     0.50000       0.2961059902       0.2961059902
+     0.05000       0.0303178378       0.3031783778
+     0.00500       0.0030325064       0.3032506408
+     0.00050       0.0003032514       0.3032513636
+     0.00005       0.0000303251       0.3032513708
+zichlik f(3) = 0.3032513709  <- limit shu songa intiladi
+f(3) EHTIMOLLIK EMAS; f(3) > 0.3 ammo P(X=3) = 0
+
+P(2 < lnB < 4) uch yol bilan:
+  (i)   Phi farqi          = 0.5528282770
+  (ii)  sonli integrallash = 0.5528282770
+  (iii) tor panjara (20000)= 0.5528282771
+  uchalasi 1e-9 aniqlikda mos : TRUE
+  haqiqiy ulush (maʼlumotda)  = 0.5626266721
+```
+
+### Talqin — daftaringizga yozing
+
+**T1.1** $n=10$ da panjara xatosi $2{,}2\times 10^{-6}$, $n=1000$ da
+$4{,}4\times 10^{-13}$. Qadam $100$ marta kichrayganda xato necha marta
+kichraydi? Oʻrta nuqta usuli uchun nazariy tartib $O(h^2)$ — sonlaringiz
+buni tasdiqlaydimi?
+
+**T1.2** $\Pr(3-\delta<X<3+\delta)$ nolga intiladi, ammo
+$\Pr/(2\delta)$ **nolga intilmaydi** — u $0{,}30325$ ga intiladi.
+Bu son nima? Uni zichlik taʼrifi bilan bogʻlang va bir jumlada
+tushuntiring: *nima uchun $f(3)>0$ boʻlsa ham $\Pr(X=3)=0$*.
+
+**T1.3** $f(3)=0{,}3033$. Talaba: «Demak byudjeti $e^3\approx 20$ mln \$
+boʻlgan film uchrash ehtimoli $30\,\%$». Bu jumlada **ikkita** xato bor.
+Ikkalasini ham nomlang.
+
+**T1.4** Model $\Pr(2<\ln B<4)=0{,}5528$ deydi, maʼlumotda esa ulush
+$0{,}5626$. Farq $0{,}0098$, yaʼni $\approx 1$ protsentil punkti. Bu
+farq **katta**mi? Javobingizni $2\,467$ ta kuzatuv soni bilan bogʻlang.
+
+**T1.5** Diskret holda $\Pr(X<4)\ne\Pr(X\le 4)$ edi (4-haftada farq
+$0{,}2370$). Uzluksiz holda farq aynan nol. Qaysi *matematik* xossa bu
+farqni yoʻqotdi? Bir jumlada ayting.
+
+### Qaror
+
+Kinoteatr $\Unif(10,25)$ taqsimotidagi kutish vaqtiga ega navbat
+tizimini boshqaradi. Menejer: «$18$ daqiqadan koʻp kutgan mijozga
+chegirma beramiz». **Chegirma olish ehtimolini** hisoblang va bir yilda
+$40\,000$ mijoz uchun chegirmalar sonini baholang. Soʻng menejerga
+aytilishi kerak boʻlgan **bitta ehtiyot jumlani** yozing: bu hisob
+qanday farazga tayanadi va faraz buzilsa nima oʻzgaradi?
+
+---
+
+# 2-topshiriq. Normal ehtimolliklar: ikki yoʻnalishda
+
+**Qiyinlik: 3 (Amaliy) · Blum: Qoʻllash · 20 ball · 20 daqiqa**
+
+### Statistik tushuncha
+
+$X\sim\Norm(\mu,\sigma^2)$ boʻlsa, **standartlashtirish**
+$$Z=\frac{X-\mu}{\sigma}\sim\Norm(0,1)$$
+har qanday normal taqsimotni **bitta** jadvalga keltiradi.
+$z$ — kuzatuvning oʻrtachadan necha **standart ogʻish** uzoqligini
+oʻlchaydigan **oʻlchovsiz** son.
+
+Ikki yoʻnalish bir-biriga teskari:
+
+| Yoʻnalish | Savol | R funksiyasi |
+|---|---|---|
+| oldinga | qiymat berilgan → ehtimollik | `pnorm(x, mu, sigma)` |
+| orqaga | ehtimollik berilgan → qiymat | `qnorm(p, mu, sigma)` |
+
+**68–95–99,7 qoidasi** — taxminiy. Aniq qiymatlar
+$0{,}682689$, $0{,}954500$, $0{,}997300$. Aniqlik talab qilinadigan
+joyda (kvantil, ishonch oraligʻi) taxminiy son ishlatilmaydi.
+
+### Maʼlumot
+
+`kinolar-byudjet.csv`, model $\ln B\sim\Norm(2{,}938942;\,1{,}314131^2)$.
+
+```{r phi_jadval}
+# --- 1-qadam: standart normal jadvalni OʻZIMIZ chiqaramiz --------------
+cat(sprintf("%10s %14s %14s\n","z","Phi(z)","1 - Phi(z)"))
+for (z in c(-2.58,-1.96,-1.645,-1,0,0.5,1,1.645,1.96,2.58))
+  cat(sprintf("%10.3f %14.6f %14.6f\n", z, pnorm(z), 1-pnorm(z)))
+
+# --- 68-95-99,7: TAXMINIY va ANIQ -------------------------------------
+cat(sprintf("\n%10s %16s %16s\n","k","P(mu+-k sigma)","taxminiy qoida"))
+for (k in 1:3) cat(sprintf("%10d %16.6f %16s\n", k, pnorm(k)-pnorm(-k),
+                           c("0.68","0.95","0.997")[k]))
+
+# --- Teskari yoʻnalish: kritik qiymatlar -------------------------------
+cat(sprintf("\n%10s %16s\n","ishonch","z"))
+for (pc in c(0.90,0.95,0.99)) cat(sprintf("%10.2f %16.6f\n", pc, qnorm(1-(1-pc)/2)))
+```
+
+```{r roundtrip}
+# --- 2-qadam: ikki funksiya bir-birining teskarisimi? ------------------
+# qnorm(pnorm(z)) = z boʻlishi SHART. Bu — «oldinga va orqaga» gʻoyasini
+# sonli tasdiqlash.
+cat(sprintf("\nOLDINGA VA ORQAGA: qnorm(pnorm(z)) = z ?\n"))
+cat(sprintf("%10s %14s %14s %14s\n","p","z = qnorm(p)","pnorm(z)","|farq|<1e-12"))
+for (pp in c(0.01,0.05,0.25,0.50,0.75,0.95,0.99)) {
+  zz <- qnorm(pp)
+  cat(sprintf("%10.2f %14.6f %14.6f %14s\n", pp, zz, pnorm(zz),
+              tf(abs(pnorm(zz)-pp) < 1e-12)))
+}
+```
+
+```{r zbaho}
+# --- 3-qadam: OLDINGA — haqiqiy byudjetlar uchun z va protsentil -------
+# Har bir qatorda model nima deydi va maʼlumot nima deydi — YONMA-YON.
+cat(sprintf("\nHAQIQIY BYUDJETLAR (model: lnB ~ N(%.6f, %.6f^2))\n", mu, sig))
+cat(sprintf("%12s %12s %12s %14s %14s %12s\n",
+            "byudjet","ln(byudjet)","z","model %-il","haqiqiy %-il","farq (p.p.)"))
+for (v in c(5,10,20,22,35.805,50,75,100,125,150)) {
+  z  <- (log(v)-mu)/sig
+  md <- 100*pnorm(z)               # model protsentili
+  hq <- 100*mean(byudjet <= v)     # haqiqiy (empirik) protsentil
+  cat(sprintf("%12.3f %12.4f %12.4f %14.1f %14.1f %12.1f\n", v, log(v), z, md, hq, md-hq))
+}
+```
+
+```{r teskari}
+# --- 4-qadam: ORQAGA — protsentildan byudjetga -------------------------
+# Bu yoʻnalish amaliyotda muhimroq: «yuqori 5 % qanday byudjetdan
+# boshlanadi?» degan savol aynan shu.
+cat(sprintf("\nTESKARI YONALISH: model boyicha protsentillar\n"))
+cat(sprintf("%10s %12s %16s %16s %14s\n",
+            "protsentil","z","ln(byudjet)","model byudjet","haqiqiy"))
+for (pp in c(0.50,0.75,0.90,0.95,0.99)) {
+  z <- qnorm(pp)
+  cat(sprintf("%10.2f %12.6f %16.6f %16.3f %14.3f\n",
+              pp, z, mu+z*sig, exp(mu+z*sig),
+              as.numeric(quantile(byudjet, pp, type = 7))))
+}
+i95 <- exp(mu + c(-1,1)*qnorm(0.975)*sig)
+cat(sprintf("\nMarkaziy 95%%: model [%.3f ; %.3f] mln $\n", i95[1], i95[2]))
+cat(sprintf("bu oraliqqa tushgan haqiqiy filmlar ulushi = %.6f\n",
+            mean(byudjet > i95[1] & byudjet < i95[2])))
+```
+
+```{r z_grafik, fig.height=3.7}
+# --- 5-qadam: uchta byudjetni standart normal oʻqida koʻrsatish --------
+zz <- data.frame(
+  byudjet = c(10, 50, 150),
+  z = (log(c(10,50,150)) - mu)/sig)
+gz <- data.frame(x = seq(-4,4,length.out=500))
+gz$y <- dnorm(gz$x)
+ggplot(gz, aes(x, y)) +
+  geom_area(data = subset(gz, x <= zz$z[3]), fill = oiSky, alpha = 0.35) +
+  geom_line(colour = oiBlue, linewidth = 0.9) +
+  geom_vline(data = zz, aes(xintercept = z), colour = oiVerm, linetype = "dashed") +
+  geom_text(data = zz, aes(x = z, y = 0.42,
+            label = sprintf("%d mln $\nz = %.3f", byudjet, z)),
+            size = 3, colour = oiVerm, vjust = 1, hjust = -0.06) +
+  labs(title = "Standartlashtirish: uch byudjet bitta oqda",
+       subtitle = "Soyalangan yuza = model boyicha 150 mln $ dan past ulush (0.943)",
+       x = "z = (ln B - mu) / sigma", y = "zichlik",
+       caption = "Manba: kinolar-byudjet.csv")
+```
+
+### Natija (kutilayotgan)
+
+```
+         z         Phi(z)     1 - Phi(z)
+    -2.580       0.004940       0.995060
+    -1.960       0.024998       0.975002
+    -1.645       0.049985       0.950015
+    -1.000       0.158655       0.841345
+     0.000       0.500000       0.500000
+     0.500       0.691462       0.308538
+     1.000       0.841345       0.158655
+     1.645       0.950015       0.049985
+     1.960       0.975002       0.024998
+     2.580       0.995060       0.004940
+
+         k   P(mu+-k sigma)   taxminiy qoida
+         1         0.682689             0.68
+         2         0.954500             0.95
+         3         0.997300            0.997
+
+   ishonch                z
+      0.90         1.644854
+      0.95         1.959964
+      0.99         2.575829
+
+OLDINGA VA ORQAGA: qnorm(pnorm(z)) = z ?
+         p   z = qnorm(p)       pnorm(z)   |farq|<1e-12
+      0.01      -2.326348       0.010000           TRUE
+      0.05      -1.644854       0.050000           TRUE
+      0.25      -0.674490       0.250000           TRUE
+      0.50       0.000000       0.500000           TRUE
+      0.75       0.674490       0.750000           TRUE
+      0.95       1.644854       0.950000           TRUE
+      0.99       2.326348       0.990000           TRUE
+
+HAQIQIY BYUDJETLAR (model: lnB ~ N(2.938942, 1.314131^2))
+     byudjet  ln(byudjet)            z     model %-il   haqiqiy %-il  farq (p.p.)
+       5.000       1.6094      -1.0117           15.6           16.7         -1.1
+      10.000       2.3026      -0.4842           31.4           28.7          2.8
+      20.000       2.9957       0.0432           51.7           48.9          2.8
+      22.000       3.0910       0.1157           54.6           50.7          3.9
+      35.805       3.5781       0.4864           68.7           66.1          2.6
+      50.000       3.9120       0.7405           77.0           76.5          0.6
+      75.000       4.3175       1.0490           85.3           86.5         -1.2
+     100.000       4.6052       1.2679           89.8           92.6         -2.9
+     125.000       4.8283       1.4377           92.5           95.3         -2.9
+     150.000       5.0106       1.5765           94.3           98.5         -4.2
+
+TESKARI YONALISH: model boyicha protsentillar
+protsentil            z      ln(byudjet)    model byudjet        haqiqiy
+      0.50     0.000000         2.938942           18.896         22.000
+      0.75     0.674490         3.825309           45.847         50.000
+      0.90     1.281552         4.623068          101.806         90.000
+      0.95     1.644854         5.100494          164.103        125.000
+      0.99     2.326348         5.996067          401.845        160.000
+
+Markaziy 95%: model [1.438 ; 248.288] mln $
+bu oraliqqa tushgan haqiqiy filmlar ulushi = 0.948520
+```
+
+### Talqin — daftaringizga yozing
+
+**T2.1** $50$ mln \$ da model va maʼlumot $0{,}6$ protsentil punkti
+farq qiladi; $150$ mln \$ da farq $4{,}2$ punkt. Ikkalasi ham **bitta**
+model. Bir jumlada ayting: model qayerda ishonchli, qayerda emas?
+
+**T2.2** Teskari yoʻnalishdagi jadvalga qarang. $50$-protsentilda model
+$18{,}90$ mln \$ beradi (haqiqiy $22$), $99$-protsentilda esa
+$401{,}85$ (haqiqiy $160$). Nisbiy xatoni ikkala qator uchun hisoblang.
+Qaysi biri kattaroq — va **nima uchun aynan shu qator qaror uchun
+muhim**?
+
+**T2.3** «Markaziy $95\,\%$» oraligʻining pastki chegarasi $1{,}44$ mln \$.
+Toʻplamdagi eng arzon film $0{,}25$ mln \$. Model shu oraliqda nechta
+filmni «kutadi» va haqiqatda nechtasi bor? Ikkala tomonni ham
+tekshiring.
+
+**T2.4** $z$ oʻlchovsiz son. Bu **nima uchun foydali**? Hosildorlik
+(t/ga) va byudjet (mln \$) ni bir xil shkalada taqqoslash misolini
+keltiring.
+
+**T2.5** $\Phi(-1{,}96)=0{,}024998$, $0{,}025$ emas. $1{,}96$ oʻrniga
+aniq $1{,}959964$ ni ishlatish qachon **ahamiyatsiz**, qachon
+**ahamiyatli**? Bittadan misol keltiring.
+
+### Qaror
+
+Bank filmlarni moliyalashtiradi va **bitta loyihaga limit** belgilashi
+kerak: arizalarning $95\,\%$ i limitdan past boʻlsin. Model
+$164{,}10$ mln \$ deydi, maʼlumot $125{,}00$ mln \$ deydi. Qaysi birini
+tanlaysiz? Javobingizda ikkala xatoning **narxini** ayting: limit juda
+past boʻlsa nima yoʻqoladi, juda yuqori boʻlsa nima yoʻqoladi.
+
+---
+
+# 3-topshiriq. Q--Q grafik: bitta son yetarli emas
+
+**Qiyinlik: 4 (Analitik) · Blum: Tahlil · 25 ball · 25 daqiqa**
+
+### Statistik tushuncha
+
+**Q--Q grafik** *(quantile--quantile plot)* — kuzatilgan tartib
+statistikalarini nazariy normal kvantillarga qarshi chizadi. Agar
+maʼlumot normal boʻlsa, nuqtalar **toʻgʻri chiziqda** yotadi.
+
+Nazariy kvantillar **chizish nuqtalari** orqali olinadi. Biz Filliben
+yaqinlashishini ishlatamiz (maʼruzada va Python kutubxonalarida
+ishlatiladigan konventsiya):
+$$m_i=\frac{i-0{,}3175}{n+0{,}365}\ (1<i<n),\qquad
+m_n=0{,}5^{1/n},\qquad m_1=1-m_n,$$
+soʻng nazariy kvantil $q_i=\Phi^{-1}(m_i)$.
+
+Bugun **uchta** oʻlchovni yonma-yon qoʻyamiz:
+
+| Oʻlchov | Nimani oʻlchaydi | Zaifligi |
+|---|---|---|
+| Qiyshiqlik | assimetriya | ikki choʻqqini **koʻrmaydi** |
+| Q--Q korrelyatsiyasi $r$ | toʻgʻri chiziqqa yaqinlik | markazdagi nuqtalar hukmron |
+| Shapiro--Wilk $p$ | rasmiy test | $n$ katta boʻlsa **har doim** rad etadi |
+
+### Maʼlumot
+
+`markaziy-osiyo-hosildorlik.csv` — toʻrtta seriya ($n=27$);
+`kinolar-byudjet.csv` — ikkita seriya ($n=2\,467$).
+
+```{r qq_asboblar}
+# --- 1-qadam: uchta oʻlchov asbobini QOʻLDA yozamiz --------------------
+# Qiyshiqlik: tuzatilgan Fisher–Pearson koeffitsiyenti G1 (1-haftadagi
+# taʼrif; scipy.stats.skew(bias=False) bilan bir xil).
+qiyshiqlik <- function(v) {
+  n <- length(v); m <- mean(v)
+  g1 <- (sum((v-m)^3)/n) / ((sum((v-m)^2)/n)^1.5)
+  sqrt(n*(n-1))/(n-2) * g1
+}
+# Filliben chizish nuqtalari
+filliben <- function(n) {
+  m <- numeric(n); m[n] <- 0.5^(1/n); m[1] <- 1 - m[n]
+  if (n > 2) { i <- 2:(n-1); m[i] <- (i-0.3175)/(n+0.365) }
+  m
+}
+# Q–Q korrelyatsiyasi: saralangan maʼlumot va nazariy kvantil orasida
+qq_r <- function(v) { s <- sort(v); cor(s, qnorm(filliben(length(s)))) }
+```
+
+```{r qq_jadval}
+# --- 2-qadam: oltita seriya, uchta hukm --------------------------------
+seriya <- function(nom, v) {
+  sw <- shapiro.test(v)
+  cat(sprintf("%-22s %6d %9.4f %9.4f %10.4f %9.4f %9.4f %11s\n",
+      nom, length(v), mean(v), sd(v), qiyshiqlik(v), qq_r(v),
+      as.numeric(sw$statistic),
+      ifelse(sw$p.value < 0.001, sprintf("%.3e", sw$p.value),
+                                  sprintf("%.4f", sw$p.value))))
+}
+# Mamlakat nomlarini POZITSIYA boʻyicha olamiz (lokal tuzogʻi yoʻq).
+bug <- function(i) hosil$bugdoy[hosil$mamlakat == mamlakatlar[i]]
+kar <- function(i) hosil$kartoshka[hosil$mamlakat == mamlakatlar[i]]
+
+cat(sprintf("%-22s %6s %9s %9s %10s %9s %9s %11s\n",
+            "seriya","n","xbar","s","qiyshiqlik","Q-Q r","SW W","SW p"))
+seriya("UZ bugdoy", bug(1)); seriya("KG bugdoy", bug(2)); seriya("KZ bugdoy", bug(3))
+seriya("UZ kartoshka", kar(1)); seriya("byudjet (mln $)", byudjet); seriya("ln(byudjet)", ln_b)
+
+cat(sprintf("\nUZ va KG bugdoy qiyshiqligi farqi = %.4f (deyarli teng)\n",
+            abs(qiyshiqlik(bug(1))-qiyshiqlik(bug(2)))))
+cat(sprintf("ammo Q-Q r farqi = %.4f, SW p: %.4f va %.4f\n",
+            qq_r(bug(2))-qq_r(bug(1)), shapiro.test(bug(1))$p.value,
+            shapiro.test(bug(2))$p.value))
+
+cat(sprintf("\n68%% qoidasi tekshiruvi (xbar +- s ichidagi ulush; normal: 0.682689)\n"))
+for (nm in 1:2) {
+  v <- bug(nm); ic <- mean(abs(v-mean(v)) < sd(v))
+  nom <- mamlakatlar[nm]; nom <- paste0(nom, strrep(" ", 16-nchar(nom)))
+  cat(sprintf("  %s %d/%d = %.4f\n", nom, sum(abs(v-mean(v))<sd(v)), length(v), ic))
+}
+```
+
+```{r minstd}
+# --- 3-qadam: MINSTD generatori (2–4-haftadan oʻzgarishsiz) ------------
+# x_{k+1} = (48271 x_k) mod 2147483647 ;  u_k = x_k / 2147483647
+# R ning set.seed() va Pythonning default_rng() TURLI sonlar beradi,
+# shu sababli ikkala daftar ham generatorni OʻZI yozadi.
+minstd_yangi <- function(urugh) {
+  m <- 2147483647; aa <- 48271
+  x <- urugh %% m; if (x == 0) x <- 1
+  function(k) {
+    u <- numeric(k)
+    for (i in seq_len(k)) { x <<- (aa*x) %% m; u[i] <- x/m }
+    u
+  }
+}
+cat(sprintf("\nMINSTD nazorat qiymatlari (urug 2026):\n"))
+cat(sprintf("u[%d] = %.10f\n", 1:5, minstd_yangi(2026)(5)), sep = "")
+
+# Qaytarishsiz tanlash (4-haftadagi rad etish usuli bilan bir xil)
+tanla_k <- function(u, ptr, N, k) {
+  olingan <- integer(0)
+  while (length(olingan) < k) {
+    j <- as.integer(u[ptr]*N); ptr <- ptr + 1L
+    if (!(j %in% olingan)) olingan <- c(olingan, j)
+  }
+  list(idx = olingan + 1L, ptr = ptr)
+}
+```
+
+```{r sw_n}
+# --- 4-qadam: SHAPIRO–WILK NIMAGA BOGʻLIQ? -----------------------------
+# AYNI BIR maʼlumotdan turli hajmdagi tanlanmalar olamiz. Maʼlumotning
+# shakli oʻzgarmaydi — faqat n oʻzgaradi. p ga nima boʻlishini kuzating.
+cat(sprintf("\nSHAPIRO-WILK VA TANLANMA HAJMI (ayni bir ln(byudjet) maʼlumoti)\n"))
+cat(sprintf("%8s %10s %12s %12s\n","k","Q-Q r","SW W","SW p"))
+g <- minstd_yangi(2026); uu <- g(200000); ptr <- 1L
+for (k in c(20,50,200,1000)) {
+  res <- tanla_k(uu, ptr, length(ln_b), k); ptr <- res$ptr
+  v <- ln_b[res$idx]; sw <- shapiro.test(v)
+  cat(sprintf("%8d %10.4f %12.4f %12s\n", k, qq_r(v), as.numeric(sw$statistic),
+      ifelse(sw$p.value < 0.001, sprintf("%.3e", sw$p.value),
+                                  sprintf("%.4f", sw$p.value))))
+}
+sw_full <- shapiro.test(ln_b)
+cat(sprintf("%8d %10.4f %12.4f %12.3e\n", length(ln_b), qq_r(ln_b),
+            as.numeric(sw_full$statistic), sw_full$p.value))
+```
+
+```{r qq_grafik, fig.height=5.4}
+# --- 5-qadam: Q–Q grafiklarni QOʻLDA quramiz ---------------------------
+qq_df <- function(v, nom) {
+  s <- sort(v)
+  data.frame(nazariy = qnorm(filliben(length(s))),
+             kuzatilgan = (s - mean(s))/sd(s),   # standartlashtirilgan
+             seriya = nom)
+}
+qdf <- rbind(
+  qq_df(bug(1),  sprintf("UZ bugdoy: r = %.4f", qq_r(bug(1)))),
+  qq_df(bug(2),  sprintf("KG bugdoy: r = %.4f", qq_r(bug(2)))),
+  qq_df(byudjet, sprintf("byudjet: r = %.4f",  qq_r(byudjet))),
+  qq_df(ln_b,    sprintf("ln(byudjet): r = %.4f", qq_r(ln_b))))
+ggplot(qdf, aes(nazariy, kuzatilgan)) +
+  geom_abline(slope = 1, intercept = 0, colour = oiVerm, linetype = "dashed") +
+  geom_point(colour = oiBlue, size = 1.1, alpha = 0.55) +
+  facet_wrap(~ seriya, scales = "free_y", ncol = 2) +
+  labs(title = "Q-Q grafiklar: nuqtalar chiziqda yotadimi?",
+       subtitle = "Uzuq chiziq = mukammal normallik; ogish = modeldan chetlanish",
+       x = "nazariy normal kvantil", y = "standartlashtirilgan kuzatuv",
+       caption = "Manba: markaziy-osiyo-hosildorlik.csv (FAOSTAT/OWID), kinolar-byudjet.csv")
+```
+
+### Natija (kutilayotgan)
+
+```
+seriya                      n      xbar         s qiyshiqlik     Q-Q r      SW W        SW p
+UZ bugdoy                  27    3.6048    1.1795    -0.6489    0.9405    0.8663      0.0025
+KG bugdoy                  27    2.2347    0.2774    -0.6546    0.9660    0.9286      0.0640
+KZ bugdoy                  27    1.0267    0.2599     0.0525    0.9869    0.9773      0.7979
+UZ kartoshka               27   20.2377    8.4159     0.3998    0.9739    0.9313      0.0743
+byudjet (mln $)          2467   35.8050   37.4124     1.6178    0.9007    0.8109   4.457e-47
+ln(byudjet)              2467    2.9389    1.3141    -0.7375    0.9799    0.9597   1.228e-25
+
+UZ va KG bugdoy qiyshiqligi farqi = 0.0056 (deyarli teng)
+ammo Q-Q r farqi = 0.0255, SW p: 0.0025 va 0.0640
+
+68% qoidasi tekshiruvi (xbar +- s ichidagi ulush; normal: 0.682689)
+  Oʻzbekiston      18/27 = 0.6667
+  Qirgʻiziston     20/27 = 0.7407
+
+MINSTD nazorat qiymatlari (urug 2026):
+u[1] = 0.0455402984
+u[2] = 0.2757419647
+u[3] = 0.3403783731
+u[4] = 0.4044473546
+u[5] = 0.0782521903
+
+SHAPIRO-WILK VA TANLANMA HAJMI (ayni bir ln(byudjet) maʼlumoti)
+       k      Q-Q r         SW W         SW p
+      20     0.9652       0.9300       0.1542
+      50     0.9757       0.9467       0.0249
+     200     0.9807       0.9600    2.002e-05
+    1000     0.9786       0.9569    1.419e-16
+    2467     0.9799       0.9597    1.228e-25
+```
+
+### Talqin — daftaringizga yozing
+
+**T3.1 (haftaning markaziy topilmasi).** Oʻzbekiston va Qirgʻiziston
+bugʻdoyining qiyshiqligi $-0{,}6489$ va $-0{,}6546$ — farq $0{,}0056$,
+yaʼni **deyarli aynan bir xil**. Ammo Shapiro--Wilk biri uchun
+$p=0{,}0025$ (rad etadi), ikkinchisi uchun $p=0{,}0640$ (rad etmaydi)
+beradi. Q--Q grafiklarga qarang va farqni **soʻz bilan** tushuntiring:
+qiyshiqlik **nimani koʻrmaydi**?
+
+**T3.2** $\ln(\text{byudjet})$ uchun $r=0{,}9799$ («aʼlo»), ammo
+$p=1{,}2\times10^{-25}$ («qatʼiy rad etiladi»). Ikkalasi ham toʻgʻri
+hisoblangan. 4-qadam jadvaliga qarang: $k=20$ da $p=0{,}1542$,
+$k=2\,467$ da $p=1{,}2\times10^{-25}$ — **ayni bir maʼlumotdan**.
+Nima oʻzgardi va nima oʻzgarmadi? Xulosangizni bir jumlada yozing.
+
+**T3.3** Qozogʻiston bugʻdoyi uchun uchala oʻlchov ham «normal» deydi
+($|{\text{qiyshiqlik}}|=0{,}05$, $r=0{,}9869$, $p=0{,}80$). Bu
+Qozogʻiston hosildorligi **haqiqatan normal taqsimlangan** degani
+emas. Nima uchun? ($n=27$ ekanini eslang.)
+
+**T3.4** Oʻzbekistonda $\bar x\pm s$ oraligʻiga $18/27=0{,}6667$
+kuzatuv tushdi — normal qiymat $0{,}6827$ ga juda yaqin. Ammo bu
+seriya normal **emas**. Demak $68\,\%$ tekshiruvi qanday xatoga yoʻl
+qoʻyadi?
+
+**T3.5** Uchala vositani qanday **tartibda** ishlatish kerak? Oʻz
+tavsiyangizni uchta qadam sifatida yozing va har biriga sabab
+keltiring.
+
+### Qaror
+
+Sugʻurta kompaniyasi hosildorlik boʻyicha mahsulot ishlab chiqmoqda va
+sizdan «Oʻzbekiston bugʻdoy hosildorligi normal taqsimlanganmi?» degan
+savolga **bitta jumlali** javob soʻraydi. Javobingizni yozing —
+va unga **ikkinchi jumla** qoʻshing: modelni baribir ishlatish kerak
+boʻlsa, qaysi qismida ishonch bilan, qaysi qismida ehtiyot bilan
+foydalaniladi.
+
+---
+
+# 4-topshiriq. Logarifmik almashtirish: nima yaxshilanadi, nima buziladi
+
+**Qiyinlik: 4 (Analitik) · Blum: Baholash · 20 ball · 20 daqiqa**
+
+### Statistik tushuncha
+
+Oʻngga qiyshiq, musbat maʼlumot uchun $\ln$ almashtirish odatiy
+vosita: koʻpaytiruvchi tuzilishni qoʻshiluvchiga aylantiradi va
+katta qiymatlarni «siqadi».
+
+**Ammo uchta chegara bor:**
+
+1. $\ln$ faqat $x>0$ uchun aniqlangan;
+2. u **haddan ortiq tuzatishi** mumkin — qiyshiqlik ishorasi
+   almashadi;
+3. teskari almashtirish $\exp(\bar{y})$ **oʻrtachani emas, medianani**
+   baholaydi (Jensen tengsizligi).
+
+Va eng muhimi: almashtirish **normallikni kafolatlamaydi**. U faqat
+bitta nuqsonni (oʻngga qiyshiqlikni) tuzatadi.
+
+### Maʼlumot
+
+`kinolar-byudjet.csv` (byudjet va $\ln$ byudjet) hamda taqqoslash
+uchun `markaziy-osiyo-hosildorlik.csv` dan Oʻzbekiston bugʻdoyi.
+
+```{r log_jadval}
+# --- 1-qadam: almashtirishdan oldin va keyin ---------------------------
+cat(sprintf("%-26s %12s %12s\n","korsatkich","byudjet","ln(byudjet)"))
+cat(sprintf("%-26s %12.4f %12.4f\n","xbar", mean(byudjet), mean(ln_b)))
+cat(sprintf("%-26s %12.4f %12.4f\n","median", median(byudjet), median(ln_b)))
+cat(sprintf("%-26s %12.4f %12.4f\n","s", sd(byudjet), sd(ln_b)))
+cat(sprintf("%-26s %12.4f %12.4f\n","qiyshiqlik", qiyshiqlik(byudjet), qiyshiqlik(ln_b)))
+cat(sprintf("%-26s %12.4f %12.4f\n","Q-Q r", qq_r(byudjet), qq_r(ln_b)))
+cat(sprintf("%-26s %12.4f %12.4f\n","(xbar-median)/s",
+            (mean(byudjet)-median(byudjet))/sd(byudjet),
+            (mean(ln_b)-median(ln_b))/sd(ln_b)))
+cat(sprintf("\nQiyshiqlik ONGDAN CHAPGA otdi: %+.4f -> %+.4f  (moduli %.4f -> %.4f)\n",
+            qiyshiqlik(byudjet), qiyshiqlik(ln_b),
+            abs(qiyshiqlik(byudjet)), abs(qiyshiqlik(ln_b))))
+```
+
+```{r empirik_qoida}
+# --- 2-qadam: empirik qoida log shkalada ------------------------------
+cat(sprintf("\nEMPIRIK QOIDA ln shkalada (normal qiymat qavsda)\n"))
+for (k in 1:3) cat(sprintf("  %d s ichida: %.4f   (%.4f)\n", k,
+                  mean(abs(ln_b-mu) < k*sig), pnorm(k)-pnorm(-k)))
+```
+
+```{r teskari_almash}
+# --- 3-qadam: TESKARI ALMASHTIRISH TUZOGʻI ----------------------------
+cat(sprintf("\nTESKARI ALMASHTIRISH\n"))
+cat(sprintf("  exp(mean(ln B))   = %.4f mln $   <- MEDIANANI baholaydi, ortachani emas\n", exp(mu)))
+cat(sprintf("  haqiqiy median    = %.4f mln $\n", median(byudjet)))
+cat(sprintf("  haqiqiy ortacha   = %.4f mln $\n", mean(byudjet)))
+cat(sprintf("  exp(mu + s^2/2)   = %.4f mln $   <- lognormal ortacha formulasi\n", exp(mu+sig^2/2)))
+```
+
+```{r log_yomon}
+# --- 4-qadam: LOGARIFM HAR DOIM YORDAM BERADIMI? ----------------------
+# Chapga qiyshiq maʼlumotga qoʻllab koʻramiz.
+cat(sprintf("\nLOGARIFM HAR DOIM YORDAM BERADIMI? (UZ bugdoy hosildorligi)\n"))
+uzb <- bug(1); l_uzb <- log(uzb)
+cat(sprintf("%-14s %12s %12s\n","","xom","log"))
+cat(sprintf("%-14s %12.4f %12.4f\n","qiyshiqlik", qiyshiqlik(uzb), qiyshiqlik(l_uzb)))
+cat(sprintf("%-14s %12.4f %12.4f\n","Q-Q r", qq_r(uzb), qq_r(l_uzb)))
+cat(sprintf("%-14s %12.4f %12.4f\n","SW W", shapiro.test(uzb)$statistic,
+            shapiro.test(l_uzb)$statistic))
+cat(sprintf("%-14s %12.4f %12.4f\n","SW p", shapiro.test(uzb)$p.value,
+            shapiro.test(l_uzb)$p.value))
+cat(sprintf("XULOSA: chapga qiyshiq maʼlumotda logarifm holatni YOMONLASHTIRDI.\n"))
+```
+
+```{r kvantil_taqqos}
+# --- 5-qadam: MARKAZ VA QUYRUQ — nisbiy xato ---------------------------
+cat(sprintf("\nMARKAZ VA QUYRUQ: model kvantili haqiqiy kvantilga nisbatan\n"))
+cat(sprintf("%10s %14s %14s %12s\n","protsentil","model (mln $)","haqiqiy","nisbiy xato"))
+for (pp in c(0.25,0.50,0.75,0.90,0.95,0.99)) {
+  md <- exp(mu + qnorm(pp)*sig)
+  hq <- as.numeric(quantile(byudjet, pp, type = 7))
+  cat(sprintf("%10.2f %14.3f %14.3f %11.1f%%\n", pp, md, hq, 100*(md-hq)/hq))
+}
+cat(sprintf("Nisbiy xato markazda ~10%%, 99-protsentilda %.0f%% ga chiqadi.\n",
+    100*(exp(mu+qnorm(0.99)*sig)-quantile(byudjet,0.99,type=7))/quantile(byudjet,0.99,type=7)))
+```
+
+```{r log_grafik, fig.height=3.9}
+# --- 6-qadam: ikki shkalada gistogramma --------------------------------
+gg <- rbind(
+  data.frame(qiymat = byudjet, shkala = "xom byudjet (mln $)"),
+  data.frame(qiymat = ln_b,    shkala = "ln(byudjet)"))
+ggplot(gg, aes(qiymat)) +
+  geom_histogram(bins = 40, fill = oiBlue, colour = "white", linewidth = 0.15) +
+  facet_wrap(~ shkala, scales = "free") +
+  labs(title = "Logarifm nimani ozgartiradi",
+       subtitle = "Qiyshiqlik +1.618 -> -0.738: tuzatish HADDAN ORTIQ ketdi",
+       x = NULL, y = "chastota",
+       caption = "Manba: kinolar-byudjet.csv, n = 2467")
+```
+
+### Natija (kutilayotgan)
+
+```
+korsatkich                      byudjet  ln(byudjet)
+xbar                            35.8050       2.9389
+median                          22.0000       3.0910
+s                               37.4124       1.3141
+qiyshiqlik                       1.6178      -0.7375
+Q-Q r                            0.9007       0.9799
+(xbar-median)/s                  0.3690      -0.1157
+
+Qiyshiqlik ONGDAN CHAPGA otdi: +1.6178 -> -0.7375  (moduli 1.6178 -> 0.7375)
+
+EMPIRIK QOIDA ln shkalada (normal qiymat qavsda)
+  1 s ichida: 0.6818   (0.6827)
+  2 s ichida: 0.9493   (0.9545)
+  3 s ichida: 0.9947   (0.9973)
+
+TESKARI ALMASHTIRISH
+  exp(mean(ln B))   = 18.8958 mln $   <- MEDIANANI baholaydi, ortachani emas
+  haqiqiy median    = 22.0000 mln $
+  haqiqiy ortacha   = 35.8050 mln $
+  exp(mu + s^2/2)   = 44.8091 mln $   <- lognormal ortacha formulasi
+
+LOGARIFM HAR DOIM YORDAM BERADIMI? (UZ bugdoy hosildorligi)
+                        xom          log
+qiyshiqlik          -0.6489      -1.0121
+Q-Q r                0.9405       0.9180
+SW W                 0.8663       0.8309
+SW p                 0.0025       0.0005
+XULOSA: chapga qiyshiq maʼlumotda logarifm holatni YOMONLASHTIRDI.
+
+MARKAZ VA QUYRUQ: model kvantili haqiqiy kvantilga nisbatan
+protsentil  model (mln $)        haqiqiy  nisbiy xato
+      0.25          7.788         10.000       -22.1%
+      0.50         18.896         22.000       -14.1%
+      0.75         45.847         50.000        -8.3%
+      0.90        101.806         90.000        13.1%
+      0.95        164.103        125.000        31.3%
+      0.99        401.845        160.000       151.2%
+Nisbiy xato markazda ~10%, 99-protsentilda 151% ga chiqadi.
+```
+
+### Talqin — daftaringizga yozing
+
+**T4.1** Q--Q korrelyatsiyasi $0{,}9007$ dan $0{,}9799$ ga koʻtarildi —
+almashtirish **foyda berdi**. Ayni paytda qiyshiqlik $+1{,}6178$ dan
+$-0{,}7375$ ga oʻtdi — almashtirish **haddan ortiq tuzatdi**. Ikkala
+bayonot ham toʻgʻri. Bir jumlada ayting: $\ln$ almashtirish aslida
+**nimani** kafolatlaydi va **nimani** kafolatlamaydi?
+
+**T4.2** $\exp(\bar{y})=18{,}90$, haqiqiy median $22{,}00$, haqiqiy
+oʻrtacha $35{,}81$. Nima uchun $\exp(\bar{y})$ oʻrtachadan **shunchalik**
+uzoq? Va nima uchun u medianaga ham aynan teng emas?
+
+**T4.3** Bugʻdoy hosildorligiga $\ln$ qoʻllash uchala oʻlchovni ham
+yomonlashtirdi. Umumiy qoidani bir jumlada yozing: $\ln$ almashtirish
+qanday maʼlumotga **mos**, qanday maʼlumotga **mos emas**?
+
+**T4.4** Nisbiy xato $25$-protsentilda $-22{,}1\,\%$, $99$-protsentilda
+$+151{,}2\,\%$. Ishora ham, kattalik ham oʻzgaradi. Bunday xatoni
+**bitta son bilan** («model yaxshi/yomon») ifodalash mumkinmi? Javobni
+asoslang.
+
+**T4.5** Model $99$-protsentilni $401{,}85$ mln \$ deb baholaydi, ammo
+toʻplamdagi **eng qimmat** film $175$ mln \$. Ikki mumkin boʻlgan
+sababni yozing: biri modelning kamchiligi, ikkinchisi maʼlumotning
+kamchiligi. Qaysi biri qaysi ekanini ayting.
+
+### Qaror
+
+Siz maslahatchisiz. Mijoz: «Byudjet maʼlumotini logarifmladim, endi u
+normal — normal modelga asoslangan har qanday hisobni bemalol
+ishlataveraman». **Uch jumlada** javob bering: (1) nima toʻgʻri,
+(2) nima notoʻgʻri, (3) mijoz aynan qaysi hisobdan voz kechishi kerak.
+
+---
+
+# 5-topshiriq. Binomialning normal yaqinlashishi va uzluksizlik tuzatmasi
+
+**Qiyinlik: 4 (Analitik) · Blum: Baholash · 25 ball · 25 daqiqa**
+
+### Statistik tushuncha
+
+$X\sim\Bin(n,p)$ da $n$ katta boʻlsa, ehtimolliklarni qoʻlda hisoblash
+ogʻirlashadi. Normal yaqinlashish:
+$$X\approx\Norm\bigl(np,\;np(1-p)\bigr),\qquad
+\text{shart: } np\ge 10 \ \text{va}\ n(1-p)\ge 10 .$$
+
+Ammo **diskret** miqdorni **uzluksiz** taqsimot bilan almashtirish
+tizimli xato tugʻdiradi: $X=3$ diskret nuqtasi uzluksiz shkalada
+$[2{,}5;\,3{,}5]$ oraligʻiga mos keladi. **Uzluksizlik tuzatmasi**
+*(continuity correction)* aynan shu:
+$$\Pr(a\le X\le b)\approx
+\Phi\!\left(\frac{b+0{,}5-np}{\sqrt{np(1-p)}}\right)-
+\Phi\!\left(\frac{a-0{,}5-np}{\sqrt{np(1-p)}}\right).$$
+
+Bugun tuzatmaning **bahosini oʻlchaymiz**.
+
+### Maʼlumot
+
+4-haftadan: $p=0{,}452807$ — filmning R reyting olish ulushi
+($1\,113/2\,458$). $X$ — tasodifiy tanlangan $n$ ta filmdagi R
+reytinglilar soni.
+
+```{r binom_jadval}
+# --- 1-qadam: uchta n uchun uch xil hisob ------------------------------
+p <- 0.452807
+cat(sprintf("%5s %9s %9s %8s %8s %6s %12s %12s %12s %10s %10s\n",
+  "n","mu=np","sigma","np","n(1-p)","shart","aniq binom","normal+UT","normal-UT",
+  "xato+UT","xato-UT"))
+for (n in c(10,30,100)) {
+  m_ <- n*p; s_ <- sqrt(n*p*(1-p))
+  lo_ <- floor(m_-1); hi_ <- ceiling(m_+1)          # mu atrofidagi oraliq
+  ex <- sum(dbinom(lo_:hi_, n, p))                   # ANIQ qiymat
+  ut <- pnorm((hi_+0.5-m_)/s_) - pnorm((lo_-0.5-m_)/s_)   # tuzatma BILAN
+  nu <- pnorm((hi_-m_)/s_)     - pnorm((lo_-m_)/s_)       # tuzatmaSIZ
+  cat(sprintf("%5d %9.4f %9.4f %8.2f %8.2f %6s %12.6f %12.6f %12.6f %10.6f %10.6f\n",
+      n, m_, s_, n*p, n*(1-p), ifelse(n*p>=10 & n*(1-p)>=10,"HA","YOQ"),
+      ex, ut, nu, abs(ut-ex), abs(nu-ex)))
+}
+cat(sprintf("\nOraliqlar: n=10 -> 3<=X<=6 ; n=30 -> 12<=X<=15 ; n=100 -> 44<=X<=47\n"))
+
+cat(sprintf("\nTUZATMA NECHA BAROBAR YAXSHILAYDI\n"))
+for (n in c(10,30,100)) {
+  m_ <- n*p; s_ <- sqrt(n*p*(1-p)); lo_ <- floor(m_-1); hi_ <- ceiling(m_+1)
+  ex <- sum(dbinom(lo_:hi_,n,p))
+  ut <- abs(pnorm((hi_+0.5-m_)/s_)-pnorm((lo_-0.5-m_)/s_)-ex)
+  nu <- abs(pnorm((hi_-m_)/s_)-pnorm((lo_-m_)/s_)-ex)
+  cat(sprintf("  n = %3d : %.1f barobar\n", n, nu/ut))
+}
+```
+
+```{r binom_nuqta}
+# --- 2-qadam: BITTA NUQTA ehtimoli ------------------------------------
+# Tuzatmasiz normal model P(X = k) ni qanday hisoblaydi? Yuza nolga
+# teng — chunki uzluksiz taqsimotda nuqta ehtimoli nol (1-topshiriq!).
+cat(sprintf("\nBITTA NUQTA EHTIMOLI P(X = k), k = round(np)\n"))
+cat(sprintf("%5s %5s %14s %14s %14s\n","n","k","aniq binom","normal+UT","normal-UT"))
+for (n in c(10,30,100)) {
+  m_ <- n*p; s_ <- sqrt(n*p*(1-p)); k_ <- round(m_)
+  cat(sprintf("%5d %5d %14.6f %14.6f %14.6f\n", n, k_, dbinom(k_,n,p),
+      pnorm((k_+0.5-m_)/s_)-pnorm((k_-0.5-m_)/s_), 0))
+}
+cat(sprintf("Tuzatmasiz normal model NUQTA ehtimolini har doim 0 deb beradi.\n"))
+```
+
+```{r binom_maks}
+# --- 3-qadam: n OSHSA tuzatma keraksiz boʻladIMI? ----------------------
+# Barcha k uchun eng katta farqni oʻlchaymiz (Kolmogorov masofasi).
+cat(sprintf("\nMAKSIMAL XATO (barcha k uchun |F_binom(k) - F_normal(k)|)\n"))
+cat(sprintf("%6s %14s %14s %10s\n","n","+UT","-UT","nisbat"))
+for (n in c(10,20,30,50,100,200,500)) {
+  m_ <- n*p; s_ <- sqrt(n*p*(1-p)); kk <- 0:n
+  e1 <- max(abs(pbinom(kk,n,p) - pnorm((kk+0.5-m_)/s_)))
+  e0 <- max(abs(pbinom(kk,n,p) - pnorm((kk-m_)/s_)))
+  cat(sprintf("%6d %14.6f %14.6f %10.1f\n", n, e1, e0, e0/e1))
+}
+```
+
+```{r binom_grafik, fig.height=3.9}
+# --- 4-qadam: koʻrsatish ----------------------------------------------
+n <- 30; m_ <- n*p; s_ <- sqrt(n*p*(1-p))
+bd <- data.frame(k = 0:n, pk = dbinom(0:n, n, p))
+cx <- seq(0, n, length.out = 400)
+cd <- data.frame(x = cx, y = dnorm(cx, m_, s_))
+ggplot() +
+  geom_col(data = bd, aes(k, pk), fill = oiBlue, alpha = 0.75, width = 0.8) +
+  geom_line(data = cd, aes(x, y), colour = oiVerm, linewidth = 0.9) +
+  geom_vline(xintercept = c(11.5, 15.5), colour = oiGreen,
+             linetype = "dashed", linewidth = 0.7) +
+  annotate("text", x = 20.5, y = 0.135, size = 3.2, colour = oiGreen,
+           label = "uzluksizlik tuzatmasi:\n[11.5 ; 15.5], [12 ; 15] emas") +
+  labs(title = "Bin(30, 0.4528) va uning normal yaqinlashishi",
+       subtitle = "Ustunlar = aniq ehtimolliklar; egri chiziq = N(13.584, 2.726^2)",
+       x = "k", y = "ehtimollik / zichlik",
+       caption = "Uzuq yashil chiziqlar tuzatilgan chegaralarni korsatadi")
+```
+
+### Natija (kutilayotgan)
+
+```
+    n     mu=np     sigma       np   n(1-p)  shart   aniq binom    normal+UT    normal-UT    xato+UT    xato-UT
+   10    4.5281    1.5741     4.53     5.47    YOQ     0.798231     0.796051     0.659302   0.002180   0.138930
+   30   13.5842    2.7264    13.58    16.42     HA     0.536146     0.536577     0.417623   0.000431   0.118523
+  100   45.2807    4.9777    45.28    54.72     HA     0.311549     0.311877     0.236626   0.000328   0.074923
+
+Oraliqlar: n=10 -> 3<=X<=6 ; n=30 -> 12<=X<=15 ; n=100 -> 44<=X<=47
+
+TUZATMA NECHA BAROBAR YAXSHILAYDI
+  n =  10 : 63.7 barobar
+  n =  30 : 275.0 barobar
+  n = 100 : 228.4 barobar
+
+BITTA NUQTA EHTIMOLI P(X = k), k = round(np)
+    n     k     aniq binom      normal+UT      normal-UT
+   10     5       0.235325       0.238648       0.000000
+   30    14       0.143108       0.143847       0.000000
+  100    45       0.079860       0.079885       0.000000
+Tuzatmasiz normal model NUQTA ehtimolini har doim 0 deb beradi.
+
+MAKSIMAL XATO (barcha k uchun |F_binom(k) - F_normal(k)|)
+     n            +UT            -UT     nisbat
+    10       0.004874       0.128476       26.4
+    20       0.003038       0.091457       30.1
+    30       0.002369       0.074885       31.6
+    50       0.001822       0.058100       31.9
+   100       0.001272       0.041303       32.5
+   200       0.000895       0.029197       32.6
+   500       0.000564       0.018482       32.8
+```
+
+### Talqin — daftaringizga yozing
+
+**T5.1** $n=10$ da shart **bajarilmaydi** ($np=4{,}53<10$), ammo
+tuzatma bilan xato atigi $0{,}0022$. Demak shart nimani kafolatlaydi
+va nimani kafolatlamaydi? Ehtiyotkorlik bilan javob bering.
+
+**T5.2** Tuzatmasiz xato $n=100$ da ham $0{,}0749$ — bu $7{,}5$
+protsentil punkti. Maksimal xato jadvaliga qarang: $n$ $10$ dan $500$
+gacha oshganda tuzatmasiz xato $0{,}1285$ dan $0{,}0185$ ga tushdi,
+ammo nisbat $26$ dan $33$ ga **koʻtarildi**. Xulosa: $n$ ni oshirish
+tuzatmaning oʻrnini bosadimi?
+
+**T5.3** Tuzatmasiz normal model $\Pr(X=k)$ ni **aynan nol** deb
+beradi. Bu 1-topshiriqdagi qaysi natijaning bevosita natijasi?
+Bogʻlanishni bir jumlada yozing.
+
+**T5.4** $n=10$ da tuzatma xatoni $63{,}7$ marta kamaytiradi,
+$n=30$ da $275$ marta, $n=100$ da $228$ marta. Nisbat monoton emas.
+Bu **tasodifmi** yoki tizimlimi? (Maslahat: aniq oraliq chegaralari
+$\mu$ ga nisbatan turlicha joylashgan.)
+
+**T5.5** Menejer: «$n=100$ katta son, shuning uchun normal
+yaqinlashishni tuzatmasdan ishlatsak ham boʻladi». Uning fikrini
+sonlar bilan rad eting va **bitta jumlalik** amaliy qoida taklif
+qiling.
+
+### Qaror
+
+Kinoteatr har hafta $30$ ta film namoyish etadi va R reytingli
+filmlar uchun $16$ ta seans ajratgan. **Seans yetishmay qolish
+ehtimolini** ($\Pr(X\ge 17)$) uch usulda hisoblang: aniq binomial,
+tuzatma bilan normal, tuzatmasiz normal. Uchta javobni bir yilda
+($52$ hafta) necha marta muammo yuz berishiga aylantiring. Menejer
+uchun qaysi farq **amaliy jihatdan** ahamiyatli — yozib bering.
+
+---
+
+# 6-topshiriq (ixtiyoriy, uyda). Koʻrsatkichli taqsimot va xotirasizlik
+
+**Qiyinlik: 5 (Ilgʻor) · Blum: Yaratish · +5 bonus ball**
+
+### Statistik tushuncha
+
+Agar hodisalar soni $\Pois(\lambda)$ boʻlsa, **ketma-ket hodisalar
+orasidagi vaqt** $\Expo(\lambda)$ boʻladi:
+$$f(t)=\lambda e^{-\lambda t},\quad t>0;\qquad
+F(t)=1-e^{-\lambda t};\qquad \E[T]=\SD(T)=\frac1\lambda .$$
+
+**Xotirasizlik** *(memorylessness)*:
+$\Pr(T>s+t\mid T>s)=\Pr(T>t)$ — kutgan vaqt keyingi kutishga
+**taʼsir qilmaydi**. Bu — matematik xossa, tabiat qonuni emas.
+
+```{r expo}
+lam <- 10.9474    # 4-haftadan: yiliga Horror filmlari ~ Pois(lambda)
+cat(sprintf("lambda = %.4f (4-hafta: yiliga Horror filmlari ~ Pois(lambda))\n", lam))
+cat(sprintf("E[T]   = 1/lambda = %.6f yil = %.2f kun\n", 1/lam, 365/lam))
+cat(sprintf("SD(T)  = 1/lambda = %.6f yil  (E = SD)\n", 1/lam))
+cat(sprintf("Median = ln2/lambda = %.6f yil = %.2f kun\n", log(2)/lam, 365*log(2)/lam))
+cat(sprintf("P(T > E[T]) = e^-1 = %.6f\n", exp(-1)))
+
+cat(sprintf("\nXOTIRASIZLIK: P(T > s+t | T > s) = P(T > t)?\n"))
+cat(sprintf("%8s %8s %16s %16s %8s\n","s","t","P(T>s+t|T>s)","P(T>t)","mos"))
+for (s0 in c(0.05,0.10,0.20)) {
+  t0 <- 0.05
+  lhs <- exp(-lam*(s0+t0))/exp(-lam*s0); rhs <- exp(-lam*t0)
+  cat(sprintf("%8.2f %8.2f %16.6f %16.6f %8s\n", s0,t0,lhs,rhs,tf(abs(lhs-rhs)<1e-12)))
+}
+```
+
+### Natija (kutilayotgan)
+
+```
+lambda = 10.9474 (4-hafta: yiliga Horror filmlari ~ Pois(lambda))
+E[T]   = 1/lambda = 0.091346 yil = 33.34 kun
+SD(T)  = 1/lambda = 0.091346 yil  (E = SD)
+Median = ln2/lambda = 0.063316 yil = 23.11 kun
+P(T > E[T]) = e^-1 = 0.367879
+
+XOTIRASIZLIK: P(T > s+t | T > s) = P(T > t)?
+       s        t     P(T>s+t|T>s)           P(T>t)      mos
+    0.05     0.05         0.578469         0.578469     TRUE
+    0.10     0.05         0.578469         0.578469     TRUE
+    0.20     0.05         0.578469         0.578469     TRUE
+```
+
+### Vazifa
+
+1. Median ($23{,}11$ kun) oʻrtachadan ($33{,}34$ kun) **kichik**.
+   Bu taqsimotning qaysi xossasini koʻrsatadi? $\Pr(T>\E[T])=0{,}3679$
+   soni bilan bogʻlang.
+2. Xotirasizlikni **isbotlang**: $\Pr(T>s+t\mid T>s)$ ni shartli
+   ehtimollik taʼrifidan (3-hafta) keltirib chiqaring.
+3. Xotirasizlik qaysi holatlarda **notoʻgʻri** faraz? Kamida uchta
+   misol keltiring (biri texnikadan, biri insonlar xatti-harakatidan,
+   biri iqtisodiyotdan) va har birida xossa **nima uchun** buzilishini
+   ayting.
+4. MINSTD bilan $10\,000$ ta $\Expo(\lambda)$ kutish vaqti
+   generatsiya qiling (teskari almashtirish usuli:
+   $T=-\ln(1-U)/\lambda$). Simulyatsiya oʻrtachasi, medianasi va
+   $\Pr(T>\E[T])$ ni nazariy qiymatlar bilan solishtiring.
+   **Urugʻ, generator nomi va takrorlar sonini yozing.**
+
+---
+
+# Yigʻma nazorat jadvali
+
+Topshirishdan oldin natijalaringizni quyidagi qiymatlar bilan
+solishtiring. **Bitta ham son farq qilmasligi kerak** — ikkala til
+uchun ham.
+
+| Koʻrsatkich | Qiymat | Qayerda |
+|---|---|---|
+| $\Unif(10,25)$: $\Pr(12<X<18)$ | 0.400000 | 1-topshiriq |
+| $\ln B$ modeli: $\mu$ | 2.938942 | 1-topshiriq |
+| $\ln B$ modeli: $\sigma$ | 1.314131 | 1-topshiriq |
+| Panjara $n=1000$, xato | 4.375e-13 | 1-topshiriq |
+| $f(3)$ (zichlik) | 0.3032513709 | 1-topshiriq |
+| $\Pr(2<\ln B<4)$ model | 0.5528282770 | 1-topshiriq |
+| $\Pr(2<\ln B<4)$ maʼlumot | 0.5626266721 | 1-topshiriq |
+| $\Phi(1{,}96)$ | 0.975002 | 2-topshiriq |
+| $\Pr(\mu\pm 1\sigma)$ | 0.682689 | 2-topshiriq |
+| 95 % uchun aniq $z$ | 1.959964 | 2-topshiriq |
+| 150 mln \$: model %-il | 94.3 | 2-topshiriq |
+| 150 mln \$: haqiqiy %-il | 98.5 | 2-topshiriq |
+| Model 99-protsentil | 401.845 | 2-topshiriq |
+| Haqiqiy 99-protsentil | 160.000 | 2-topshiriq |
+| UZ bugʻdoy: qiyshiqlik | −0.6489 | 3-topshiriq |
+| KG bugʻdoy: qiyshiqlik | −0.6546 | 3-topshiriq |
+| UZ bugʻdoy: Q--Q $r$ | 0.9405 | 3-topshiriq |
+| KG bugʻdoy: Q--Q $r$ | 0.9660 | 3-topshiriq |
+| UZ / KG Shapiro $p$ | 0.0025 / 0.0640 | 3-topshiriq |
+| MINSTD $u_1$ | 0.0455402984 | 3-topshiriq |
+| $\ln B$, $k=20$: SW $p$ | 0.1542 | 3-topshiriq |
+| $\ln B$, $k=2467$: SW $p$ | 1.228e-25 | 3-topshiriq |
+| Byudjet qiyshiqligi | +1.6178 | 4-topshiriq |
+| $\ln$ byudjet qiyshiqligi | −0.7375 | 4-topshiriq |
+| $\exp(\bar{y})$ | 18.8958 | 4-topshiriq |
+| $n=10$: aniq binomial | 0.798231 | 5-topshiriq |
+| $n=10$: normal $+$ tuzatma | 0.796051 | 5-topshiriq |
+| $n=10$: normal $-$ tuzatma | 0.659302 | 5-topshiriq |
+| $n=100$: tuzatmasiz xato | 0.074923 | 5-topshiriq |
+| $\Expo$: $\E[T]$ (kun) | 33.34 | 6-topshiriq |
+| Xotirasizlik qiymati | 0.578469 | 6-topshiriq |
+
+**Agar sonlaringiz mos kelmasa.**
+(1) Byudjetni **mln \$** ga aylantirdingizmi ($/10^6$)?
+(2) Standart ogʻishda maxraj $n-1$ mi (`sd()`)?
+(3) Qiyshiqlikda **tuzatilgan** $G_1$ formulasini ishlatdingizmi?
+(4) Q--Q da **Filliben** chizish nuqtalarini ishlatdingizmi?
+    (R ning `ppoints()` boshqa konventsiyani beradi va $r$ ozgina
+    farq qiladi — bu xato emas, ammo jadval bilan mos kelmaydi.)
+(5) Uzluksizlik tuzatmasida $\pm 0{,}5$ **ikkala** chegaraga
+    qoʻyilganmi?
+
+---
+
+# Topshirish tartibi va akademik halollik
+
+* **Fayl:** `W05-lab-<familiya>.Rmd` + undan olingan `.html`,
+  *yoki* bajarilgan `W05-lab-<familiya>.ipynb`.
+* **Kod xatosiz ishlashi shart:** *Restart and Run All* dan soʻng
+  hech bir katak xato bermasligi kerak.
+* **Talqin va qaror** har bir topshiriq uchun matn koʻrinishida
+  yozilgan boʻlishi shart.
+* **Muddat:** laboratoriyadan keyingi 48 soat ichida, Moodle.
+* **Grafiklar:** faqat Okabe--Ito ranglari; maʼnoni faqat rang bilan
+  bermang; oʻq nomlari va manba koʻrsatilishi shart.
+* **Simulyatsiya:** har bir natija yonida urugʻ (2026), generator nomi
+  (MINSTD) va tanlanma hajmi.
+* **Maʼlumot halolligi:** ikkala toʻplam ham **haqiqiy**; manbani
+  koʻrsating. Mashq uchun son oʻylab topsangiz, uni
+  *simulyatsiya qilingan maʼlumot* deb belgilang.
+
+**Sunʼiy intellektdan foydalanish.** Mumkin: kod xatosini topish,
+funksiya hujjatini tushuntirish, matnni tahrirlash. Mumkin emas:
+talqin va qaror bosqichlarini SIʼ ga yozdirish — aynan shu qism
+baholanadi.
+
+> **Alohida ogohlantirish.** Til modellari uzluksiz taqsimotlarda
+> muntazam ravishda: (i) zichlik qiymatini ehtimollik deb ataydi,
+> (ii) bitta statistikaga qarab «maʼlumot normal» deb xulosa
+> chiqaradi, (iii) normal modelni uzoq quyruqda ishonch bilan
+> qoʻllaydi, (iv) uzluksizlik tuzatmasini tushirib qoldiradi,
+> (v) «logarifm normallikni kafolatlaydi» deb yozadi. Bu haftaning
+> SI topshirigʻi (`W05-si-topshiriqlari`) aynan shu besh xatoga
+> bagʻishlangan.
+
+**Deklaratsiya majburiy:** ish oxirida qaysi vosita, qaysi bosqichda,
+qanday soʻrov bilan ishlatilgani va javob qanday tekshirilgani
+yoziladi.
+
+---
+
+**Manbalar:** Newbold, Carlson & Thorne, *Statistics for Business and
+Economics*, 5-bob · McClave & Sincich, *Statistics*, 5-bob ·
+Heumann, Schomaker & Shalabh, *Introduction to Statistics and Data
+Analysis*, 8-bob · Çetinkaya-Rundel & Hardin, *Introduction to Modern
+Statistics* (Q--Q grafiklar va normal model) ·
+Limpert, Stahel & Abbt (2001), *Log-normal distributions across the
+sciences*, BioScience 51(5), 341--352 ·
+Maʼlumot: FAOSTAT / Our World in Data (hosildorlik);
+kinolar-byudjet.csv (2000--2018).

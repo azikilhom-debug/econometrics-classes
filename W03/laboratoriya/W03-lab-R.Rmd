@@ -1,0 +1,1440 @@
+---
+title: "STAT201 · 3-hafta · Kompyuter laboratoriyasi (R)"
+subtitle: "Shartli ehtimollik, toʻliq ehtimollik formulasi va Bayes teoremasi"
+author: "Toshkent Xalqaro Universiteti · Iqtisodiyot fakulteti"
+date: "2025/2026 oʻquv yili"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    df_print: kable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,     # kodni koʻrsatish
+  message = FALSE,    # paket yuklash xabarlarini yashirish
+  warning = FALSE,
+  fig.width = 7, fig.height = 4.2, dpi = 110,
+  # dev.args: grafiklarda oʻzbekcha «ʻ» belgisi chiqishi uchun cairo
+  # mexanizmi shart (0-bosqichdagi izohga qarang).
+  dev = "png", dev.args = list(type = "cairo")
+)
+options(digits = 7)
+```
+
+<!--
+  ==================================================================
+  STAT201 · 3-hafta · Kompyuter laboratoriyasi · R versiyasi
+  Davomiyligi: 2 akademik soat (120 daqiqa)
+  CLO2 — ehtimollik qoidalarini, shu jumladan shartli ehtimollik va
+         Bayes teoremasini iqtisodiy masalalarga qoʻllash
+         (Blum: Qoʻllash va Tahlil)
+  Maʼlumot: data/kinolar-byudjet.csv          (2 467 film, 2000-2018)
+            data/markaziy-osiyo-hosildorlik.csv (FAOSTAT / OWID)
+  Har bir topshiriq bitta zanjirga boʻysunadi:
+  statistik tushuncha -> maʼlumot -> kod -> natija -> talqin -> qaror
+  Izohlar va oʻzgaruvchi nomlari — oʻzbekcha; funksiya nomlari — inglizcha.
+  Simulyatsiya generatori: MINSTD (2-haftadagi bilan AYNAN bir xil),
+  urugʻ 2026. Shu sababli R va Python daftarlari bir xil son beradi.
+  ==================================================================
+-->
+
+# Laboratoriya haqida
+
+**Maqsad.** Maʼruzada keltirib chiqarilgan **toʻliq ehtimollik
+formulasi** va **Bayes teoremasi**ni haqiqiy maʼlumot ustida
+**tekshirish**, soʻng ularni bevosita sanash imkoni *boʻlmagan*
+masalalarga (diagnostik test, kredit skoring) qoʻllash.
+
+**Haftaning markaziy gʻoyasi — formulaga ishonchni qozonish.**
+Bayes teoremasini biz avval *javob mustaqil ravishda maʼlum boʻlgan*
+joyda sinaymiz: kino maʼlumotida $\Pr(\text{Horror} \mid R)$ ni ham
+formula bilan, ham $154/1113$ deb **sanab** olamiz. Ikkalasi *aynan*
+bir xil chiqishi shart — yaxlitlash xatosi ham boʻlmasligi kerak.
+Faqat shundan keyin biz formulani skrining testiga qoʻllaymiz, u yerda
+esa sanash mumkin emas: kimning kasal ekanini bilmaymiz.
+
+> **Qoida.** Formulaga u *tasdiqlangani* uchun ishoning, u *aytilgani*
+> uchun emas. Bugungi laboratoriyaning butun tuzilishi shu qoidaga
+> boʻysunadi.
+
+**Ish zanjiri.** Har bir topshiriqda quyidagi ketma-ketlikni yozma
+ravishda bajarasiz:
+
+> **statistik tushuncha → maʼlumot → kod → natija → talqin → qaror**
+
+Faqat kod yozib, natijani izohsiz qoldirish — topshiriq bajarilmagan
+hisoblanadi. Baholashning yarmidan koʻpi aynan *talqin* va *qaror*
+bosqichlariga beriladi.
+
+**Vaqt va ball taqsimoti (120 daqiqa, 115 ball + 5 bonus).**
+
+| # | Mazmun | Daqiqa | Blum | Ball |
+|---|---|---|---|---|
+| 0 | Muhitni sozlash | 5 | — | — |
+| 1 | Boʻlinma va toʻliq ehtimollik formulasi | 20 | Qoʻllash | 20 |
+| 2 | Qayta ishlatiladigan Bayes funksiyasi | 25 | Tahlil | 25 |
+| 3 | Skrining testi kalkulyatori va PPV egri chizigʻi | 25 | Tahlil | 25 |
+| 4 | Monty Hall simulyatsiyasi | 25 | Baholash | 25 |
+| 5 | Bazaviy stavkani oʻzgartirish | 20 | Baholash | 20 |
+| 6 | Ixtiyoriy: hosildorlik maʼlumotida Bayes | uyda | Yaratish | +5 |
+
+**Oldingi bilim (2-hafta).** Sizga quyidagilar allaqachon maʼlum
+boʻlishi kerak: hodisani **mantiqiy vektor** sifatida ifodalash
+(`sum(A)` $= n(A)$, `mean(A)` $= \Pr(A)$); qoʻshish qoidasi; shartli
+ehtimollik taʼrifi $\Pr(A\mid B) = \Pr(A\cap B)/\Pr(B)$; koʻpaytirish
+qoidasi; MINSTD generatori. Bugun shularning ustiga **boʻlinma**,
+**toʻliq ehtimollik formulasi** va **Bayes teoremasi** qoʻshiladi.
+
+---
+
+# 0-bosqich. Muhitni sozlash
+
+```{r lokal}
+# --- MUHIM: UTF-8 muhitini kafolatlash --------------------------------
+# Oʻzbekcha nomlarda tutuq belgisi «ʻ» (U+02BB) bor. Agar R UTF-8
+# boʻlmagan lokalda ishga tushsa (masalan LC_CTYPE=C), kod ichidagi
+# "Oʻzbekiston" satri va CSV dan oʻqilgan "Oʻzbekiston" qiymati
+# BAYTLARI bir xil boʻlsa ham TENG DEB HISOBLANMAYDI. Natijada
+# filter() BOʻSH jadval qaytaradi va butun tahlil NaN ga aylanadi —
+# hech qanday xato xabari chiqmasdan. 6-topshiriqda buni koʻrasiz.
+if (!grepl("UTF-8", Sys.getlocale("LC_CTYPE"), ignore.case = TRUE)) {
+  for (lokal in c("C.UTF-8", "en_US.UTF-8", "uz_UZ.UTF-8",
+                  "Uzbek_Uzbekistan.utf8", "English_United States.utf8")) {
+    if (suppressWarnings(Sys.setlocale("LC_CTYPE", lokal)) != "") break
+  }
+}
+cat("LC_CTYPE =", Sys.getlocale("LC_CTYPE"), "\n")
+```
+
+```{r paketlar}
+# --- Kerakli paketlar -------------------------------------------------
+# readr   — CSV faylni oʻqish (kodlashni aniq belgilash imkoni bor)
+# dplyr   — maʼlumotni filtrlash, guruhlash, xulosalash
+# ggplot2 — grafiklar
+library(readr)
+library(dplyr)
+library(ggplot2)
+
+# Okabe-Ito palitrasi: rang koʻrmaslikka moslashgan.
+# Kursda maʼlumot ranglari faqat shu roʻyxatdan olinadi.
+oiBlue <- "#0072B2"; oiOrange <- "#E69F00"; oiGreen  <- "#009E73"
+oiPink <- "#CC79A7"; oiVerm   <- "#D55E00"; oiSky    <- "#56B4E9"
+
+theme_set(theme_minimal(base_size = 11))
+theme_update(
+  panel.grid.minor = element_blank(),
+  plot.title    = element_text(face = "bold"),
+  plot.subtitle = element_text(colour = "grey30")
+)
+
+# QOIDA (2-haftadan): grafik yorliqlarida faqat ASCII harflar.
+# R ning standart pdf() qurilmasi U+02BB belgisini chiza olmaydi va
+# uning oʻrniga nuqta qoʻyadi. Yorliqlarda «Ozbekiston», «bazaviy
+# stavka» kabi ASCII shakllardan foydalanamiz.
+cat("cairo mavjudmi:", capabilities("cairo"), "\n")
+```
+
+```{r yuklash}
+# --- Asosiy maʼlumot va ISHCHI FAZO -----------------------------------
+# 2-haftadagi qaror oʻzgarmaydi: reytingi koʻrsatilmagan 9 ta film
+# fazodan chiqariladi, chunki ular uchun «R reyting» hodisasi
+# aniqlanmagan. |S| = 2458.
+kino <- read_csv("data/kinolar-byudjet.csv",
+                 locale = locale(encoding = "UTF-8"),
+                 show_col_types = FALSE)
+kino_t <- kino %>% filter(!is.na(reyting))
+n <- nrow(kino_t)
+
+cat("xom satrlar         :", nrow(kino), "\n")
+cat("reytingi yoʻq       :", nrow(kino) - n, "\n")
+cat("ISHCHI FAZO |S| = n :", n, "\n")
+
+# Kontingensiya jadvali — butun laboratoriyaning asosi.
+jadval <- table(kino_t$janr, kino_t$reyting)
+addmargins(jadval)
+```
+
+---
+
+# 1-topshiriq. Boʻlinma va toʻliq ehtimollik formulasi
+
+**Qiyinlik: 3 (Amaliy) · Blum: Qoʻllash · 20 ball · 20 daqiqa**
+
+### Statistik tushuncha
+
+**Boʻlinma** *(partition)*. $B_1, B_2, \dots, B_k$ hodisalari $S$ ning
+boʻlinmasi deyiladi, agar
+
+1. ular juft-juft kesishmasa: $B_i \cap B_j = \varnothing$ ($i \ne j$),
+2. birlashmasi butun fazo boʻlsa: $\bigcup_{i=1}^{k} B_i = S$.
+
+Yaʼni **har bir natija aynan bitta** $B_i$ ga tushadi — birortasiga
+ham tushmaydigan yoki ikkitasiga tushadigan natija boʻlmasligi kerak.
+
+**Toʻliq ehtimollik formulasi** *(law of total probability)*: agar
+$B_1,\dots,B_k$ boʻlinma boʻlsa va $\Pr(B_i) > 0$ boʻlsa, ixtiyoriy $A$
+uchun
+
+$$\Pr(A) \;=\; \sum_{i=1}^{k} \Pr(A \mid B_i)\,\Pr(B_i).$$
+
+*Isboti bir qatorlik:* $A = \bigcup_i (A \cap B_i)$ va bu boʻlaklar
+kesishmaydi, demak A3 aksiomasi boʻyicha ehtimolliklar qoʻshiladi; har
+bir hadga koʻpaytirish qoidasini qoʻllaymiz.
+
+**Bugungi tekshiruv.** Formula haqiqiy maʼlumotda ishlashini
+koʻrsatish uchun biz $\Pr(R)$ ni **ikki mustaqil yoʻl** bilan olamiz:
+(a) formula orqali, janrlar boʻlinmasidan; (b) bevosita sanab,
+$1113/2458$. Ular *aynan* teng chiqishi shart.
+
+### Maʼlumot
+
+`data/kinolar-byudjet.csv`, ishchi fazo $n = 2\,458$. Boʻlinma —
+beshta janr. Hodisa $A = R$ («film R reyting oldi»).
+
+```{r bolinma_tekshiruv}
+# --- 1-qadam: BOʻLINMA ekanini TEKSHIRISH ------------------------------
+# Formula boʻlinmaga tayanadi. Shu sababli birinchi qadam — tekshirish,
+# qoʻllash emas. Ikki shartni sonli tekshiramiz.
+janrlar <- sort(unique(kino_t$janr))   # alifbo tartibida — barqaror
+cat("janrlar:", paste(janrlar, collapse = ", "), "\n\n")
+
+# (1) Har bir film aynan BITTA janrga tegishlimi?
+#     table() bitta ustundan qurilgani uchun bu avtomatik bajariladi:
+#     har bir qator bitta qiymatga ega. Buni sonli tasdiqlaymiz.
+janr_sonlari <- as.integer(table(kino_t$janr))
+cat("janrlar boʻyicha sonlar:", janr_sonlari, "\n")
+cat("yigʻindi =", sum(janr_sonlari), " | n =", n,
+    " | boʻlinma:", sum(janr_sonlari) == n, "\n")
+
+# (2) Ehtimolliklar yigʻindisi 1 ga tengmi?
+P_janr <- janr_sonlari / n
+cat("P(B_i) yigʻindisi =", sprintf("%.10f", sum(P_janr)), "\n")
+```
+
+```{r ltp_jadval}
+# --- 2-qadam: toʻliq ehtimollik formulasining JADVALI -------------------
+# Har bir janr uchun uchta son kerak: P(B), P(R|B) va ularning
+# koʻpaytmasi. Jadvalni oshkora quramiz — formulani «qora quti» sifatida
+# emas, qatorma-qator koʻrsatish uchun.
+R <- kino_t$reyting == "R"           # hodisa = mantiqiy vektor
+
+ltp <- data.frame(
+  janr   = janrlar,
+  n_B    = janr_sonlari,
+  P_B    = P_janr,
+  n_RB   = sapply(janrlar, function(g) sum(kino_t$janr == g & R)),
+  stringsAsFactors = FALSE
+)
+ltp$P_R_B  <- ltp$n_RB / ltp$n_B          # ishonchlilik P(R|B)
+ltp$hissa  <- ltp$P_R_B * ltp$P_B         # formulaning bitta hadi
+
+print(ltp, digits = 4, row.names = FALSE)
+```
+
+```{r ltp_tekshiruv}
+# --- 3-qadam: IKKI YOʻL BILAN P(R) --------------------------------------
+P_R_formula  <- sum(ltp$hissa)      # toʻliq ehtimollik formulasi
+P_R_bevosita <- mean(R)             # bevosita sanash: n(R)/n
+
+cat(sprintf("toʻliq ehtimollik formulasi : P(R) = %.10f\n", P_R_formula))
+cat(sprintf("bevosita sanash             : P(R) = %d/%d = %.10f\n",
+            sum(R), n, P_R_bevosita))
+cat(sprintf("farq                        : %.3e\n",
+            abs(P_R_formula - P_R_bevosita)))
+cat("aynan teng (yaxlitlashsiz):",
+    isTRUE(all.equal(P_R_formula, P_R_bevosita, tolerance = 0)), "\n")
+```
+
+```{r ltp_notogri}
+# --- 4-qadam: BOʻLINMA BUZILSA nima boʻladi? ---------------------------
+# Eng koʻp uchraydigan xato: boʻlinma emas, shunchaki «bir nechta
+# hodisa» olinadi. Ikki holatni koʻrsatamiz.
+
+# (a) Toʻliq boʻlmagan toʻplam: Horror ni tashlab yuboramiz.
+kam <- ltp[ltp$janr != "Horror", ]
+cat(sprintf("(a) Horror tashlansa: P(B) yigʻindisi = %.4f (1 emas!)\n",
+            sum(kam$P_B)))
+cat(sprintf("    formula beradi: %.4f, haqiqiy P(R) = %.4f, xato = %.4f\n",
+            sum(kam$hissa), P_R_bevosita, P_R_bevosita - sum(kam$hissa)))
+
+# (b) Kesishuvchi «boʻlinma»: janr oʻrniga ikkita kesishuvchi hodisa.
+#     D = Drama, K = katta byudjetli (mediana ustida). Bular kesishadi.
+D <- kino_t$janr == "Drama"
+K <- kino_t$byudjet > median(kino_t$byudjet, na.rm = TRUE)
+cat(sprintf("(b) D va K kesishmasi: n(D va K) = %d  (0 boʻlishi kerak edi)\n",
+            sum(D & K)))
+soxta <- mean(R[D]) * mean(D) + mean(R[K]) * mean(K)
+cat(sprintf("    «formula» beradi: %.4f, haqiqiy P(R) = %.4f\n",
+            soxta, P_R_bevosita))
+cat("    Xulosa: shartlarni tekshirmasdan qoʻllangan formula",
+    "xato javob beradi va HECH QANDAY ogohlantirish bermaydi.\n")
+```
+
+```{r ltp_grafik, fig.height=3.6}
+# --- 5-qadam: formulani KOʻRSATISH -------------------------------------
+# Har bir janrning P(R) ga qoʻshgan hissasi — ustunlar. Ularning
+# yigʻindisi P(R) ni beradi. Yorliqlar ASCII.
+gr <- ltp
+gr$janr <- factor(gr$janr, levels = gr$janr[order(gr$hissa)])
+
+ggplot(gr, aes(x = janr, y = hissa)) +
+  geom_col(fill = oiBlue, width = 0.62) +
+  geom_text(aes(label = sprintf("%.4f", hissa)), hjust = -0.12, size = 3.3) +
+  coord_flip() +
+  scale_y_continuous(limits = c(0, 0.24)) +
+  labs(title = "Har bir janrning P(R) ga qoshgan hissasi",
+       subtitle = "Ustunlar yigindisi = 0.4528 = P(R). Bu — toliq ehtimollik formulasi",
+       x = NULL, y = "P(R | janr) x P(janr)",
+       caption = "Manba: kinolar-byudjet.csv, n = 2458")
+```
+
+### Natija (kutilayotgan)
+
+```
+janrlar boʻyicha sonlar: 358 363 600 929 208
+yigʻindi = 2458  | n = 2458  | boʻlinma: TRUE
+P(B_i) yigʻindisi = 1.0000000000
+
+      janr n_B     P_B n_RB  P_R_B    hissa
+    Action 358 0.14565  174 0.48603 0.070789
+ Adventure 363 0.14768   14 0.03857 0.005696
+    Comedy 600 0.24410  292 0.48667 0.118796
+     Drama 929 0.37795  479 0.51561 0.194874
+    Horror 208 0.08462  154 0.74038 0.062653
+
+toʻliq ehtimollik formulasi : P(R) = 0.4528071603
+bevosita sanash             : P(R) = 1113/2458 = 0.4528071603
+farq                        : 0.000e+00
+aynan teng (yaxlitlashsiz): TRUE
+
+(a) Horror tashlansa: P(B) yigʻindisi = 0.9154 (1 emas!)
+    formula beradi: 0.3902, haqiqiy P(R) = 0.4528, xato = 0.0627
+(b) D va K kesishmasi: n(D va K) = 316  (0 boʻlishi kerak edi)
+    «formula» beradi: 0.3568, haqiqiy P(R) = 0.4528
+```
+
+### Talqin — daftaringizga yozing
+
+**T1.1** Farq **aynan** $0$ chiqdi — hatto $10^{-15}$ tartibida ham
+emas. Nima uchun? (Maslahat: har ikkala hisobda ham bir xil butun
+sonlar bir xil maxrajga boʻlinadi. Qaysi arifmetik amallar bajarildi?)
+
+**T1.2** Boʻlinmaning ikki shartini oʻz soʻzingiz bilan yozing va har
+biri **qanday sonli tekshiruv** bilan tasdiqlanishini ayting. Agar
+maʼlumotda «Action/Comedy» kabi qoʻsh janr boʻlganida, qaysi shart
+buzilardi?
+
+**T1.3** (a) holatda xato aynan $0{,}0627$ chiqdi. Bu son jadvalning
+qaysi katagida turibdi? Tasodifmi? Umumiy qoidani formulalashtiring.
+
+**T1.4** (b) holatda «formula» $\Pr(R)$ dan katta son berdi. Nima
+uchun kesishuvchi hodisalar **ortiqcha** baho beradi? Buni 2-haftadagi
+qoʻshish qoidasi bilan bogʻlang.
+
+**T1.5** Toʻliq ehtimollik formulasi $\Pr(R)$ ni **allaqachon
+bilganimizda** nima uchun kerak boʻldi? Formulaning haqiqiy foydasi
+qaysi vaziyatda paydo boʻladi? Bitta iqtisodiy misol keltiring.
+
+### Qaror
+
+Kinoprokat kompaniyasi kelasi yil katalogini oʻzgartirmoqchi: Horror
+ulushini $8{,}5\,\%$ dan $20\,\%$ ga koʻtarish, farqni Adventure
+hisobidan qoplash. Toʻliq ehtimollik formulasidan foydalanib, yangi
+katalogda $\Pr(R)$ qanday boʻlishini **hisoblang** (har bir janr
+ichidagi $\Pr(R\mid B)$ oʻzgarmaydi deb faraz qiling). Bu farazni
+oʻzingiz baholang: u qanchalik ishonarli?
+
+---
+
+# 2-topshiriq. Qayta ishlatiladigan Bayes funksiyasi
+
+**Qiyinlik: 4 (Analitik) · Blum: Tahlil · 25 ball · 25 daqiqa**
+
+### Statistik tushuncha
+
+**Bayes teoremasi** *(Bayes' theorem)* — yangi qoida emas. U uchta
+maʼlum narsaning birgalikda yozilishi:
+
+$$\underbrace{\Pr(B_j \mid A)}_{\text{keyingi}} =
+\frac{\Pr(A \cap B_j)}{\Pr(A)}
+= \frac{\overbrace{\Pr(A \mid B_j)}^{\text{ishonchlilik}}\,
+        \overbrace{\Pr(B_j)}^{\text{oldingi}}}
+       {\underbrace{\sum_{i} \Pr(A \mid B_i)\Pr(B_i)}_{\text{dalil}}}.$$
+
+**Lugʻat.** $\Pr(B)$ — **oldingi ehtimollik** *(prior)*, dalilni
+koʻrishdan oldingi ishonch; $\Pr(A\mid B)$ — **ishonchlilik**
+*(likelihood)*; $\Pr(B\mid A)$ — **keyingi ehtimollik**
+*(posterior)*; $\Pr(A)$ — **dalil** *(evidence)*, maxraj.
+
+**Nima uchun funksiya yozamiz?** Bir xil hisobni beshta janrga
+qoʻlda takrorlash — xato manbai. Funksiya yozish (a) hisobni bir
+marta *toʻgʻri* yozishga majbur qiladi, (b) uni keyingi
+topshiriqlarda qayta ishlatish imkonini beradi, (c) kodni
+tekshiriladigan qiladi.
+
+**Bugungi tekshiruv.** Beshta janrning **har biri** uchun Bayes
+bergan javob bevosita sanash bergan javob bilan solishtiriladi:
+$\Pr(B\mid R)$ va $n(B \cap R)/n(R)$.
+
+### Maʼlumot
+
+Xuddi shu kontingensiya jadvali. Endi *yoʻnalish teskari*: reyting
+maʼlum, janr nomaʼlum.
+
+```{r bayes_funksiya}
+# --- Umumiy Bayes funksiyasi -------------------------------------------
+# Kirish:
+#   oldingi     — P(B_i) vektori (boʻlinma!)
+#   ishonchlilik— P(A | B_i) vektori, bir xil uzunlikda
+#   nomlar      — boʻlaklarning nomlari (ixtiyoriy)
+# Chiqish: data.frame — oldingi, ishonchlilik, hissa, dalil, keyingi.
+#
+# DIQQAT: funksiya ishga tushishidan oldin SHARTLARNI tekshiradi.
+# Tekshiruvsiz funksiya — noqulay xatolarning eng keng tarqalgan manbai.
+bayes <- function(oldingi, ishonchlilik, nomlar = NULL) {
+  stopifnot(length(oldingi) == length(ishonchlilik))
+  stopifnot(all(oldingi >= 0), all(ishonchlilik >= 0),
+            all(ishonchlilik <= 1))
+  # Boʻlinma sharti: oldingi ehtimolliklar yigʻindisi 1 ga teng.
+  # all.equal() — suzuvchi nuqtali taqqoslash uchun; == ishlatmang.
+  if (!isTRUE(all.equal(sum(oldingi), 1))) {
+    stop(sprintf("oldingi ehtimolliklar yigʻindisi %.6f — boʻlinma emas!",
+                 sum(oldingi)))
+  }
+  hissa <- ishonchlilik * oldingi        # P(A|B_i) P(B_i)
+  dalil <- sum(hissa)                    # P(A) — toʻliq ehtimollik formulasi
+  if (dalil == 0) stop("dalil ehtimoli 0 — Bayes aniqlanmagan")
+  data.frame(
+    bolak        = if (is.null(nomlar)) seq_along(oldingi) else nomlar,
+    oldingi      = oldingi,
+    ishonchlilik = ishonchlilik,
+    hissa        = hissa,
+    dalil        = dalil,
+    keyingi      = hissa / dalil,
+    stringsAsFactors = FALSE
+  )
+}
+
+# Funksiyani ENG SODDA holatda sinaymiz: agar barcha ishonchliliklar
+# teng boʻlsa, dalil hech narsani oʻzgartirmasligi kerak —
+# keyingi ehtimollik oldingisiga teng chiqadi.
+sinov <- bayes(c(0.2, 0.3, 0.5), c(0.4, 0.4, 0.4))
+cat("nazorat sinovi (teng ishonchlilik): keyingi =",
+    sprintf("%.4f", sinov$keyingi), "\n")
+cat("oldingi bilan mos:",
+    isTRUE(all.equal(sinov$keyingi, c(0.2, 0.3, 0.5))), "\n")
+```
+
+```{r bayes_kino}
+# --- Funksiyani kino maʼlumotiga qoʻllash ------------------------------
+# 1-topshiriqdagi ltp jadvalidan tayyor ustunlarni olamiz.
+nat <- bayes(oldingi      = ltp$P_B,
+             ishonchlilik = ltp$P_R_B,
+             nomlar       = ltp$janr)
+
+# Bevosita sanash: n(B va R) / n(R). Formulaga UMUMAN murojaat yoʻq.
+nat$bevosita <- ltp$n_RB / sum(R)
+nat$mos      <- abs(nat$keyingi - nat$bevosita) < 1e-12
+nat$koeff    <- nat$keyingi / nat$oldingi   # dalil ishonchni necha barobar
+                                            # oʻzgartirdi
+
+print(nat[, c("bolak", "oldingi", "ishonchlilik", "keyingi",
+              "bevosita", "mos", "koeff")], digits = 4, row.names = FALSE)
+
+cat("\ndalil P(R) =", sprintf("%.10f", nat$dalil[1]), "\n")
+cat("keyingi ehtimolliklar yigʻindisi =",
+    sprintf("%.10f", sum(nat$keyingi)), "\n")
+cat("BARCHA besh janr uchun mos:", all(nat$mos), "\n")
+```
+
+```{r bayes_shanslar}
+# --- Bayesning SHANSLAR (odds) shakli ----------------------------------
+# Ikki boʻlakli holatda Bayes ayniqsa sodda koʻrinadi:
+#     keyingi shans = oldingi shans x ishonchlilik nisbati
+# Ishonchlilik nisbati LR = P(A|B) / P(A|B^c) — dalilning KUCHI.
+# Bu shakl «dalil ishonchni necha barobar oʻzgartirdi» degan savolga
+# bevosita javob beradi.
+H  <- kino_t$janr == "Horror"
+P_H      <- mean(H)
+P_R_H    <- mean(R[H])            # 154/208
+P_R_notH <- mean(R[!H])           # 959/2250
+
+oldingi_shans <- P_H / (1 - P_H)
+LR            <- P_R_H / P_R_notH
+keyingi_shans <- oldingi_shans * LR
+
+cat(sprintf("P(H) = %.4f   P(R|H) = %.4f   P(R|H^c) = %d/%d = %.4f\n",
+            P_H, P_R_H, sum(R & !H), sum(!H), P_R_notH))
+cat(sprintf("oldingi shans = %.6f\n", oldingi_shans))
+cat(sprintf("ishonchlilik nisbati LR = %.6f\n", LR))
+cat(sprintf("keyingi shans = %.6f -> keyingi ehtimollik = %.10f\n",
+            keyingi_shans, keyingi_shans / (1 + keyingi_shans)))
+cat("Bayes funksiyasi bilan mos:",
+    isTRUE(all.equal(keyingi_shans / (1 + keyingi_shans),
+                     nat$keyingi[nat$bolak == "Horror"])), "\n")
+```
+
+```{r bayes_grafik, fig.height=4.0}
+# --- Dalil ishonchni qanday siljitdi? ----------------------------------
+# Har bir janr uchun oldingi va keyingi ehtimollikni yonma-yon
+# qoʻyamiz. Yorliqlar ASCII.
+uzun <- rbind(
+  data.frame(janr = nat$bolak, qiymat = nat$oldingi, turi = "oldingi P(B)"),
+  data.frame(janr = nat$bolak, qiymat = nat$keyingi, turi = "keyingi P(B|R)")
+)
+uzun$turi <- factor(uzun$turi, levels = c("oldingi P(B)", "keyingi P(B|R)"))
+uzun$janr <- factor(uzun$janr, levels = nat$bolak)
+
+ggplot(uzun, aes(x = janr, y = qiymat, fill = turi)) +
+  geom_col(position = position_dodge(width = 0.72), width = 0.66) +
+  geom_text(aes(label = sprintf("%.3f", qiymat)),
+            position = position_dodge(width = 0.72),
+            vjust = -0.35, size = 2.9) +
+  scale_fill_manual(values = c(`oldingi P(B)` = oiBlue,
+                               `keyingi P(B|R)` = oiGreen)) +
+  scale_y_continuous(limits = c(0, 0.50)) +
+  labs(title = "Dalil (R reyting) ishonchni ikki tomonga suradi",
+       subtitle = "Horror x1.64 oshdi, Adventure x0.09 ga TUSHDI (12 barobar kamaydi)",
+       x = NULL, y = "Ehtimollik", fill = NULL,
+       caption = "Manba: kinolar-byudjet.csv, n = 2458") +
+  theme(legend.position = "top")
+```
+
+### Natija (kutilayotgan)
+
+```
+nazorat sinovi (teng ishonchlilik): keyingi = 0.2000 0.3000 0.5000
+oldingi bilan mos: TRUE
+
+     bolak oldingi ishonchlilik keyingi bevosita  mos   koeff
+    Action 0.14565      0.48603 0.15633  0.15633 TRUE 1.07338
+ Adventure 0.14768      0.03857 0.01258  0.01258 TRUE 0.08517
+    Comedy 0.24410      0.48667 0.26235  0.26235 TRUE 1.07478
+     Drama 0.37795      0.51561 0.43037  0.43037 TRUE 1.13869
+    Horror 0.08462      0.74038 0.13836  0.13836 TRUE 1.63510
+
+dalil P(R) = 0.4528071603
+keyingi ehtimolliklar yigʻindisi = 1.0000000000
+BARCHA besh janr uchun mos: TRUE
+
+P(H) = 0.0846   P(R|H) = 0.7404   P(R|H^c) = 959/2250 = 0.4262
+oldingi shans = 0.092444
+ishonchlilik nisbati LR = 1.737086
+keyingi shans = 0.160584 -> keyingi ehtimollik = 0.1383647799
+```
+
+### Talqin — daftaringizga yozing
+
+**T2.1** Beshta keyingi ehtimollikning yigʻindisi aynan $1$ chiqdi.
+Bu tasodifmi? Buni Bayes formulasidan **keltirib chiqaring**
+(maslahat: umumiy maxraj barcha hadlarda bir xil).
+
+**T2.2** Adventure uchun koeffitsiyent $0{,}085$: dalil ishonchni
+qariyb **12 barobar kamaytirdi**. «Keyingi ehtimollik doim
+oldingisidan katta» degan tasavvur nima uchun notoʻgʻri? Koeffitsiyent
+**qachon** $1$ dan katta, qachon kichik boʻlishini
+$\Pr(R\mid B)$ va $\Pr(R)$ orqali umumiy shaklda yozing.
+
+**T2.3** `bayes()` funksiyasi oldingi ehtimolliklar yigʻindisi $1$
+emasligini tekshiradi va **xato beradi**. Nima uchun bu tekshiruv
+funksiyaning ichida boʻlishi kerak, foydalanuvchining mulohazasiga
+qoldirilmasligi kerak? Bu qaysi kasbiy odatga bogʻlanadi?
+
+**T2.4** Shanslar shakli: $\text{keyingi shans} = \text{oldingi
+shans} \times \text{LR}$. Bu yozuv «bazaviy stavka» va «dalil kuchi»
+ni **ajratib** koʻrsatadi. Horror uchun LR $= 1{,}737$ — bu «kuchli
+dalil»mi? Javobingizni koeffitsiyent $1{,}635$ bilan bogʻlang.
+
+**T2.5** Bevosita sanash **mumkin boʻlgani uchun** biz formulani
+tekshira oldik. Keyingi topshiriqda (skrining testi) bunday imkoniyat
+**boʻlmaydi**. Nima uchun? Bu tekshirilgan formulaga ishonish uchun
+yetarli asosmi? Ikki jumla bilan yozing.
+
+### Qaror
+
+Onlayn kinoteatr tavsiya tizimini quradi: foydalanuvchi R reytingli
+filmni tomosha qildi. Tizim keyingi qaysi janrni tavsiya qilishi
+kerak? $\Pr(B\mid R)$ jadvalidan foydalanib javob bering — **va**
+bu tavsiyaning kamida ikkita jiddiy kamchiligini ayting.
+
+---
+
+# 3-topshiriq. Skrining testi kalkulyatori
+
+**Qiyinlik: 4 (Analitik) · Blum: Tahlil · 25 ball · 25 daqiqa**
+
+### Statistik tushuncha
+
+Diagnostik test uchun toʻrtta atama:
+
+| Atama | Belgi | Maʼnosi |
+|---|---|---|
+| Tarqalganlik *(prevalence)* | $\Pr(K)$ | aholida kasallarning ulushi — **bazaviy stavka** |
+| Sezgirlik *(sensitivity)* | $\Pr(+\mid K)$ | kasallarning qanchasini test topadi |
+| Xoslik *(specificity)* | $\Pr(-\mid K^{c})$ | sogʻlomlarning qanchasini test toʻgʻri chiqaradi |
+| **Bashoratlovchi qiymat** *(PPV)* | $\Pr(K\mid +)$ | musbat natija olganlarning qanchasi haqiqatan kasal |
+
+**Yoʻnalish masalasi.** Test ishlab chiquvchisi sezgirlik va xoslikni
+biladi — u testni *kasal* va *sogʻlom* guruhlarda sinagan. Bemorga esa
+PPV kerak. Bu ikkalasi **butunlay boshqa sonlar**, chunki maxrajlari
+boshqa. Bayes ular orasidagi koʻprik:
+
+$$\Pr(K \mid +) = \frac{\Pr(+\mid K)\Pr(K)}
+{\Pr(+\mid K)\Pr(K) + \Pr(+\mid K^{c})\Pr(K^{c})}.$$
+
+**Bazaviy stavka xatosi** *(base rate fallacy)* — jonli va aniq dalilga
+($0{,}99$, $0{,}95$) eʼtibor qaratib, hodisaning umumiy chastotasini
+($0{,}001$) eʼtiborsiz qoldirish.
+
+### Maʼlumot
+
+**Bu topshiriqda maʼlumot fayli yoʻq.** Qiymatlar **faraziy** — ular
+oʻquv maqsadida tanlangan va hech qanday mamlakat statistikasini
+ifodalamaydi:
+
+* tarqalganlik $\Pr(K) = 0{,}001$,
+* sezgirlik $\Pr(+\mid K) = 0{,}99$,
+* xoslik $\Pr(-\mid K^{c}) = 0{,}95$.
+
+```{r skrining_funksiya}
+# --- Skrining kalkulyatori ---------------------------------------------
+# Bayesni har safar qoʻlda yozish oʻrniga BITTA funksiya. U toʻrtala
+# koʻrsatkichni qaytaradi va kirish qiymatlarini tekshiradi.
+skrining <- function(tarqalganlik, sezgirlik, xoslik) {
+  stopifnot(tarqalganlik >= 0, tarqalganlik <= 1,
+            sezgirlik >= 0, sezgirlik <= 1,
+            xoslik >= 0, xoslik <= 1)
+  yolgon_musbat <- 1 - xoslik                 # P(+ | K^c)
+  # Maxraj — toʻliq ehtimollik formulasi. Boʻlinma: {K, K^c}.
+  P_musbat <- sezgirlik * tarqalganlik +
+              yolgon_musbat * (1 - tarqalganlik)
+  P_manfiy <- 1 - P_musbat
+  list(
+    P_musbat = P_musbat,
+    PPV = sezgirlik * tarqalganlik / P_musbat,               # P(K | +)
+    NPV = xoslik * (1 - tarqalganlik) / P_manfiy,            # P(K^c | -)
+    FOR = (1 - sezgirlik) * tarqalganlik / P_manfiy          # P(K | -)
+  )
+}
+
+nat3 <- skrining(0.001, 0.99, 0.95)
+cat(sprintf("P(+)      = %.5f\n", nat3$P_musbat))
+cat(sprintf("PPV = P(K|+)   = %.6f  = %.2f %%\n", nat3$PPV, 100 * nat3$PPV))
+cat(sprintf("NPV = P(K^c|-) = %.6f\n", nat3$NPV))
+cat(sprintf("P(K|-)         = %.8f\n", nat3$FOR))
+```
+
+```{r skrining_chastota}
+# --- Xuddi shu javob CHASTOTA shaklida ---------------------------------
+# Gigerenzer va Hoffrage (1995): bir xil masala chastota shaklida
+# berilganda odamlar sezilarli darajada yaxshiroq yechadi. Bu — xatoga
+# qarshi eng samarali amaliy vosita.
+AHOLI <- 10000
+kasal   <- AHOLI * 0.001                 # 10
+soglom  <- AHOLI - kasal                 # 9990
+kasal_musbat  <- kasal  * 0.99           # 9.9
+soglom_musbat <- soglom * 0.05           # 499.5
+jami_musbat   <- kasal_musbat + soglom_musbat
+
+cat(sprintf("%d kishilik guruhda:\n", AHOLI))
+cat(sprintf("  kasal  : %6.1f  -> musbat %6.1f\n", kasal, kasal_musbat))
+cat(sprintf("  sogʻlom: %6.1f  -> musbat %6.1f   (yolgʻon musbat)\n",
+            soglom, soglom_musbat))
+cat(sprintf("  jami musbat: %.1f\n", jami_musbat))
+cat(sprintf("  haqiqiy kasal ulushi = %.1f/%.1f = %.6f\n",
+            kasal_musbat, jami_musbat, kasal_musbat / jami_musbat))
+cat("formula bilan mos:",
+    isTRUE(all.equal(kasal_musbat / jami_musbat, nat3$PPV)), "\n")
+```
+
+```{r skrining_supurma}
+# --- PPV faqat bazaviy stavkaga qanchalik bogʻliq? ---------------------
+# TEST OʻZGARMAYDI: sezgirlik 0.99, xoslik 0.95 — barcha qatorlarda
+# bir xil. Faqat tarqalganlik oʻzgaradi.
+tarqalganliklar <- c(0.001, 0.01, 0.05, 0.10)
+supurma <- data.frame(
+  tarqalganlik = tarqalganliklar,
+  P_musbat = sapply(tarqalganliklar, function(t) skrining(t, 0.99, 0.95)$P_musbat),
+  PPV      = sapply(tarqalganliklar, function(t) skrining(t, 0.99, 0.95)$PPV),
+  NPV      = sapply(tarqalganliklar, function(t) skrining(t, 0.99, 0.95)$NPV)
+)
+supurma$PPV_foiz <- sprintf("%.2f %%", 100 * supurma$PPV)
+print(supurma, digits = 5, row.names = FALSE)
+
+# PPV = 0.5 boʻladigan tarqalganlik: shanslar shaklidan analitik yechim.
+# LR+ = sezgirlik / (1 - xoslik). PPV = 0.5  <=>  keyingi shans = 1
+#   <=>  oldingi shans x LR+ = 1  <=>  p/(1-p) = 1/LR+  <=>  p = 1/(1+LR+)
+LR_musbat <- 0.99 / 0.05
+p_yarim   <- 1 / (1 + LR_musbat)
+cat(sprintf("\nLR+ = %.1f\n", LR_musbat))
+cat(sprintf("PPV = 0,5 boʻladigan tarqalganlik = 1/(1+LR+) = %.6f\n", p_yarim))
+cat(sprintf("tekshiruv: PPV(%.6f) = %.6f\n", p_yarim,
+            skrining(p_yarim, 0.99, 0.95)$PPV))
+```
+
+```{r skrining_grafik, fig.height=4.2}
+# --- PPV egri chizigʻi -------------------------------------------------
+# Nozik toʻrda hisoblaymiz. Egri chiziq kelib chiqishda JUDA tik:
+# aynan shu tiklik bazaviy stavkaning ahamiyatini koʻrsatadi.
+tor <- seq(0.0005, 0.20, length.out = 400)
+egri <- data.frame(
+  tarqalganlik = tor,
+  PPV = sapply(tor, function(t) skrining(t, 0.99, 0.95)$PPV)
+)
+
+ggplot(egri, aes(x = tarqalganlik, y = PPV)) +
+  geom_line(colour = oiBlue, linewidth = 0.9) +
+  geom_hline(yintercept = 0.5, linetype = "dotted", colour = "grey40") +
+  geom_vline(xintercept = p_yarim, linetype = "dotted", colour = "grey40") +
+  geom_point(data = supurma, aes(x = tarqalganlik, y = PPV),
+             colour = oiVerm, size = 2.6, shape = 17) +
+  geom_text(data = supurma,
+            aes(x = tarqalganlik, y = PPV,
+                label = sprintf("%.1f%%", 100 * PPV)),
+            hjust = -0.25, vjust = 0.2, size = 3.1, colour = oiVerm) +
+  annotate("text", x = p_yarim + 0.004, y = 0.06, hjust = 0, size = 3.1,
+           label = sprintf("PPV = 50%% nuqtasi: %.4f", p_yarim)) +
+  scale_y_continuous(limits = c(0, 0.85)) +
+  labs(title = "PPV butunlay bazaviy stavkaga bogliq",
+       subtitle = "Test ozgarmaydi: sezgirlik 0.99, xoslik 0.95 — barcha nuqtalarda bir xil",
+       x = "Tarqalganlik P(K)  (bazaviy stavka)",
+       y = "PPV = P(K | musbat)",
+       caption = "Faraziy qiymatlar — hech qanday mamlakat statistikasi emas")
+```
+
+```{r skrining_ikki_bosqich}
+# --- Nima uchun ikki bosqichli skrining ishlaydi? ----------------------
+# Amaliyotdagi yechim: arzon test bilan skrining, soʻng musbat
+# chiqqanlarni QIMMAT tasdiqlovchi test bilan qayta tekshirish.
+# Ikkinchi bosqichda BAZAVIY STAVKA endi 0.001 emas — u birinchi
+# bosqichning KEYINGI ehtimolligi, yaʼni 0.0194.
+bosqich1 <- skrining(0.001, 0.99, 0.95)
+bosqich2 <- skrining(bosqich1$PPV, 0.99, 0.99)   # tasdiqlovchi test: xoslik 0.99
+
+cat(sprintf("1-bosqich: bazaviy stavka %.4f -> PPV %.4f\n",
+            0.001, bosqich1$PPV))
+cat(sprintf("2-bosqich: bazaviy stavka %.4f -> PPV %.4f\n",
+            bosqich1$PPV, bosqich2$PPV))
+cat(sprintf("Ikki bosqichdan keyin musbat natijaning %.1f %% i haqiqiy.\n",
+            100 * bosqich2$PPV))
+```
+
+### Natija (kutilayotgan)
+
+```
+P(+)      = 0.05094
+PPV = P(K|+)   = 0.019435  = 1.94 %
+NPV = P(K^c|-) = 0.999989
+P(K|-)         = 0.00001054
+
+10000 kishilik guruhda:
+  kasal  :   10.0  -> musbat    9.9
+  sogʻlom: 9990.0  -> musbat  499.5   (yolgʻon musbat)
+  jami musbat: 509.4
+  haqiqiy kasal ulushi = 9.9/509.4 = 0.019435
+formula bilan mos: TRUE
+
+ tarqalganlik P_musbat      PPV     NPV PPV_foiz
+        0.001  0.05094 0.019435 0.99999   1.94 %
+        0.010  0.05940 0.166667 0.99989  16.67 %
+        0.050  0.09700 0.510309 0.99945  51.03 %
+        0.100  0.14400 0.687500 0.99883  68.75 %
+
+LR+ = 19.8
+PPV = 0,5 boʻladigan tarqalganlik = 1/(1+LR+) = 0.048077
+tekshiruv: PPV(0.048077) = 0.500000
+
+1-bosqich: bazaviy stavka 0.0010 -> PPV 0.0194
+2-bosqich: bazaviy stavka 0.0194 -> PPV 0.6624
+Ikki bosqichdan keyin musbat natijaning 66.2 % i haqiqiy.
+```
+
+### Talqin — daftaringizga yozing
+
+**T3.1** «Test $99\,\%$ aniq» degan jumla qaysi sonni nazarda tutadi
+va bemor qaysi sonni **eshitadi**? Ikkalasini maxraji bilan yozing.
+Farq necha barobar?
+
+**T3.2** $\text{NPV} = 0{,}999989$ — test **rad etishda** ajoyib,
+**tasdiqlashda** esa deyarli befoyda. Bu ziddiyat emas. Uni bazaviy
+stavka orqali tushuntiring.
+
+**T3.3** PPV $=50\,\%$ nuqtasi $0{,}0481$ ga teng. Bu sonni
+$\text{LR}^{+} = 19{,}8$ dan **keltirib chiqaring**. Agar testning
+xosligi $0{,}95$ dan $0{,}99$ ga koʻtarilsa, bu nuqta qayerga
+siljiydi? Hisoblang.
+
+**T3.4** Ikki bosqichli skriningda PPV $1{,}94\,\%$ dan
+$66{,}2\,\%$ ga koʻtarildi — **ikkinchi test birinchisidan kuchliroq
+boʻlgani uchunmi**, yoki boshqa sababmi? Aniq javob bering.
+
+**T3.5** Grafikdagi egri chiziq $0$ ga yaqin joyda juda tik. Bu
+tiklikning **siyosat uchun** maʼnosi nima? Kam uchraydigan kasallik
+uchun ommaviy skrining nima uchun tavsiya etilmaydi?
+
+**T3.6** Barcha qiymatlar **faraziy**. Agar siz haqiqiy siyosat
+tavsiyasini yozayotgan boʻlsangiz, qaysi uchta sonni qaysi manbadan
+olishingiz kerak edi? Har biri uchun manba turini ayting.
+
+### Qaror
+
+Vazirlik butun aholi uchun majburiy skrining dasturini muhokama
+qilmoqda. Sizdan bitta sahifalik xizmat xati soʻralgan. Yuqoridagi
+sonlardan foydalanib **tavsiya** yozing (5–7 jumla): dasturni
+qoʻllab-quvvatlaysizmi, qanday shart bilan, va qanday muqobil
+taklif qilasiz? Yolgʻon musbatlarning inson va moliyaviy narxini
+oshkora ayting.
+
+---
+
+# 4-topshiriq. Monty Hall simulyatsiyasi
+
+**Qiyinlik: 5 (Ilgʻor) · Blum: Baholash · 25 ball · 25 daqiqa**
+
+### Statistik tushuncha
+
+Uchta eshik: bittasida avtomobil, ikkitasida echki.
+
+1. Siz bitta eshikni tanlaysiz.
+2. Boshlovchi qolgan ikkitadan **echki bor** eshikni ochadi.
+3. Tanlovni almashtirasizmi?
+
+**Kalit shart — uni har safar aytish shart.** Boshlovchi
+avtomobilning qayerdaligini **biladi** va **doim** echkili eshikni
+ochadi. Agar u tasodifan ochsa (baʼzan avtomobilni ochib
+qoʻyishi mumkin boʻlsa), javob $1/2$ boʻladi. Butun masala aynan shu
+shartga tayanadi.
+
+**Nazariy javob.** Boshlangʻich tanlov toʻgʻri boʻlish ehtimoli $1/3$.
+Boshlovchi hech qanday holatda avtomobilni ochmaydi, shu sababli
+boshlangʻich tanlov ehtimoli oʻzgarmaydi. Demak:
+
+* qolish yutugʻi $= \Pr(\text{boshlangʻich tanlov toʻgʻri}) = 1/3$;
+* almashtirish yutugʻi $= \Pr(\text{boshlangʻich tanlov notoʻgʻri}) = 2/3$.
+
+**Nima uchun simulyatsiya?** Bu masala intuitsiyaga zid: koʻpchilik
+«ikki eshik qoldi — demak 50/50» deydi. Simulyatsiya **bahsni
+tugatadi**: nazariyani bogʻliqsiz, ishonchdan qatʼi nazar tekshiradi.
+
+### Maʼlumot — oʻzimiz yaratamiz
+
+**Generator: MINSTD (Lehmer)**, 2-haftadagi bilan *aynan bir xil*:
+$$x_{k+1} = (48\,271\,x_k) \bmod 2\,147\,483\,647,\qquad
+u_k = x_k / 2\,147\,483\,647 .$$
+Urugʻ $= 2026$. Nima uchun aynan bu generator: eng katta oraliq
+koʻpaytma $48\,271 \times 2\,147\,483\,646 < 2^{53}$, demak u R ning
+`double` turida va Pythonning butun sonida **bit darajasida** bir xil
+hisoblanadi. Natijada ikkala daftar bir xil sonlarni beradi.
+(Toʻliq izoh 2-hafta laboratoriyasining 5-topshirigʻida.)
+
+```{r minstd}
+# --- MINSTD generatori (2-haftadan oʻzgarishsiz) -----------------------
+# closure: ichki holat `x` chaqiruvlar orasida saqlanadi.
+minstd_yangi <- function(urugh) {
+  m <- 2147483647; a <- 48271
+  x <- urugh %% m
+  if (x == 0) x <- 1
+  function(k) {
+    u <- numeric(k)
+    for (i in seq_len(k)) {
+      x <<- (a * x) %% m      # <<- : tashqi muhitdagi x ni yangilaydi
+      u[i] <- x / m
+    }
+    u
+  }
+}
+
+# Nazorat qiymatlari — Python daftaridagi sonlar bilan SOLISHTIRING.
+cat(sprintf("u[%d] = %.10f\n", 1:5, minstd_yangi(2026)(5)))
+```
+
+```{r monty_sim}
+# --- Monty Hall simulyatsiyasi -----------------------------------------
+# Eshiklar 0, 1, 2 deb raqamlanadi (Python bilan bir xil boʻlishi uchun).
+# Har bir oʻyin uchun UCHTA tasodifiy son:
+#   u1 -> avtomobil qaysi eshikda
+#   u2 -> siz qaysi eshikni tanlaysiz
+#   u3 -> boshlovchi TANLOV TOʻGʻRI boʻlgan holatda qaysi echkini ochadi
+# Uchinchi son faqat bitta holatda kerak, ammo uni HAR DOIM olamiz —
+# shunda sonlar oqimi ikkala tilda aynan bir xil boʻladi.
+N <- 100000
+g <- minstd_yangi(2026)
+u <- g(3 * N)
+
+u1 <- u[seq(1, 3 * N, by = 3)]
+u2 <- u[seq(2, 3 * N, by = 3)]
+u3 <- u[seq(3, 3 * N, by = 3)]
+
+avto   <- floor(u1 * 3)      # 0, 1 yoki 2
+tanlov <- floor(u2 * 3)
+
+# Boshlovchi qaysi eshikni ochadi?
+# Holat A (tanlov == avto): qolgan IKKITA eshikda ham echki bor —
+#   u3 bilan tanlaydi (0.5 dan kichik boʻlsa kichik raqamlisini).
+# Holat B (tanlov != avto): boshlovchining TANLOVI YOʻQ — u yagona
+#   qolgan eshikni ochishi shart. Eshiklar yigʻindisi 0+1+2 = 3
+#   boʻlgani uchun: ochiq = 3 - tanlov - avto.
+qolgan1 <- pmin((tanlov + 1) %% 3, (tanlov + 2) %% 3)
+qolgan2 <- pmax((tanlov + 1) %% 3, (tanlov + 2) %% 3)
+ochiq <- ifelse(tanlov == avto,
+                ifelse(u3 < 0.5, qolgan1, qolgan2),
+                3 - tanlov - avto)
+
+# Almashtirilgan eshik — uchinchisi.
+almash <- 3 - tanlov - ochiq
+
+# --- MAJBURIY NAZORAT TEKSHIRUVLARI ------------------------------------
+# Simulyatsiya toʻgʻri qurilganini uch shart bilan tekshiramiz.
+# Bu tekshiruvlarsiz simulyatsiya — shunchaki chiroyli son.
+cat("(1) boshlovchi hech qachon avtomobilni ochmadi:",
+    all(ochiq != avto), "\n")
+cat("(2) boshlovchi hech qachon sizning eshigingizni ochmadi:",
+    all(ochiq != tanlov), "\n")
+cat("(3) almashtirilgan eshik ochiq ham, tanlangan ham emas:",
+    all(almash != ochiq & almash != tanlov), "\n")
+```
+
+```{r monty_natija}
+# --- Natijalar ---------------------------------------------------------
+qolish_yutuq <- (tanlov == avto)
+almash_yutuq <- (almash  == avto)
+
+cat(sprintf("qolish      : nazariy 1/3 = %.5f   simulyatsiya = %.5f\n",
+            1/3, mean(qolish_yutuq)))
+cat(sprintf("almashtirish: nazariy 2/3 = %.5f   simulyatsiya = %.5f\n",
+            2/3, mean(almash_yutuq)))
+cat(sprintf("yigʻindi = %.5f  (1 boʻlishi shart)\n",
+            mean(qolish_yutuq) + mean(almash_yutuq)))
+
+# Farqni STANDART XATO birligida oʻlchaymiz — «katta/kichik» degan
+# sifat baho oʻrniga son.
+SE <- sqrt((2/3) * (1/3) / N)
+cat(sprintf("|farq| = %.5f   SE = %.5f   farq/SE = %.2f\n",
+            abs(mean(almash_yutuq) - 2/3), SE,
+            abs(mean(almash_yutuq) - 2/3) / SE))
+```
+
+```{r monty_yaqinlashish}
+# --- Yaqinlashish: xato monoton kamaydimi? -----------------------------
+kum <- cumsum(almash_yutuq) / seq_len(N)
+nlar <- c(10, 100, 1000, 10000, 100000)
+yaq <- data.frame(N = nlar, baho = kum[nlar], xato = abs(kum[nlar] - 2/3))
+print(yaq, digits = 5, row.names = FALSE)
+cat("xato barcha qadamlarda kamaydimi?", all(diff(yaq$xato) < 0), "\n")
+```
+
+```{r monty_grafik, fig.height=4.0}
+# --- Yaqinlashish grafigi ----------------------------------------------
+indeks <- unique(round(exp(seq(log(10), log(N), length.out = 2500))))
+egri4 <- data.frame(N = indeks, baho = kum[indeks])
+yolak <- data.frame(N = indeks,
+                    past   = 2/3 - 2 * sqrt((2/3)*(1/3)/indeks),
+                    yuqori = 2/3 + 2 * sqrt((2/3)*(1/3)/indeks))
+
+ggplot() +
+  geom_ribbon(data = yolak, aes(x = N, ymin = past, ymax = yuqori),
+              fill = oiSky, alpha = 0.25) +
+  geom_line(data = egri4, aes(x = N, y = baho), colour = oiBlue,
+            linewidth = 0.5) +
+  geom_hline(yintercept = 2/3, colour = oiVerm, linewidth = 0.8,
+             linetype = "dashed") +
+  geom_hline(yintercept = 0.5, colour = "grey45", linewidth = 0.6,
+             linetype = "dotted") +
+  annotate("text", x = 12, y = 2/3 + 0.05, hjust = 0, size = 3.3,
+           colour = oiVerm, label = "2/3 = 0.6667") +
+  annotate("text", x = 12, y = 0.46, hjust = 0, size = 3.3,
+           colour = "grey35", label = "intuitiv (notogri) javob 1/2") +
+  scale_x_log10(breaks = c(10, 100, 1000, 10000, 100000),
+                labels = c("10", "100", "1000", "10 000", "100 000")) +
+  coord_cartesian(ylim = c(0.2, 1.0)) +
+  labs(title = "Monty Hall: almashtirish yutuq chastotasi 2/3 ga yaqinlashadi",
+       subtitle = "Soya: nazariy +/- 2 SE yolagi. 1/2 chizigi hech qachon yolakka tushmaydi",
+       x = "Oyinlar soni N (logarifmik oq)",
+       y = "Almashtirish yutuq ulushi",
+       caption = "MINSTD generatori, urug 2026, N = 100 000")
+```
+
+```{r monty_bexabar}
+# --- MUHIM QIYOS: BEXABAR boshlovchi -----------------------------------
+# Endi shartni buzamiz: boshlovchi avtomobil qayerdaligini BILMAYDI va
+# qolgan ikkitadan birini TASODIFAN ochadi. Agar u avtomobilni ochib
+# qoʻysa, oʻyin bekor qilinadi (bunday raundlar hisobga olinmaydi).
+# Yangi generator — alohida oqim, avvalgi natijalarga taʼsir qilmaydi.
+g2 <- minstd_yangi(4052)     # boshqa urugʻ: 2 x 2026
+u_b <- g2(3 * N)
+avto_b   <- floor(u_b[seq(1, 3*N, by = 3)] * 3)
+tanlov_b <- floor(u_b[seq(2, 3*N, by = 3)] * 3)
+u3_b     <- u_b[seq(3, 3*N, by = 3)]
+
+# Boshlovchi qolgan ikkitadan birini TASODIFAN ochadi (avtomobilni ham).
+q1 <- pmin((tanlov_b + 1) %% 3, (tanlov_b + 2) %% 3)
+q2 <- pmax((tanlov_b + 1) %% 3, (tanlov_b + 2) %% 3)
+ochiq_b <- ifelse(u3_b < 0.5, q1, q2)
+
+bekor <- (ochiq_b == avto_b)                 # avtomobil ochildi -> bekor
+almash_b <- 3 - tanlov_b - ochiq_b
+cat(sprintf("bekor qilingan raundlar: %d (%.1f %%)\n",
+            sum(bekor), 100 * mean(bekor)))
+cat(sprintf("BEXABAR boshlovchi, almashtirish yutugʻi = %.5f  (nazariy 1/2)\n",
+            mean(almash_b[!bekor] == avto_b[!bekor])))
+cat(sprintf("BILADIGAN boshlovchi, almashtirish yutugʻi = %.5f (nazariy 2/3)\n",
+            mean(almash_yutuq)))
+cat("Xulosa: farq eshiklarda emas — BOSHLOVCHINING BILIMIDA.\n")
+```
+
+### Natija (kutilayotgan)
+
+```
+u[1] = 0.0455402984   u[2] = 0.2757419647   u[3] = 0.3403783731
+u[4] = 0.4044473546   u[5] = 0.0782521903
+
+(1) boshlovchi hech qachon avtomobilni ochmadi: TRUE
+(2) boshlovchi hech qachon sizning eshigingizni ochmadi: TRUE
+(3) almashtirilgan eshik ochiq ham, tanlangan ham emas: TRUE
+
+qolish      : nazariy 1/3 = 0.33333   simulyatsiya = 0.33294
+almashtirish: nazariy 2/3 = 0.66667   simulyatsiya = 0.66706
+yigʻindi = 1.00000  (1 boʻlishi shart)
+|farq| = 0.00039   SE = 0.00149   farq/SE = 0.26
+
+     N    baho       xato
+ 1e+01 0.60000 0.06666667
+ 1e+02 0.65000 0.01666667
+ 1e+03 0.67100 0.00433333
+ 1e+04 0.67490 0.00823333
+ 1e+05 0.66706 0.00039333
+xato barcha qadamlarda kamaydimi? FALSE
+
+bekor qilingan raundlar: 33281 (33.3 %)
+BEXABAR boshlovchi, almashtirish yutugʻi = 0.50109  (nazariy 1/2)
+BILADIGAN boshlovchi, almashtirish yutugʻi = 0.66706 (nazariy 2/3)
+```
+
+### Talqin — daftaringizga yozing
+
+**T4.1** Simulyatsiya $0{,}66706$ berdi, nazariya $0{,}66667$. Farq
+$0{,}00039$ — bu «yaqin»mi? Javobingizni **SE birligida** bering
+(farq/SE $= 0{,}26$). Qanday qiymatdan boshlab tashvishlanish kerak?
+
+**T4.2** Nazorat tekshiruvlari (1)–(3) nima uchun **majburiy**?
+Har biri qanday xatoni tutadi? Agar (1) `FALSE` chiqqanida, kodning
+qaysi qatorini birinchi boʻlib tekshirardingiz?
+
+**T4.3** $N = 1000$ da xato $0{,}0043$, $N = 10\,000$ da $0{,}0082$ —
+xato **oshdi**. Katta sonlar qonuni buzildimi? «Yaqinlashish» va
+«monoton kamayish» ni aniq ajrating (2-haftadagi javobingizni
+kengaytiring).
+
+**T4.4** Bexabar boshlovchi holatida $33{,}3\,\%$ raund bekor
+qilindi. Bu son tasodifmi? Uni nazariy hisoblang.
+
+**T4.5** «Ikki eshik qoldi — demak 50/50» deydigan hamkasbingizga
+**Bayes tili bilan** javob yozing (4–5 jumla): oldingi ehtimollik
+nima edi, dalil nima, ishonchlilik nisbati nechaga teng?
+*(Maslahat: siz eshik 0 ni tanladingiz va boshlovchi eshik 1 ni
+ochdi. $\Pr(\text{ochiq} = 1 \mid \text{avto} = 0) = 1/2$, ammo
+$\Pr(\text{ochiq} = 1 \mid \text{avto} = 2) = 1$.)*
+
+**T4.6** MINSTD ishlatilgani uchun sizning sonlaringiz Python bilan
+ishlaydigan talabaning sonlari bilan **aynan** mos tushishi kerak.
+Bu mos tushish nimani isbotlaydi va nimani isbotlamaydi?
+
+### Qaror
+
+Telekanal oʻyin koʻrsatuvining qoidalarini oʻzgartirmoqchi: boshlovchi
+endi eshikni **tasodifan** ochadi. Prodyuser sizdan soʻraydi: «Bu
+tomoshabinlar uchun oʻyinni adolatliroq qiladimi?» Sonlar bilan javob
+bering va **qaysi maʼnoda** adolatli/adolatsiz ekanini aniqlang.
+
+---
+
+# 5-topshiriq. Bazaviy stavkani oʻzgartirish
+
+**Qiyinlik: 5 (Ilgʻor) · Blum: Baholash · 20 ball · 20 daqiqa**
+
+### Statistik tushuncha
+
+Bayesda ikkita mustaqil kirish bor: **oldingi ehtimollik** (bazaviy
+stavka) va **dalilning kuchi** (ishonchlilik nisbati). Shanslar
+shaklida ular koʻpaytma sifatida ajraladi:
+
+$$\underbrace{\frac{\Pr(D\mid \text{bayroq})}{\Pr(D^{c}\mid \text{bayroq})}}
+_{\text{keyingi shans}}
+\;=\;
+\underbrace{\frac{\Pr(D)}{\Pr(D^{c})}}_{\text{oldingi shans}}
+\;\times\;
+\underbrace{\frac{\Pr(\text{bayroq}\mid D)}{\Pr(\text{bayroq}\mid D^{c})}}
+_{\text{ishonchlilik nisbati } \mathrm{LR}^{+}} .$$
+
+Bu yozuv haftaning eng muhim xulosasini koʻrsatadi: **modelni
+oʻzgartirmasdan** ham keyingi ehtimollikni butunlay oʻzgartirish
+mumkin — buning uchun faqat bazaviy stavka oʻzgarishi kifoya.
+
+### Maʼlumot
+
+**Faraziy bank modeli** (real bank maʼlumoti emas):
+$\Pr(\text{bayroq}\mid D) = 0{,}90$ (model defolt qiluvchilarning
+$90\,\%$ ini aniqlaydi), $\Pr(\text{bayroq}\mid D^{c}) = 0{,}10$
+(yaxshi mijozlarning $10\,\%$ iga xato bayroq qoʻyadi). Defolt bazaviy
+stavkasi $\Pr(D)$ **portfeldan portfelga oʻzgaradi** — aynan shuni
+oʻrganamiz.
+
+```{r kredit_funksiya}
+# --- Kredit skoring: 3-topshiriqdagi funksiyani QAYTA ISHLATAMIZ -------
+# skrining(tarqalganlik, sezgirlik, xoslik) — matematik jihatdan
+# bir xil masala, faqat atamalar boshqa:
+#   tarqalganlik <-> defolt bazaviy stavkasi P(D)
+#   sezgirlik    <-> P(bayroq | D)         = 0.90
+#   xoslik       <-> P(bayroq yoʻq | D^c)  = 1 - 0.10 = 0.90
+# Bu — muhim pedagogik nuqta: bitta formula ikki sohaga xizmat qiladi.
+SEZGIRLIK <- 0.90
+XOSLIK    <- 0.90        # chunki P(bayroq | D^c) = 0.10
+
+# Bazaviy holat: P(D) = 0.03
+asosiy <- skrining(0.03, SEZGIRLIK, XOSLIK)
+cat(sprintf("P(D) = 0.03:\n"))
+cat(sprintf("  P(bayroq)          = %.4f\n", asosiy$P_musbat))
+cat(sprintf("  P(D | bayroq)      = %.6f  (%.2f %%)\n",
+            asosiy$PPV, 100 * asosiy$PPV))
+cat(sprintf("  yolgʻon bayroqlar  = %.2f %%\n", 100 * (1 - asosiy$PPV)))
+cat(sprintf("  P(D | bayroq yoʻq) = %.6f\n", asosiy$FOR))
+```
+
+```{r kredit_supurma}
+# --- BAZAVIY STAVKANI OʻZGARTIRAMIZ ------------------------------------
+# Model butunlay oʻzgarmaydi. Faqat portfel tarkibi oʻzgaradi.
+stavkalar <- c(0.01, 0.03, 0.05, 0.10, 0.15, 0.20, 0.30)
+kredit <- data.frame(
+  P_D        = stavkalar,
+  P_bayroq   = sapply(stavkalar, function(p) skrining(p, SEZGIRLIK, XOSLIK)$P_musbat),
+  P_D_bayroq = sapply(stavkalar, function(p) skrining(p, SEZGIRLIK, XOSLIK)$PPV),
+  P_D_yoq    = sapply(stavkalar, function(p) skrining(p, SEZGIRLIK, XOSLIK)$FOR)
+)
+kredit$koeff <- kredit$P_D_bayroq / kredit$P_D    # necha barobar oshdi
+print(kredit, digits = 4, row.names = FALSE)
+
+LR_kredit <- SEZGIRLIK / (1 - XOSLIK)
+cat(sprintf("\nLR+ = %.1f  (bu son BARCHA qatorlarda bir xil)\n", LR_kredit))
+cat(sprintf("P(D|bayroq) = 0,5 boʻladigan bazaviy stavka = 1/(1+LR+) = %.4f\n",
+            1 / (1 + LR_kredit)))
+```
+
+```{r kredit_shanslar}
+# --- Shanslar shakli: koʻpaytma sifatida qarash ------------------------
+# Har bir qatorda: oldingi shans x LR = keyingi shans.
+# LR ustuni OʻZGARMAYDI — bu «dalil kuchi». Oʻzgarayotgani —
+# oldingi shans, yaʼni BAZAVIY STAVKA.
+shans <- data.frame(
+  P_D           = stavkalar,
+  oldingi_shans = stavkalar / (1 - stavkalar),
+  LR            = LR_kredit
+)
+shans$keyingi_shans <- shans$oldingi_shans * shans$LR
+shans$keyingi_ehtimollik <- shans$keyingi_shans / (1 + shans$keyingi_shans)
+print(shans, digits = 4, row.names = FALSE)
+
+cat("PPV jadvali bilan mos:",
+    isTRUE(all.equal(shans$keyingi_ehtimollik, kredit$P_D_bayroq)), "\n")
+```
+
+```{r kredit_grafik, fig.height=4.2}
+# --- Ikki egri chiziq: kuchli va zaif model ----------------------------
+# Bir xil bazaviy stavkalar, ikki xil model. Bu grafik «modelni
+# yaxshilash» va «bazaviy stavkani bilish» ni taqqoslaydi.
+tor5 <- seq(0.005, 0.35, length.out = 300)
+egri5 <- rbind(
+  data.frame(P_D = tor5, model = "LR+ = 9  (sez. 0.90, yolgon musbat 0.10)",
+             PPV = sapply(tor5, function(p) skrining(p, 0.90, 0.90)$PPV)),
+  data.frame(P_D = tor5, model = "LR+ = 49 (sez. 0.98, yolgon musbat 0.02)",
+             PPV = sapply(tor5, function(p) skrining(p, 0.98, 0.98)$PPV))
+)
+
+ggplot(egri5, aes(x = P_D, y = PPV, colour = model, linetype = model)) +
+  geom_line(linewidth = 0.9) +
+  geom_hline(yintercept = 0.5, linetype = "dotted", colour = "grey40") +
+  geom_point(data = kredit, aes(x = P_D, y = P_D_bayroq),
+             inherit.aes = FALSE, colour = oiVerm, size = 2.2, shape = 17) +
+  scale_colour_manual(values = c(oiBlue, oiGreen)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(title = "Keyingi ehtimollik: bazaviy stavka va dalil kuchi birga ishlaydi",
+       subtitle = "Uchburchaklar: 0.90/0.10 modeli. Nuqtali chiziq: 50 % chegarasi",
+       x = "Defolt bazaviy stavkasi P(D)",
+       y = "P(D | bayroq)", colour = NULL, linetype = NULL,
+       caption = "Faraziy bank modeli — real portfel maʼlumoti emas") +
+  theme(legend.position = "top",
+        legend.text = element_text(size = 7.5))
+```
+
+```{r kredit_kino_bogliq}
+# --- Xuddi shu gʻoya KINO maʼlumotida ----------------------------------
+# 2-topshiriqdagi Horror natijasini shanslar shaklida qayta yozamiz va
+# «faraziy katalog» stsenariylarini koʻramiz: agar katalogda Horror
+# ulushi boshqacha boʻlsa, P(Horror | R) qanday oʻzgaradi?
+# DIQQAT: P(R|Horror) va P(R|Horror^c) OʻZGARMAYDI deb faraz qilamiz.
+LR_kino <- P_R_H / P_R_notH
+# DIQQAT: birinchi qatorda YAXLITLANMAGAN P_H ni ishlatamiz. Agar
+# yaxlitlangan 0.0846 yozilsa, natija 0.138331 chiqadi — haqiqiy
+# 0.138365 dan farq qiladi. Yaxlitlash faqat CHIQARISH bosqichida.
+stsen <- data.frame(P_Horror = c(P_H, 0.15, 0.25, 0.40))
+stsen$oldingi_shans <- stsen$P_Horror / (1 - stsen$P_Horror)
+stsen$keyingi_shans <- stsen$oldingi_shans * LR_kino
+stsen$P_Horror_R    <- stsen$keyingi_shans / (1 + stsen$keyingi_shans)
+print(stsen, digits = 4, row.names = FALSE)
+cat(sprintf("\nLR = %.4f — dalil kuchi barcha stsenariyda bir xil.\n", LR_kino))
+cat("Birinchi qator haqiqiy maʼlumotdan:",
+    sprintf("%.6f", stsen$P_Horror_R[1]), "\n")
+```
+
+### Natija (kutilayotgan)
+
+```
+P(D) = 0.03:
+  P(bayroq)          = 0.1240
+  P(D | bayroq)      = 0.217742  (21.77 %)
+  yolgʻon bayroqlar  = 78.23 %
+  P(D | bayroq yoʻq) = 0.003425
+
+  P_D P_bayroq P_D_bayroq  P_D_yoq koeff
+ 0.01    0.108    0.08333 0.001121 8.333
+ 0.03    0.124    0.21774 0.003425 7.258
+ 0.05    0.140    0.32143 0.005814 6.429
+ 0.10    0.180    0.50000 0.012195 5.000
+ 0.15    0.220    0.61364 0.019231 4.091
+ 0.20    0.260    0.69231 0.027027 3.462
+ 0.30    0.340    0.79412 0.045455 2.647
+
+LR+ = 9.0  (bu son BARCHA qatorlarda bir xil)
+P(D|bayroq) = 0,5 boʻladigan bazaviy stavka = 1/(1+LR+) = 0.1000
+
+ P_D oldingi_shans LR keyingi_shans keyingi_ehtimollik
+ 0.01       0.01010  9       0.09091            0.08333
+ 0.03       0.03093  9       0.27835            0.21774
+ 0.05       0.05263  9       0.47368            0.32143
+ 0.10       0.11111  9       1.00000            0.50000
+ 0.15       0.17647  9       1.58824            0.61364
+ 0.20       0.25000  9       2.25000            0.69231
+ 0.30       0.42857  9       3.85714            0.79412
+PPV jadvali bilan mos: TRUE
+
+ P_Horror oldingi_shans keyingi_shans P_Horror_R
+  0.08462       0.09244        0.1606     0.1384
+  0.15000       0.17647        0.3065     0.2346
+  0.25000       0.33333        0.5790     0.3667
+  0.40000       0.66667        1.1581     0.5366
+
+LR = 1.7371 — dalil kuchi barcha stsenariyda bir xil.
+Birinchi qator haqiqiy maʼlumotdan: 0.138365
+```
+
+### Talqin — daftaringizga yozing
+
+**T5.1** `koeff` ustuni bazaviy stavka oshgan sari **kamayadi**
+($8{,}33 \to 2{,}65$), garchi keyingi ehtimollik oshsa ham. Bu
+ziddiyat emas. Nima uchun? (Maslahat: shanslar koʻpaytmasi
+oʻzgarmaydi, ammo shansdan ehtimollikka oʻtish chiziqli emas.)
+
+**T5.2** $\Pr(D) = 0{,}10$ da bayroqlarning aynan yarmi haqiqiy.
+Bu sonni $\text{LR}^{+} = 9$ dan **hisoblab** chiqaring va nima uchun
+bu «aylanish nuqtasi» ekanini tushuntiring.
+
+**T5.3** Ikki bank: A portfelida $\Pr(D) = 0{,}03$, B portfelida
+$\Pr(D) = 0{,}20$. **Bir xil model** ishlatiladi. Bayroq qoʻyilgan
+mijozga munosabat ikki bankda bir xil boʻlishi kerakmi? Sonlar bilan
+javob bering.
+
+**T5.4** Bankning texnik direktori: «Modelni yaxshilaymiz —
+sezgirlikni $0{,}90$ dan $0{,}98$ ga koʻtaramiz». Grafikdan
+foydalanib, bu $\Pr(D) = 0{,}03$ da PPV ni qanchaga koʻtarishini
+ayting. **Muqobil taklif**: portfelni bazaviy stavkasi yuqori boʻlgan
+segmentga toraytirish. Qaysi biri arzonroq va nima uchun?
+
+**T5.5** Kino stsenariylarida $\Pr(\text{Horror}) = 0{,}40$ boʻlsa,
+$\Pr(\text{Horror}\mid R) = 0{,}537$ chiqadi — dalil **bir xil**
+boʻlsa ham. «$R$ reyting — Horrorning kuchli belgisi» degan jumla
+qanchalik toʻgʻri? Uni tuzating.
+
+**T5.6** Etik savol. Agar bazaviy stavka ijtimoiy guruhlar boʻyicha
+farq qilsa, **bir xil model** turli guruhlarga turlicha taʼsir qiladi.
+Buni yuqoridagi jadval bilan koʻrsating va kamida bitta yumshatuvchi
+chora taklif qiling.
+
+### Qaror
+
+Bank kengashi qaror qabul qilmoqda: bayroq qoʻyilgan barcha arizalarni
+avtomatik rad etish. $\Pr(D) = 0{,}03$ boʻlgan portfelda $10\,000$
+ariza uchun **nechta yaxshi mijoz yoʻqotiladi** va **nechta defolt
+oldi olinadi**? Ikkala sonni hisoblang. Qarorni qoʻllab-quvvatlaysizmi?
+Javobingiz qaysi qoʻshimcha maʼlumotga bogʻliq?
+
+---
+
+# 6-topshiriq (ixtiyoriy, +5 bonus ball). Hosildorlik maʼlumotida Bayes
+
+**Qiyinlik: 6 (Tadqiqotga yoʻnaltirilgan) · Blum: Yaratish · uyda**
+
+Bir xil apparat — butunlay boshqa soha. Fazo: $135$ ta *mamlakat–yil*
+kuzatuvi. Boʻlinma — **beshta mamlakat**. Hodisa $Y$ = «bugʻdoy
+hosildorligi mintaqa medianasidan yuqori».
+
+```{r hosildorlik}
+hos <- read_csv("data/markaziy-osiyo-hosildorlik.csv",
+                locale = locale(encoding = "UTF-8"),
+                show_col_types = FALSE)
+
+# --- LOKAL TUZOGʻI (2-haftadan eslatma) --------------------------------
+# QUYIDAGI KOD AYRIM MUHITLARDA JIMGINA ISHLAMAY QOLADI:
+#     U <- hos$mamlakat == "Oʻzbekiston"
+# BARQAROR YECHIM: nomni fayldan OLIB kelamiz — literal yozmaymiz.
+mamlakatlar <- sort(unique(hos$mamlakat))
+print(mamlakatlar)
+uz <- mamlakatlar[1]                       # alifbo tartibida birinchisi
+stopifnot(sum(hos$mamlakat == uz) == 27)   # tekshiruvsiz davom etmang
+
+mediana <- median(hos$bugdoy)
+Y <- hos$bugdoy > mediana
+
+# Boʻlinma boʻyicha toʻliq ehtimollik formulasi + Bayes
+oldingi_m <- sapply(mamlakatlar, function(m) mean(hos$mamlakat == m))
+ishonch_m <- sapply(mamlakatlar, function(m) mean(Y[hos$mamlakat == m]))
+nat6 <- bayes(oldingi_m, ishonch_m, mamlakatlar)
+nat6$bevosita <- sapply(mamlakatlar,
+                        function(m) sum(hos$mamlakat == m & Y) / sum(Y))
+nat6$mos <- abs(nat6$keyingi - nat6$bevosita) < 1e-12
+
+cat(sprintf("mintaqa bugʻdoy medianasi = %.3f t/ga\n", mediana))
+print(nat6[, c("bolak", "oldingi", "ishonchlilik", "keyingi",
+               "bevosita", "mos")], digits = 4, row.names = FALSE)
+cat(sprintf("\ndalil P(Y) = %.10f   bevosita = %.10f\n",
+            nat6$dalil[1], mean(Y)))
+```
+
+### Talqin va qaror
+
+**T6.1** $\Pr(U\mid Y) = 0{,}3582$ va $\Pr(Y\mid U) = 0{,}8889$. Ikki
+jumla yozing, har birida shu sonlardan bittasi toʻgʻri ishlatilsin.
+
+**T6.2** Qozogʻiston uchun $\Pr(Y\mid \text{Qoz}) = 0$, demak keyingi
+ehtimollik ham $0$. Bayes teoremasi bu yerda nima deydi va bu
+xulosaning **cheklovi** nimada? (Maslahat: $0$ ehtimollik nimani
+anglatadi va nimani anglatmaydi?)
+
+**T6.3** Kuzatuv birligi — *mamlakat–yil*. Bir mamlakatning ketma-ket
+yillari bogʻliq. Bu «boʻlinma» shartini buzadimi yoki «teng
+imkoniyatlilik» farazini? Farqni aniq koʻrsating.
+
+**T6.4** Mediana **butun mintaqa** boʻyicha olindi. Agar u har bir
+mamlakat ichida alohida olinganida, $\Pr(U\mid Y)$ qanday boʻlardi?
+Hisoblang va farqni tushuntiring.
+
+**Qaror.** Xalqaro tashkilot mintaqada bugʻdoy dasturi uchun mamlakat
+tanlamoqda va sizdan «qaysi mamlakat yuqori hosildorlik bilan koʻproq
+bogʻlangan» degan savolga javob soʻraydi. Qaysi ehtimollikni
+hisoblaysiz va nima uchun? Sababiy xulosaning chegarasini oshkora
+ayting.
+
+---
+
+# Yakuniy nazorat roʻyxati
+
+```{r yakun}
+# Barcha asosiy natijalarni bitta jadvalda yigʻamiz — topshirishdan
+# oldin ularni kutilayotgan qiymatlar bilan solishtiring.
+xulosa <- data.frame(
+  korsatkich = c("n = |S|",
+                 "P(R) toʻliq ehtimollik formulasi",
+                 "P(R) bevosita sanash",
+                 "P(Horror | R)  Bayes",
+                 "P(Adventure | R)",
+                 "P(Drama | R)",
+                 "LR(Horror)",
+                 "PPV, tarqalganlik 0.001",
+                 "PPV, tarqalganlik 0.05",
+                 "PPV = 0.5 nuqtasi (skrining)",
+                 "Monty Hall: almashtirish",
+                 "Monty Hall: qolish",
+                 "P(D | bayroq), P(D) = 0.03",
+                 "P(D|bayroq) = 0.5 nuqtasi",
+                 "P(Oʻzbekiston | Y)"),
+  qiymat = c(n,
+             round(P_R_formula, 4), round(P_R_bevosita, 4),
+             round(nat$keyingi[nat$bolak == "Horror"], 4),
+             round(nat$keyingi[nat$bolak == "Adventure"], 4),
+             round(nat$keyingi[nat$bolak == "Drama"], 4),
+             round(LR, 4),
+             round(nat3$PPV, 4),
+             round(skrining(0.05, 0.99, 0.95)$PPV, 4),
+             round(p_yarim, 4),
+             round(mean(almash_yutuq), 5),
+             round(mean(qolish_yutuq), 5),
+             round(asosiy$PPV, 4),
+             round(1 / (1 + LR_kredit), 4),
+             round(nat6$keyingi[1], 4))
+)
+xulosa
+```
+
+**Kutilayotgan qiymatlar:** 2458 · 0.4528 · 0.4528 · 0.1384 · 0.0126 ·
+0.4304 · 1.7371 · 0.0194 · 0.5103 · 0.0481 · 0.66706 · 0.33294 ·
+0.2177 · 0.1000 · 0.3582
+
+**Bitta ham son farq qilmasligi kerak** — R va Python daftarlari uchun
+ham.
+
+---
+
+# Refleksiya (topshiriq bilan birga topshiriladi)
+
+Har biriga **3–4 jumla** bilan javob bering.
+
+1. **Tekshirilgan formula.** Bayes teoremasini avval javob maʼlum
+   boʻlgan joyda sinadik, keyin javob nomaʼlum boʻlgan joyda
+   qoʻlladik. Bu ketma-ketlik nima uchun muhim? Agar biz teskarisini
+   qilganimizda, qanday xavf paydo boʻlardi?
+2. **Yoʻnalish.** Bugun $\Pr(A\mid B)$ va $\Pr(B\mid A)$ farqi uch
+   sohada koʻrindi: kino, tibbiyot, kredit. Qaysi biri sizga eng
+   ishonarli tuyuldi va nima uchun? Kundalik hayotingizdan
+   **oʻzingizning** misolingizni keltiring.
+3. **Bazaviy stavka.** «Test $99\,\%$ aniq» degan jumlani eshitganda
+   endi qanday savol berasiz? Aynan bitta savolni yozing.
+4. **Simulyatsiya va nazariya.** Monty Hall masalasida siz avval
+   qaysi javobga ishondingiz? Simulyatsiya fikringizni oʻzgartirdimi,
+   yoki nazariy dalil? Qaysi biri sizni koʻproq ishontirdi va bu
+   sizning oʻrganish uslubingiz haqida nima deydi?
+5. **Funksiya yozish.** `bayes()` va `skrining()` funksiyalari beshta
+   turli masalada ishlatildi. Kodni funksiyaga aylantirish qanday
+   xatolardan himoya qildi? Qaysi tekshiruvni siz oʻzingiz
+   qoʻshgan boʻlardingiz?
+
+---
+
+# Topshirish tartibi va akademik halollik
+
+* **Fayl:** `W03-lab-<familiya>.Rmd` + undan olingan `.html`.
+* **Kod xatosiz ishlashi shart:** *Knit* / *Restart and Run All* dan
+  soʻng hech bir katak xato bermasligi kerak.
+* **Talqin va qaror** har bir topshiriq uchun matn koʻrinishida
+  yozilgan boʻlishi shart. Faqat kod — bajarilmagan ish.
+* **Muddat:** laboratoriyadan keyingi 48 soat ichida, Moodle.
+* **Grafiklar:** faqat Okabe–Ito ranglari; maʼnoni faqat rang bilan
+  bermang; oʻq nomlari, oʻlchov birligi va manba koʻrsatilsin.
+* **Sonlar:** matnda oʻnli ajratgich — **vergul** ($0{,}1384$); kod
+  natijasida — **nuqta** (`0.1384`). Aralashtirmang.
+* **Faraziy qiymatlar:** skrining va kredit bloklaridagi barcha sonlar
+  **faraziy**. Hisobotda ularni rasmiy statistika sifatida keltirish
+  — akademik halollik buzilishi.
+* **Urugʻ:** har bir simulyatsiya natijasi yonida urugʻ (2026) va
+  generator nomi (MINSTD) yozilishi shart.
+
+**Sunʼiy intellekt.** Ruxsat etiladi: kod xatosini topish, funksiya
+hujjatini tushuntirish, matnni tahrirlash. **Mumkin emas:** talqin va
+qaror bosqichlarini SIʼ ga yozdirish.
+
+> **Alohida ogohlantirish.** Til modellari Bayes masalalarida
+> muntazam ravishda **shartni teskari qoʻyadi** ($\Pr(+\mid K)$ ni
+> $\Pr(K\mid +)$ deb beradi) va **bazaviy stavkani unutadi**. Har
+> qanday javobni oʻz jadvalingizdagi sonlar bilan tekshiring — bu
+> haftaning SI topshirigʻi aynan shu xatolarni topishga
+> bagʻishlangan.
