@@ -1,0 +1,1449 @@
+---
+title: "STAT201 · 7-hafta · Kompyuter laboratoriyasi (R)"
+subtitle: "Tanlanma taqsimotlari, katta sonlar qonuni va markaziy limit teoremasi"
+author: "Toshkent Xalqaro Universiteti · Iqtisodiyot fakulteti"
+date: "2025/2026 oʻquv yili"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    df_print: kable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 7, fig.height = 4.2, dpi = 110,
+  # dev.args: oʻzbekcha «ʻ» belgisi grafikda chiqishi uchun cairo kerak.
+  # Shunga qaramay YORLIQLARDA faqat ASCII ishlatamiz — qoida 2-haftadan beri.
+  dev = "png", dev.args = list(type = "cairo")
+)
+options(digits = 7)
+```
+
+<!--
+  ==================================================================
+  STAT201 · 7-hafta · Kompyuter laboratoriyasi · R versiyasi
+  Davomiyligi: 2 akademik soat (120 daqiqa)
+  CLO5 — tanlanma taqsimotlari va MLT ning xulosa chiqarishdagi rolini
+         tushuntirish (Blum: Tushunish–Qoʻllash–Tahlil)
+  Maʼlumot: data/markaziy-osiyo-hosildorlik.csv (5 mamlakat x 27 yil)
+            data/kinolar-byudjet.csv  (2 467 film, 2000–2018)
+  Har bir topshiriq bitta zanjirga boʻysunadi:
+  statistik tushuncha -> maʼlumot -> kod -> natija -> talqin -> qaror
+  Izohlar va oʻzgaruvchi nomlari — oʻzbekcha; funksiya nomlari — inglizcha.
+  Simulyatsiya generatori: MINSTD (2-haftadagi bilan AYNAN bir xil).
+  Urugʻlar maʼruza slaydlaridagi bilan bir xil, shu sababli R va Python
+  daftarlari BELGI-MA-BELGI bir xil matn chiqaradi.
+  ==================================================================
+-->
+
+$$
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\SD}{\operatorname{SD}}
+\newcommand{\SE}{\operatorname{SE}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\Xbar}{\bar{X}}
+\newcommand{\phat}{\hat{p}}
+\newcommand{\xbar}{\bar{x}}
+\newcommand{\Norm}{\mathcal{N}}
+\newcommand{\Bin}{\operatorname{Bin}}
+\newcommand{\Bern}{\operatorname{Bern}}
+\newcommand{\Expo}{\operatorname{Exp}}
+$$
+
+# Laboratoriya haqida
+
+**Maqsad.** Maʼruzada aytilgan **tanlanma taqsimoti** haqida *eshitish*
+yetarli emas. Bugun siz uni **quradingiz**: avval qoʻlda — beshta
+haqiqiy sondan olinadigan *barcha* tanlanmalarni sanab chiqib; soʻng
+kompyuterda — 2 467 ta haqiqiy kino byudjetidan 20 000 marta tanlanma
+olib. Keyin $\SE=\sigma/\sqrt{n}$, $\SD(\Xbar)$ ning qiyshiqligi,
+katta sonlar qonuni va markaziy limit teoremasini **oʻlchash bilan**
+tekshirasiz.
+
+**Haftaning markaziy gʻoyasi — statistika ham tasodifiy miqdor.**
+$\xbar$ — bitta son emas, balki *taqsimoti bor* miqdorning bitta
+realizatsiyasi. Bugun siz shu taqsimotni koʻz bilan koʻrasiz.
+
+Ushbu mashgʻulot beshta narsani **isbotlaydi yoki buzadi**:
+
+1. **$\E[\Xbar]=\mu$ va $\Var(\Xbar)=\sigma^{2}/n$** — 10 va 25 ta
+   tanlanmani toʻliq sanab chiqib, formulani *taxminan* emas, **aynan**
+   tasdiqlaysiz.
+2. **$n-1$ maxraji** — 1-haftadan beri javobsiz qolgan savol
+   $\E[s^{2}]=1{,}309079=\sigma^{2}$, ammo $\E[s^{2}_{n}]=0{,}654540$
+   degan ikkita son bilan yopiladi.
+3. **Qimorboz xatosi** ikki ustunli jadval bilan oʻldiriladi:
+   $\E|S_{n}-n/2|$ **oʻsadi**, $\E|\phat-0{,}5|$ esa **kamayadi** —
+   ikkalasi bir vaqtda toʻgʻri.
+4. **``$n\ge30$'' qoidasi** koʻz bilan emas, **Kolmogorov masofasi**
+   bilan tekshiriladi va $\Bern(0{,}10)$ da **13 barobar** yomonroq
+   ekani chiqadi.
+5. **MLT universal emas.** 7-topshiriqda siz ayni shu kodni Koshi
+   taqsimotida ishlatasiz va u **ishlamaydi** — sababini oʻzingiz
+   topasiz.
+
+> **Qoida.** $\SE$ — bu **oʻrtachalar** tarqoqligi, $\sigma$ esa
+> **kuzatuvlar** tarqoqligi. $n$ oshsa $\SE$ kichrayadi, $\sigma$ esa
+> **oʻzgarmaydi**. Bu ikkisini chalkashtirish — 7-haftaning eng qimmat
+> xatosi.
+
+**Ish zanjiri.** Har bir topshiriqda quyidagi ketma-ketlikni yozma
+ravishda bajarasiz:
+
+> **statistik tushuncha → maʼlumot → kod → natija → talqin → qaror**
+
+Faqat kod yozib, natijani izohsiz qoldirish — topshiriq bajarilmagan
+hisoblanadi. Baholashning yarmidan koʻpi aynan *talqin* va *qaror*
+bosqichlariga beriladi.
+
+**Vaqt va ball taqsimoti (120 daqiqa, 120 ball + 5 bonus).**
+
+| # | Mazmun | Daqiqa | Blum | Qiyinlik | Ball |
+|---|---|---|---|---|---|
+| 0 | Muhitni sozlash va MINSTD | 5 | — | — | — |
+| 1 | Haqiqiy ustun — chekli bosh toʻplam, $\mu$ va $\sigma$ | 12 | Qoʻllash | 2 (Konseptual) | 15 |
+| 2 | Barcha tanlanmalarni sanab chiqish ($N=5$, $n=2$) | 18 | Qoʻllash | 3 (Amaliy) | 20 |
+| 3 | Takroriy tanlash: $\SD(\Xbar)$ va qiyshiqlik qonuni | 18 | Tahlil | 4 (Analitik) | 20 |
+| 4 | Katta sonlar qonuni va qimorboz xatosi | 15 | Tahlil | 4 (Analitik) | 15 |
+| 5 | MLT panjarasi va Kolmogorov masofasi | 22 | Baholash | 5 (Ilgʻor) | 20 |
+| 6 | Ulush $\phat$ va muvaffaqiyat–muvaffaqiyatsizlik sharti | 15 | Qoʻllash | 3 (Amaliy) | 15 |
+| 7 | Koshi: MLT ishlamaydigan hol | 15 | Baholash | 5 (Ilgʻor) | 15 |
+| 8 | AI yordamida: javobdagi xatoni topish | uyda | Yaratish | 6 (Tadqiqot) | +5 |
+
+**Oldingi bilim.** Sizga quyidagilar allaqachon maʼlum boʻlishi kerak:
+oʻrtacha, dispersiya, standart ogʻish va $n-1$ maxraji (1-hafta);
+gistogramma va qiyshiqlik (1-hafta); MINSTD generatori va urugʻ
+tushunchasi (2-hafta); bogʻliqsizlik (3-hafta); kutilma va dispersiya
+xossalari (4-hafta); normal taqsimot va $z$-baho (5-hafta);
+$\Var(aX+bY)=a^{2}\Var(X)+b^{2}\Var(Y)+2ab\Cov(X,Y)$ (6-hafta) — bugungi
+isbot aynan shu formuladan chiqadi.
+
+**Bu hafta nimani qilmaymiz.** Ishonch oraligʻi, $t$-taqsimot, $\sigma$
+oʻrniga $s$ qoʻyish, gipotezalarni tekshirish va $p$-qiymat — **9-haftadan**
+boshlanadi. Bugun $\sigma$ **maʼlum** deb olinadi. Bu vaqtinchalik aldov
+va biz buni ochiq tan olamiz.
+
+> **Diqqat: keyingi hafta — oraliq imtihon (25 %), 1–7-haftalar.**
+> Ushbu laboratoriya imtihonga tayyorgarlikning asosiy qismi:
+> 5-topshiriqdagi Kolmogorov jadvali va 4-topshiriqdagi ikki ustun
+> imtihonda deyarli aynan takrorlanadi.
+
+---
+
+# 0-bosqich. Muhitni sozlash
+
+```{r lokal}
+# --- MUHIM: UTF-8 muhitini kafolatlash --------------------------------
+# Oʻzbekcha nomlarda tutuq belgisi «ʻ» (U+02BB) bor. Agar R UTF-8
+# boʻlmagan lokalda ishga tushsa (masalan LC_CTYPE=C), kod ichidagi
+# oʻzbekcha satr va CSV dan oʻqilgan qiymat BAYTLARI bir xil boʻlsa ham
+# TENG DEB HISOBLANMAYDI: filter() BOʻSH jadval qaytaradi va butun
+# tahlil NaN ga aylanadi — hech qanday xato xabari chiqmasdan.
+# QOIDA (2-haftadan): toifa nomlarini kod ichida literal yozmang —
+# ularni unique(...) orqali FAYLDAN oling va POZITSIYA boʻyicha tanlang.
+if (!grepl("UTF-8", Sys.getlocale("LC_CTYPE"), ignore.case = TRUE)) {
+  for (lokal in c("C.UTF-8", "en_US.UTF-8", "uz_UZ.UTF-8",
+                  "Uzbek_Uzbekistan.utf8", "English_United States.utf8")) {
+    if (suppressWarnings(Sys.setlocale("LC_CTYPE", lokal)) != "") break
+  }
+}
+cat("MUHIT: LC_CTYPE =", Sys.getlocale("LC_CTYPE"), "\n")
+```
+
+```{r paketlar}
+# --- Kerakli paketlar -------------------------------------------------
+library(readr)     # CSV oʻqish
+library(dplyr)     # maʼlumotni filtrlash
+library(ggplot2)   # grafiklar
+
+# Okabe–Ito palitrasi: rang koʻrmaslikka moslashgan.
+oiBlue <- "#0072B2"; oiOrange <- "#E69F00"; oiGreen  <- "#009E73"
+oiPink <- "#CC79A7"; oiVerm   <- "#D55E00"; oiSky    <- "#56B4E9"
+oiYell <- "#F0E442"; oiGrey   <- "#5A6470"
+
+theme_set(theme_minimal(base_size = 11))
+theme_update(
+  panel.grid.minor = element_blank(),
+  plot.title    = element_text(face = "bold"),
+  plot.subtitle = element_text(colour = "grey30")
+)
+
+# QOIDA (2-haftadan): grafik yorliqlarida faqat ASCII harflar.
+# R ning standart pdf() qurilmasi U+02BB belgisini chiza olmaydi.
+cat("MUHIT: cairo mavjudmi:", capabilities("cairo"), "\n")
+```
+
+```{r yordamchi}
+# --- IKKI DAFTAR BIR XIL MATN CHIQARISHI UCHUN YORDAMCHILAR ------------
+# (1) tf(): R «TRUE», Python esa «True» yozadi. Mantiqiy qiymatni
+#     OʻZIMIZ formatlaymiz.
+tf <- function(b) if (isTRUE(as.logical(b))) "TRUE" else "FALSE"
+
+# (2) pad()/padl(): R ning sprintf("%-16s") formati satrni BAYT boʻyicha
+#     toʻldiradi, Python esa BELGI boʻyicha. «Oʻzbekiston» da 11 ta belgi,
+#     ammo 12 ta bayt bor — shu sababli oʻzbekcha yorliqlarni sprintf ga
+#     bermay, kenglikni OʻZIMIZ hisoblaymiz.
+pad  <- function(s, n) {           # chapga tekislash (oʻngdan boʻshliq)
+  s <- enc2utf8(s); k <- n - nchar(s, type = "chars")
+  if (k > 0) paste0(s, strrep(" ", k)) else s
+}
+padl <- function(s, n) {           # oʻngga tekislash (chapdan boʻshliq)
+  s <- enc2utf8(s); k <- n - nchar(s, type = "chars")
+  if (k > 0) paste0(strrep(" ", k), s) else s
+}
+
+# (3) P_(): sprintf + cat qisqartmasi. Har bir son QOʻLDA formatlanadi.
+P_ <- function(...) cat(sprintf(...), "\n", sep = "")
+
+# (4) Bosh toʻplam koʻrsatkichlari — MAXRAJI N (n-1 EMAS!).
+#     R ning var() va sd() funksiyalari n-1 ga boʻladi: ular TANLANMA
+#     koʻrsatkichlari. Bugun bizga PARAMETR kerak.
+dispersiya_bosh <- function(x) mean((x - mean(x))^2)
+ogish_bosh      <- function(x) sqrt(mean((x - mean(x))^2))
+
+# (5) Qiyshiqlik va ekssess kurtoz — moment taʼrifi boʻyicha
+#     (scipy.stats.skew / kurtosis bilan bir xil, bias=TRUE).
+qiyshiqlik <- function(x) {
+  d <- x - mean(x); m2 <- mean(d^2); m3 <- mean(d^3); m3 / m2^1.5
+}
+kurtoz <- function(x) {
+  d <- x - mean(x); m2 <- mean(d^2); m4 <- mean(d^4); m4 / m2^2 - 3
+}
+
+# (6) Kvantil: R ning type=7 usuli numpy.percentile ning standart
+#     ("linear") usuli bilan AYNAN bir xil. Boshqa type ISHLATMANG.
+kv <- function(x, p) as.numeric(quantile(x, p, type = 7, names = FALSE))
+```
+
+```{r minstd}
+# --- MINSTD generatori (2-haftadan beri oʻzgarmagan) -------------------
+# Nima uchun oʻzimizning generatorimiz kerak?
+#   R:      set.seed(2026); runif(3)
+#   Python: np.random.default_rng(2026).random(3)
+# Bu ikkisi BOSHQA-BOSHQA sonlar beradi. Ikkalasi ham toʻgʻri, lekin
+# ikkalasi ham bir-biriga mos emas. Shu sababli kursda tasodifiylik
+# kerak boʻlganda HAR DOIM quyidagi 4 qatorli generator ishlatiladi:
+#     x <- (48271 * x) mod 2147483647,    u <- x / 2147483647
+# Bu — Lehmer (1951) generatori, «MINSTD» nomi bilan mashhur.
+A_ <- 48271; M_ <- 2147483647
+
+minstd <- function(urug) {
+  x <- urug %% M_
+  function(n) {                      # n ta u ~ U(0,1) qaytaradi
+    o <- numeric(n)
+    for (i in seq_len(n)) { x <<- (A_ * x) %% M_; o[i] <- x }
+    o / M_
+  }
+}
+
+# Indeks tanlash: 0 dan hi-1 gacha butun son (Python bilan bir xil).
+# R da vektor 1 dan boshlanadi, shuning uchun ishlatishda +1L qilamiz.
+indeks <- function(gen, n, hi) as.integer(gen(n) * hi)
+
+# Nazorat qiymati: urugʻ 2026 dan keyingi uchta son.
+g <- minstd(2026); u3 <- g(3)
+P_("=== 0-BOSQICH: MINSTD NAZORATI ===")
+P_("urugʻ 2026 -> u1 = %.10f  u2 = %.10f  u3 = %.10f", u3[1], u3[2], u3[3])
+P_("bu uchta son ikkinchi tildagi daftarda ham AYNAN shunday chiqishi shart")
+
+# Solishtirish uchun: tilning OʻZ generatori (bu satr ikki tilda FARQ QILADI)
+set.seed(2026)
+cat(sprintf("MUHIT: R ning runif(1) = %.10f  (Python da boshqa son chiqadi)\n",
+            runif(1)))
+```
+
+```{r malumot}
+# --- Ikkita haqiqiy maʼlumot toʻplami ---------------------------------
+# A. markaziy-osiyo-hosildorlik.csv — 5 mamlakat x 27 yil (1992–2018),
+#    hosildorlik t/ga. Manba: FAOSTAT / Our World in Data (OWID).
+# B. kinolar-byudjet.csv — 2 467 film (2000–2018), byudjet va daromad
+#    AQSh dollarida. Manba: The Numbers / Kaggle «movie industry».
+DATA  <- "data"
+hosil <- read_csv(file.path(DATA, "markaziy-osiyo-hosildorlik.csv"),
+                  locale = locale(encoding = "UTF-8"), show_col_types = FALSE)
+kino  <- read_csv(file.path(DATA, "kinolar-byudjet.csv"),
+                  locale = locale(encoding = "UTF-8"), show_col_types = FALSE)
+
+# Mamlakat nomlari FAYLDAN olinadi — kod ichida literal yozilmaydi.
+mamlakatlar <- unique(hosil$mamlakat)
+kod5        <- c("UZB", "KGZ", "KAZ", "TJK", "TKM")   # ASCII (grafiklar uchun)
+
+P_("")
+P_("=== 0-BOSQICH: MAʼLUMOT ===")
+P_("hosildorlik : %d qator, %d mamlakat, %d-%d yillar",
+   nrow(hosil), length(mamlakatlar), min(hosil$yil), max(hosil$yil))
+for (i in seq_along(mamlakatlar))
+  P_("  [%d] %s = %s", i, kod5[i], pad(mamlakatlar[i], 13))
+P_("kinolar     : n = %d ta film, %d-%d yillar",
+   nrow(kino), min(kino$yil), max(kino$yil))
+```
+
+---
+
+# 1-topshiriq. Haqiqiy ustun — chekli bosh toʻplam {#t1}
+
+> **Blum:** Qoʻllash · **Qiyinlik:** 2 (Konseptual) · **Ball:** 15 ·
+> **Vaqt:** 12 daqiqa
+
+**Statistik tushuncha.** Butun hafta bitta ajratishga tayanadi:
+
+| | Bosh toʻplam (barcha birliklar) | Tanlanma ($n$ ta birlik) |
+|---|---|---|
+| Belgi | $\mu$, $\sigma$, $p$ — **parametr** | $\xbar$, $s$, $\phat$ — **statistika** |
+| Alifbo | yunon | lotin |
+| Qiymati | **qatʼiy son**, noaniqligi yoʻq | **tasodifiy miqdor** |
+| Maxraj | $\sigma^{2}=\frac{1}{N}\sum(x_i-\mu)^{2}$ | $s^{2}=\frac{1}{n-1}\sum(x_i-\xbar)^{2}$ |
+
+Bugun biz maʼlumot faylini **butun bosh toʻplam** deb qabul qilamiz.
+Bu sunʼiy holat, ammo u bizga *haqiqatni bilish* imkonini beradi: $\mu$ va
+$\sigma$ ni **hisoblab qoʻyamiz**, keyin tanlanmalar ularga qanchalik
+yaqin tushishini oʻlchaymiz. Haqiqiy tadqiqotda $\mu$ hech qachon
+maʼlum boʻlmaydi — shuning uchun bugungi mashq **kalitni koʻrib turib**
+oʻynaladigan oʻyin.
+
+> **Tuzoq.** R da `var(x)` va `sd(x)` **$n-1$** ga boʻladi — bu
+> *tanlanma* koʻrsatkichi. Python da `np.var(x)` **$N$** ga boʻladi —
+> bu *bosh toʻplam* koʻrsatkichi. Ikki til ikki xil standartni tanlagan.
+> Shuning uchun 0-bosqichda `dispersiya_bosh()` va `ogish_bosh()`
+> funksiyalarini **oʻzimiz** yozdik.
+
+**Maʼlumot.** (a) 2018-yilgi bugʻdoy hosildorligi, 5 ta Markaziy Osiyo
+mamlakati, t/ga — $N=5$ lik *kichkina* bosh toʻplam.
+(b) 2 467 ta film byudjeti (mln $) — $N=2467$ lik *katta* bosh toʻplam.
+
+**Kod.**
+
+```{r t1-kichik}
+# --- 1A: N = 5 lik bosh toʻplam ---------------------------------------
+# Qator POZITSIYA boʻyicha tanlanadi (mamlakat nomini literal yozmaymiz).
+h18 <- hosil[hosil$yil == 2018, ]
+h18 <- h18[order(match(h18$mamlakat, mamlakatlar)), ]
+X   <- as.numeric(h18$bugdoy)
+N   <- length(X)
+
+P_("")
+P_("=== 1-TOPSHIRIQ (A): N = 5 LIK BOSH TOʻPLAM ===")
+P_("2018-yil bugʻdoy hosildorligi, t/ga  [manba: OWID / FAOSTAT]")
+for (i in seq_len(N)) P_("  %s %s %8.3f", kod5[i], pad(mamlakatlar[i], 13), X[i])
+
+mu    <- mean(X)
+sig2  <- dispersiya_bosh(X)          # maxraj N — PARAMETR
+sig   <- ogish_bosh(X)
+s2    <- var(X)                      # maxraj n-1 — STATISTIKA
+P_("")
+P_("PARAMETR  mu       = %.4f/%d = %.6f", sum(X), N, mu)
+P_("PARAMETR  sigma^2  = %.6f/%d = %.6f  (maxraj N)", sum((X - mu)^2), N, sig2)
+P_("PARAMETR  sigma    = %.6f", sig)
+P_("STATISTIKA s^2 (R var()) = %.6f  (maxraj n-1) -- BOSHQA SON!", s2)
+P_("nisbat s^2/sigma^2 = %.6f = N/(N-1) = %.6f", s2 / sig2, N / (N - 1))
+
+P_("")
+P_("Ogʻishlar (x - mu) va ularning yigʻindisi:")
+P_("  %s", paste(sprintf("%+.4f", X - mu), collapse = "  "))
+P_("  |yigʻindi| = %.10f  -> nolga teng: %s",
+   abs(sum(X - mu)), tf(abs(sum(X - mu)) < 1e-12))
+```
+
+```{r t1-katta}
+# --- 1B: N = 2467 lik haqiqiy bosh toʻplam ----------------------------
+b   <- kino$byudjet / 1e6            # mln $ ga oʻtkazamiz
+Nb  <- length(b)
+mub <- mean(b); sigb <- ogish_bosh(b)
+
+P_("")
+P_("=== 1-TOPSHIRIQ (B): N = 2467 LIK BOSH TOʻPLAM ===")
+P_("Kino byudjetlari, mln $  [manba: The Numbers / Kaggle, 2000-2018]")
+P_("N        = %d", Nb)
+P_("mu       = %.6f", mub)
+P_("sigma    = %.6f", sigb)
+P_("median   = %.4f", median(b))
+P_("min; max = %.4f; %.4f", min(b), max(b))
+P_("qiyshiqlik gamma1 = %.6f", qiyshiqlik(b))
+P_("ekssess kurtoz    = %.6f", kurtoz(b))
+P_("")
+P_("mu > median (%.4f > %.4f): %s  -> oʻngga qiyshiq",
+   mub, median(b), tf(mub > median(b)))
+P_("")
+P_("5%% qoidasi: chekli bosh toʻplam tuzatmasini n < 0.05*N boʻlsa eʼtiborsiz")
+P_("qoldirsa boʻladi.  0.05 * %d = %.2f", Nb, 0.05 * Nb)
+P_("Demak n <= %d gacha sigma/sqrt(n) formulasi tuzatmasiz ishlaydi.",
+   floor(0.05 * Nb))
+```
+
+```{r t1-grafik}
+# --- 1C: bosh toʻplamning shakli --------------------------------------
+# ASCII yorliqlar (2-hafta qoidasi).
+gp <- ggplot(data.frame(byudjet = b), aes(byudjet)) +
+  geom_histogram(bins = 40, fill = oiBlue, colour = "white", linewidth = 0.2) +
+  geom_vline(xintercept = mub,       colour = oiVerm,   linewidth = 0.9) +
+  geom_vline(xintercept = median(b), colour = oiOrange, linewidth = 0.9,
+             linetype = "dashed") +
+  annotate("text", x = mub + 4, y = Inf, label = "mu (solid)", vjust = 1.6,
+           hjust = 0, colour = oiVerm, size = 3.2) +
+  annotate("text", x = median(b) - 4, y = Inf, label = "median (dashed)",
+           vjust = 3.0, hjust = 1, colour = oiOrange, size = 3.2) +
+  labs(title = "Population of 2467 film budgets (NOT a sampling distribution)",
+       subtitle = "Strongly right-skewed: gamma1 = 1.6168",
+       x = "budget, million USD", y = "count",
+       caption = "Source: The Numbers / Kaggle")
+gp
+```
+
+**Natija.** Kutilayotgan chiqish:
+
+- $\mu=2{,}3794$, $\sigma^{2}=1{,}309079$, $\sigma=1{,}144150$;
+  `var()` esa $1{,}636349$ beradi — **boshqa son**;
+- ogʻishlar yigʻindisi aynan $0$ (bu tasodif emas, taʼrifdan kelib chiqadi);
+- kino byudjetlari: $\mu=35{,}804977$, $\sigma=37{,}404842$,
+  median $=22$, $\gamma_1=1{,}616805$.
+
+**Talqin (yozma javob talab qilinadi).**
+
+1. Nima uchun $\sigma^{2}$ va $s^{2}$ **turli maxrajga** ega? Qaysi biri
+   bugungi $N=5$ lik holatda toʻgʻri va **nima uchun**?
+2. Kino byudjetlari taqsimoti kuchli qiyshiq. Bu 5-topshiriqda MLT uchun
+   qanday oqibatga olib keladi — *oldindan* bashorat qiling va bashoratingizni
+   yozib qoʻying.
+3. $0{,}05N=123{,}35$ soni nimani anglatadi? $n=200$ boʻlsa nima qilish kerak?
+
+**Qaror.** Statistika idorasi sizdan «bugʻdoy hosildorligining
+oʻzgaruvchanligi» haqida bitta son soʻradi. Siz $1{,}144150$ (bosh
+toʻplam) yoki $1{,}279198$ (tanlanma) ni berasizmi? Javobingizni
+**bir jumla** bilan asoslang.
+
+---
+
+# 2-topshiriq. Barcha tanlanmalarni sanab chiqish {#t2}
+
+> **Blum:** Qoʻllash · **Qiyinlik:** 3 (Amaliy) · **Ball:** 20 ·
+> **Vaqt:** 18 daqiqa
+
+**Statistik tushuncha.**
+
+> **Taʼrif.** $\bar{X}$ ning **tanlanma taqsimoti** — bu bosh toʻplamdan
+> olinishi mumkin boʻlgan *barcha* $n$ hajmli tanlanmalar boʻyicha
+> $\bar{X}$ qiymatlarining taqsimoti.
+
+Bu taʼrif odatda mavhum tuyuladi, chunki «barcha tanlanmalar» cheksiz
+koʻp boʻladi. $N=5$, $n=2$ da esa ular **atigi 10 ta** (qaytarishsiz)
+yoki **25 ta** (qaytarish bilan). Shuning uchun bugun biz taʼrifni
+*taxminan* emas, **toʻliq** bajaramiz — va $\E[\Xbar]=\mu$ hamda
+$\Var(\Xbar)=\sigma^{2}/n$ ni jadvaldan **oʻqib olamiz**.
+
+Isbot (6-haftadan): $X_1,\dots,X_n$ bogʻliqsiz va bir xil taqsimlangan boʻlsa,
+$$\E[\Xbar]=\frac{1}{n}\sum\E[X_i]=\mu,\qquad
+  \Var(\Xbar)=\frac{1}{n^{2}}\sum\Var(X_i)=\frac{\sigma^{2}}{n}.$$
+Ikkinchi tenglikda $\Cov(X_i,X_j)=0$ **ishlatildi** — bogʻliqsizlik aynan
+shu bitta qatorda kerak boʻladi. Qaytarishsiz tanlashda tanlanmalar
+bogʻliqsiz **emas**, shuning uchun natija $\frac{\sigma^{2}}{n}\cdot
+\frac{N-n}{N-1}$ ga oʻzgaradi (**chekli bosh toʻplam tuzatmasi**, fpc).
+
+**Kod.**
+
+```{r t2-qaytarishsiz}
+# --- 2A: qaytarishSIZ — C(5,2) = 10 ta tanlanma -----------------------
+juft  <- t(combn(N, 2))                  # 10 x 2 indekslar matritsasi
+mwor  <- (X[juft[, 1]] + X[juft[, 2]]) / 2
+
+P_("")
+P_("=== 2-TOPSHIRIQ (A): QAYTARISHSIZ, n = 2, BARCHA 10 TANLANMA ===")
+P_("%s %s %s", pad("tanlanma", 16), padl("qiymatlar", 20), padl("Xbar", 10))
+for (i in seq_len(nrow(juft))) {
+  a <- juft[i, 1]; c_ <- juft[i, 2]
+  P_("%s %s %s",
+     pad(sprintf("{%s, %s}", substr(mamlakatlar[a], 1, 4),
+                             substr(mamlakatlar[c_], 1, 4)), 16),
+     padl(sprintf("(%.3f + %.3f)/2", X[a], X[c_]), 20),
+     padl(sprintf("%.4f", mwor[i]), 10))
+}
+E_wor <- mean(mwor); V_wor <- dispersiya_bosh(mwor)
+fpc   <- (N - 2) / (N - 1)
+P_("")
+P_("E[Xbar]   = %.6f   mu = %.6f   -> siljimagan: %s",
+   E_wor, mu, tf(abs(E_wor - mu) < 1e-12))
+P_("Var(Xbar) = %.6f", V_wor)
+P_("sigma^2/n = %.6f   -> BU YERDA MOS EMAS", sig2 / 2)
+P_("sigma^2/n * (N-n)/(N-1) = %.6f * %.6f = %.6f -> mos: %s",
+   sig2 / 2, fpc, sig2 / 2 * fpc, tf(abs(V_wor - sig2 / 2 * fpc) < 1e-12))
+P_("fpc koeffitsiyenti sqrt((N-n)/(N-1)) = %.6f", sqrt(fpc))
+P_("SE = %.6f", sqrt(V_wor))
+```
+
+```{r t2-qaytarish}
+# --- 2B: qaytarish BILAN — 5^2 = 25 ta tanlanma -----------------------
+# expand.grid ustunlar tartibi: birinchi ustun tez oʻzgaradi. Python dagi
+# ikkilik sikl esa IKKINCHI indeksni tez oʻzgartiradi. Bir xil TOʻPLAM
+# hosil boʻladi, lekin tartibni moslash uchun sikl tartibini aniq yozamiz.
+i1 <- rep(seq_len(N), each = N)          # i tashqi sikl
+i2 <- rep(seq_len(N), times = N)         # j ichki sikl
+mwr <- (X[i1] + X[i2]) / 2
+
+P_("")
+P_("=== 2-TOPSHIRIQ (B): QAYTARISH BILAN, 25 TA TANLANMA ===")
+P_("5x5 jadval, Xbar qiymatlari:")
+P_("%s%s", pad("", 8), paste(sapply(seq_len(N),
+    function(j) padl(kod5[j], 9)), collapse = ""))
+for (i in seq_len(N)) {
+  satr <- paste(sapply(seq_len(N),
+    function(j) padl(sprintf("%.4f", (X[i] + X[j]) / 2), 9)), collapse = "")
+  P_("%s%s", pad(kod5[i], 8), satr)
+}
+E_wr <- mean(mwr); V_wr <- dispersiya_bosh(mwr)
+P_("")
+P_("E[Xbar]   = %.6f = mu : %s", E_wr, tf(abs(E_wr - mu) < 1e-12))
+P_("Var(Xbar) = %.6f   sigma^2/n = %.6f  -> mos: %s",
+   V_wr, sig2 / 2, tf(abs(V_wr - sig2 / 2) < 1e-12))
+P_("SE(Xbar)  = %.6f   sigma/sqrt(2) = %.6f", sqrt(V_wr), sig / sqrt(2))
+P_("Turli xil Xbar qiymatlari: %d ta (25 tanlanmadan)",
+   length(unique(round(mwr, 4))))
+P_("Kenglik: bosh toʻplam [%.3f; %.3f] -> Xbar [%.4f; %.4f]  -> torayadi",
+   min(X), max(X), min(mwr), max(mwr))
+P_("")
+P_("SE solishtirish: qaytarishsiz %.6f  <  qaytarish bilan %.6f : %s",
+   sqrt(V_wor), sqrt(V_wr), tf(sqrt(V_wor) < sqrt(V_wr)))
+```
+
+```{r t2-s2}
+# --- 2C: NIMA UCHUN n-1? Javob 25 ta tanlanmada -----------------------
+# Har bir tanlanma uchun IKKI xil dispersiya hisoblaymiz va ularning
+# 25 ta tanlanma boʻyicha OʻRTACHASINI sigma^2 bilan solishtiramiz.
+s2_n1 <- numeric(N * N); s2_n <- numeric(N * N)
+for (k in seq_len(N * N)) {
+  tan_       <- c(X[i1[k]], X[i2[k]])
+  s2_n1[k]   <- sum((tan_ - mean(tan_))^2) / (2 - 1)   # maxraj n-1
+  s2_n[k]    <- sum((tan_ - mean(tan_))^2) / 2         # maxraj n
+}
+P_("")
+P_("=== 2-TOPSHIRIQ (C): NIMA UCHUN n-1 GA BOʻLAMIZ? ===")
+P_("sigma^2 (haqiqat)          = %.6f", sig2)
+P_("E[s^2]   maxraj n-1 boʻlsa = %.6f  -> siljimagan: %s",
+   mean(s2_n1), tf(abs(mean(s2_n1) - sig2) < 1e-12))
+P_("E[s^2_n] maxraj n   boʻlsa = %.6f  -> SILJIGAN (past baholaydi)",
+   mean(s2_n))
+P_("siljish nisbati = %.6f = (n-1)/n = %.6f", mean(s2_n) / sig2, (2 - 1) / 2)
+P_("")
+P_("Xulosa: n-1 maxraji «tuzatish» emas, u siljishni AYNAN yoʻqotadi.")
+P_("Sabab: tanlanma oʻrtachasi tanlanmaning OʻZIDAN olingan, shuning uchun")
+P_("kuzatuvlar oʻz oʻrtachasiga mu ga qaraganda YAQINROQ turadi.")
+```
+
+```{r t2-grafik}
+# --- 2D: bosh toʻplam va tanlanma taqsimoti yonma-yon ------------------
+d1 <- data.frame(qiymat = X,    turi = "Population (N = 5)")
+d2 <- data.frame(qiymat = mwor, turi = "Sampling distr. of Xbar (n = 2, without repl.)")
+d3 <- data.frame(qiymat = mwr,  turi = "Sampling distr. of Xbar (n = 2, with repl.)")
+dd <- rbind(d1, d2, d3)
+dd$turi <- factor(dd$turi, levels = unique(dd$turi))
+
+ggplot(dd, aes(qiymat, fill = turi)) +
+  geom_dotplot(binwidth = 0.09, dotsize = 0.85, stackratio = 0.9,
+               colour = "white", show.legend = FALSE) +
+  geom_vline(xintercept = mu, colour = oiVerm, linewidth = 0.8) +
+  facet_wrap(~ turi, ncol = 1, scales = "free_y") +
+  scale_fill_manual(values = c(oiGrey, oiBlue, oiGreen)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  labs(title = "All samples enumerated: the spread shrinks, the centre does not move",
+       subtitle = "Red line = mu = 2.3794 (identical in all three panels)",
+       x = "wheat yield, t/ha", y = NULL,
+       caption = "Source: OWID / FAOSTAT, 2018")
+```
+
+**Natija.** Kutilayotgan qiymatlar: qaytarishsiz $\E[\Xbar]=2{,}379400$,
+$\Var(\Xbar)=0{,}490905$, $\SE=0{,}700646$, fpc $=0{,}866025$;
+qaytarish bilan $\Var(\Xbar)=0{,}654540=\sigma^{2}/2$,
+$\SE=0{,}809036$, 15 ta turli qiymat;
+$\E[s^{2}]=1{,}309079=\sigma^{2}$, $\E[s^{2}_{n}]=0{,}654540$.
+
+**Talqin.**
+
+1. Uchala panelda **markaz bir xil**, ammo **tarqoqlik turlicha**.
+   Buni $\E[\Xbar]=\mu$ va $\Var(\Xbar)=\sigma^{2}/n$ tillarida ayting.
+2. Qaytarishsiz $\SE$ **kichikroq**. Nima uchun bu *mantiqan* toʻgʻri?
+   (Maslahat: $n=N=5$ boʻlsa nima boʻladi?)
+3. $\E[s^{2}_{n}]/\sigma^{2}=0{,}5$ aniq $(n-1)/n$ ga teng. $n=30$ da bu
+   nisbat qancha boʻladi va nima uchun amaliyotda farq sezilmaydi?
+
+**Qaror.** Sizga «$N=5$ ta viloyatdan $n=2$ tasini tekshiramiz» degan
+dizayn taklif qilindi va $\SE$ ni $\sigma/\sqrt{2}$ deb hisoblashdi.
+Bu **notoʻgʻri**. Qanchalik notoʻgʻri — foizda ayting va qanday tuzatish
+kerakligini yozing.
+
+---
+
+# 3-topshiriq. Takroriy tanlash: $\SD(\Xbar)$ va qiyshiqlik qonuni {#t3}
+
+> **Blum:** Tahlil · **Qiyinlik:** 4 (Analitik) · **Ball:** 20 ·
+> **Vaqt:** 18 daqiqa
+
+**Statistik tushuncha.** 2-topshiriqda barcha tanlanmalarni sanab
+chiqdik. $N=2467$, $n=30$ da bu mumkin emas: tanlanmalar soni
+$2467^{30}\approx10^{103}$. Shuning uchun biz **taxminiy sanab
+chiqish** — *Monte-Karlo* usulini ishlatamiz: 20 000 ta tasodifiy
+tanlanma olamiz va ularning oʻrtachalari taqsimotini quramiz.
+
+Tekshiriladigan **ikki** qonun:
+$$\SE(\Xbar)=\frac{\sigma}{\sqrt{n}}
+\qquad\text{va}\qquad
+\gamma_1(\Xbar)=\frac{\gamma_1(X)}{\sqrt{n}}.$$
+Birinchisi maʼruzada isbotlandi. **Ikkinchisi — bugungi kashfiyot:**
+qiyshiqlik ham $\sqrt{n}$ tezligida soʻnadi. Aynan shu formula
+5-topshiriqdagi «$n\ge30$ yetarlimi?» savoliga javob beradi.
+
+**Maʼlumot.** 2 467 ta film byudjeti (1B da hisoblangan
+$\mu=35{,}804977$, $\sigma=37{,}404842$, $\gamma_1=1{,}616805$).
+
+**Kod.**
+
+```{r t3-jadval}
+# --- 3A: 20 000 ta tanlanma, besh xil n -------------------------------
+m_sim <- 20000L
+n_lar <- c(1L, 5L, 30L, 100L, 400L)
+g1b   <- qiyshiqlik(b)
+xb_saqlash <- list()                     # grafik uchun saqlab qoʻyamiz
+
+P_("")
+P_("=== 3-TOPSHIRIQ: TAKRORIY TANLASH (m = 20 000, MINSTD urugʻ 20260007+n) ===")
+P_("%s%s%s%s%s%s", padl("n", 6), padl("E[Xbar]", 12), padl("SD(Xbar)", 12),
+   padl("sigma/sqrt(n)", 16), padl("qiyshiqlik", 12), padl("gamma1/sqrt(n)", 16))
+for (n_ in n_lar) {
+  gen <- minstd(20260007 + n_)
+  idx <- indeks(gen, m_sim * n_, Nb) + 1L
+  # Python .reshape(m, n) qator boʻyicha toʻldiradi -> byrow = TRUE
+  S   <- matrix(b[idx], nrow = m_sim, ncol = n_, byrow = TRUE)
+  xb  <- rowMeans(S)
+  xb_saqlash[[as.character(n_)]] <- xb
+  P_("%s%s%s%s%s%s", padl(sprintf("%d", n_), 6),
+     padl(sprintf("%.4f", mean(xb)), 12),
+     padl(sprintf("%.4f", ogish_bosh(xb)), 12),
+     padl(sprintf("%.4f", sigb / sqrt(n_)), 16),
+     padl(sprintf("%.4f", qiyshiqlik(xb)), 12),
+     padl(sprintf("%.4f", g1b / sqrt(n_)), 16))
+}
+P_("")
+P_("Haqiqiy bosh toʻplam: mu = %.4f  sigma = %.4f  gamma1 = %.4f",
+   mub, sigb, g1b)
+```
+
+```{r t3-oralik}
+# --- 3B: Xbar ning markaziy 95 % oraligʻi ------------------------------
+P_("")
+P_("Xbar ning markaziy 95%% oraligʻi (simulyatsiyadan, 2.5-97.5 kvantil):")
+for (n_ in c(30L, 400L)) {
+  xb <- xb_saqlash[[as.character(n_)]]
+  lo <- kv(xb, 0.025); hi <- kv(xb, 0.975)
+  P_("  n = %3d : [%.3f; %.3f]   eni = %.3f", n_, lo, hi, hi - lo)
+}
+P_("")
+P_("SE ni YARMIGA tushirish uchun n ni NECHA barobar oshirish kerak?")
+P_("  SE(25)  = %.4f", sigb / sqrt(25))
+P_("  SE(100) = %.4f   nisbat = %.4f", sigb / sqrt(100),
+   (sigb / sqrt(25)) / (sigb / sqrt(100)))
+P_("  javob: 4 barobar. Aniqlik sqrt(n) tezligida, xarajat esa n tezligida oshadi.")
+```
+
+```{r t3-grafik}
+# --- 3C: beshta tanlanma taqsimoti BITTA oʻqda -------------------------
+# Diqqat: hamma panel bir xil x oʻqiga ega — aks holda «torayish» koʻrinmaydi.
+dd3 <- do.call(rbind, lapply(names(xb_saqlash), function(k)
+  data.frame(xbar = xb_saqlash[[k]], n = factor(paste0("n = ", k),
+             levels = paste0("n = ", names(xb_saqlash))))))
+
+ggplot(dd3, aes(xbar)) +
+  geom_histogram(bins = 60, fill = oiBlue, colour = NA) +
+  geom_vline(xintercept = mub, colour = oiVerm, linewidth = 0.7) +
+  facet_wrap(~ n, ncol = 1, scales = "free_y") +
+  coord_cartesian(xlim = c(0, 120)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  labs(title = "Sampling distribution of Xbar: same axis, five sample sizes",
+       subtitle = "Red line = mu = 35.8050. Centre fixed, spread shrinks as 1/sqrt(n)",
+       x = "Xbar, million USD", y = NULL,
+       caption = "20000 samples per n, MINSTD seed 20260007+n")
+```
+
+```{r t3-grafik2}
+# --- 3D: SE ning sqrt(n) qonuni — log-log oʻqda ------------------------
+nn  <- c(1, 2, 5, 10, 25, 30, 50, 100, 400, 1600)
+dse <- data.frame(n = nn, se = sigb / sqrt(nn))
+dsim <- data.frame(n = as.numeric(names(xb_saqlash)),
+                   se = sapply(xb_saqlash, ogish_bosh))
+
+ggplot(dse, aes(n, se)) +
+  geom_line(colour = oiGrey, linewidth = 0.7) +
+  geom_point(data = dsim, aes(n, se), colour = oiVerm, size = 2.6, shape = 17) +
+  scale_x_log10(breaks = c(1, 5, 30, 100, 400, 1600)) + scale_y_log10() +
+  labs(title = "SE = sigma/sqrt(n): theory (line) vs simulation (triangles)",
+       subtitle = "Straight line on a log-log plot => slope -1/2",
+       x = "n (log scale)", y = "SE(Xbar), million USD (log scale)",
+       caption = "Population: 2467 film budgets")
+```
+
+**Natija.**
+
+| $n$ | $\E[\Xbar]$ | $\SD(\Xbar)$ | $\sigma/\sqrt n$ | $\gamma_1(\Xbar)$ | $\gamma_1/\sqrt n$ |
+|---|---|---|---|---|---|
+| 1 | 35,9725 | 37,4554 | 37,4048 | 1,6052 | 1,6168 |
+| 5 | 35,8913 | 16,6195 | 16,7280 | 0,6832 | 0,7231 |
+| 30 | 35,7590 | 6,8166 | 6,8292 | 0,2994 | 0,2952 |
+| 100 | 35,8713 | 3,7601 | 3,7405 | 0,1362 | 0,1617 |
+| 400 | 35,7962 | 1,8676 | 1,8702 | 0,0673 | 0,0808 |
+
+**Talqin.**
+
+1. $\E[\Xbar]$ ustuni $n$ oshgani sayin $\mu$ ga **yaqinlashmaydi** —
+   u **hamma joyda** $\mu$ atrofida. Nima uchun? Qaysi xossa buni
+   kafolatlaydi?
+2. $n=1$ satrida $\SD(\Xbar)=37{,}4554$, ammo $\sigma=37{,}4048$.
+   Farq $0{,}0506$. Bu **xatomi**? Javobingizni Monte-Karlo xatosi
+   tilida asoslang.
+3. $n=30$ da $\gamma_1(\Xbar)=0{,}2994$ — hali ham nolga teng emas.
+   Bu MLT uchun nimani anglatadi?
+4. $n$ ni $30\to400$ ga oshirish oraliq enini $26{,}5\to7{,}4$ ga
+   tushirdi: $13{,}3$ barobar koʻp maʼlumot, $3{,}6$ barobar aniqlik.
+   Bu savdo kelishuvi arziydimi? Qanday sharoitda arzimaydi?
+
+**Qaror.** Byudjet oʻrtachasini $\pm2$ mln $ aniqlikda bilish kerak.
+$n$ ni hisoblang va uni $N=2467$ bilan solishtiring. Xulosangizni bir
+jumlada yozing.
+
+---
+
+# 4-topshiriq. Katta sonlar qonuni va qimorboz xatosi {#t4}
+
+> **Blum:** Tahlil · **Qiyinlik:** 4 (Analitik) · **Ball:** 15 ·
+> **Vaqt:** 15 daqiqa
+
+**Statistik tushuncha.**
+
+> **Katta sonlar qonuni (KSQ).** $n\to\infty$ da $\Xbar\to\mu$
+> (ehtimollik boʻyicha).
+
+KSQ **nima demaydi**:
+
+- U **muvozanatlashtiruvchi kuch** haqida emas. Tanga xotirasiz:
+  10 ta gerbdan keyin raqam ehtimoli hamon $0{,}5$.
+- U **sonlar farqi** haqida emas. $|S_n-n/2|$ — gerblar soni bilan
+  kutilgan son orasidagi farq — **oʻsib boradi**, $\sqrt{n}$ tartibida.
+  Faqat bu farqning **$n$ ga nisbati** kamayadi.
+
+Bugungi topshiriq shu ikki ustunni **yonma-yon** chop etadi. Aynan bu
+ikkisini chalkashtirish **qimorboz xatosi**ni tugʻdiradi.
+
+**Kod.**
+
+```{r t4-yol}
+# --- 4A: BITTA realizatsiya — 1 000 000 ta tanga tashlash --------------
+gen  <- minstd(999)
+u    <- gen(1000000L)
+gerb <- as.integer(u < 0.5)             # 1 = gerb
+kum  <- cumsum(gerb)
+
+P_("")
+P_("=== 4-TOPSHIRIQ (A): BITTA YOʻL, 1 000 000 TASHLASH (urugʻ 999) ===")
+P_("%s%s%s%s%s", padl("n", 9), padl("gerblar", 10), padl("ulush", 10),
+   padl("|ulush-0.5|", 14), padl("|gerb - n/2|", 15))
+for (n_ in c(10L, 100L, 1000L, 10000L, 100000L, 1000000L)) {
+  hd <- kum[n_]; pr <- hd / n_
+  P_("%s%s%s%s%s", padl(sprintf("%d", n_), 9), padl(sprintf("%d", hd), 10),
+     padl(sprintf("%.5f", pr), 10), padl(sprintf("%.6f", abs(pr - 0.5)), 14),
+     padl(sprintf("%.1f", abs(hd - n_ / 2)), 15))
+}
+P_("")
+P_("CHAP tomon (ulush) 0.5 ga yaqinlashadi -> KSQ.")
+P_("OʻNG tomon (sonlar farqi) KICHRAYMAYDI.")
+P_("Diqqat: bu BITTA tasodifiy yoʻl; u sakrab turishi mumkin.")
+P_("Qonun bitta yoʻl haqida emas, OʻRTACHA xulq-atvor haqida:")
+```
+
+```{r t4-takror}
+# --- 4B: 2 000 ta MUSTAQIL realizatsiya — mustahkam bayon --------------
+# Nazariya: E|S_n - n/2| = 0.5*sqrt(2n/pi)  (katta n uchun).
+P_("")
+P_("=== 4-TOPSHIRIQ (B): 2 000 REALIZATSIYA (urugʻ 20260702+n) ===")
+P_("%s%s%s%s", padl("n", 8), padl("E|S_n - n/2|", 18),
+   padl("0.5*sqrt(2n/pi)", 18), padl("E|ulush - 0.5|", 18))
+for (n_ in c(25L, 100L, 400L, 1600L, 6400L)) {
+  gl <- minstd(20260702 + n_)
+  F_ <- matrix(as.integer(gl(2000L * n_) < 0.5), nrow = 2000L, ncol = n_,
+               byrow = TRUE)
+  S_ <- rowSums(F_)
+  P_("%s%s%s%s", padl(sprintf("%d", n_), 8),
+     padl(sprintf("%.4f", mean(abs(S_ - n_ / 2))), 18),
+     padl(sprintf("%.4f", 0.5 * sqrt(2 * n_ / pi)), 18),
+     padl(sprintf("%.6f", mean(abs(S_ / n_ - 0.5))), 18))
+}
+P_("")
+P_("CHAP ustun OʻSADI (sqrt(n) tartibida), OʻNG ustun KAMAYADI (1/sqrt(n)).")
+P_("Ikkalasi ham bir vaqtda TOʻGʻRI. Qimorboz xatosi aynan shu ikki")
+P_("ustunni chalkashtirishdan tugʻiladi.")
+P_("")
+P_("KSQ va MLT farqi:")
+P_("  KSQ: Xbar -> mu.  Nima haqida: JOYLASHUV.")
+P_("  MLT: (Xbar-mu)/(sigma/sqrt(n)) -> N(0,1).  Nima haqida: SHAKL va TARQOQLIK.")
+```
+
+```{r t4-grafik}
+# --- 4C: ikkita ustunni ikkita panelda koʻrsatish ----------------------
+nsteps <- unique(round(10^seq(1, 6, length.out = 120)))
+d4 <- data.frame(
+  n    = rep(nsteps, 2),
+  qiym = c(abs(kum[nsteps] / nsteps - 0.5), abs(kum[nsteps] - nsteps / 2)),
+  turi = rep(c("|proportion - 0.5|  (SHRINKS)",
+               "|heads - n/2|  (GROWS)"), each = length(nsteps)))
+d4$turi <- factor(d4$turi, levels = unique(d4$turi))
+
+ggplot(d4, aes(n, qiym, colour = turi)) +
+  geom_line(linewidth = 0.7, show.legend = FALSE) +
+  facet_wrap(~ turi, ncol = 2, scales = "free_y") +
+  scale_x_log10(breaks = c(10, 1000, 100000)) +
+  scale_colour_manual(values = c(oiGreen, oiVerm)) +
+  labs(title = "The two faces of the Law of Large Numbers (one coin path, seed 999)",
+       subtitle = "Both panels come from the SAME million tosses",
+       x = "n (log scale)", y = NULL,
+       caption = "MINSTD generator, seed 999")
+```
+
+**Natija.**
+
+| $n$ | gerblar | ulush | $\lvert$ulush$-0{,}5\rvert$ | $\lvert S_n-n/2\rvert$ |
+|---|---|---|---|---|
+| 10 | 2 | 0,20000 | 0,300000 | 3,0 |
+| 100 | 41 | 0,41000 | 0,090000 | 9,0 |
+| 1 000 | 495 | 0,49500 | 0,005000 | 5,0 |
+| 10 000 | 4 948 | 0,49480 | 0,005200 | 52,0 |
+| 100 000 | 49 772 | 0,49772 | 0,002280 | 228,0 |
+| 1 000 000 | 499 198 | 0,49920 | 0,000802 | 802,0 |
+
+**Talqin.**
+
+1. $n=1000$ da $|S_n-n/2|=5$, $n=10000$ da esa $52$. Farq **10 barobar**
+   oshdi. Bu KSQ ga **zid emas** — nima uchun?
+2. Nazariy ustun $0{,}5\sqrt{2n/\pi}$ simulyatsiyaga qanchalik yaqin?
+   Eng katta nisbiy farq qaysi $n$ da?
+3. Qimorbozga «ketma-ket 10 ta gerbdan keyin raqam kelishi kerak» degan
+   fikr **qaysi ustunga** tayanadi va u qaysi ustunni koʻrmaydi?
+4. **Oʻrtachaga qaytish.** Eng yaxshi natija koʻrsatgan sotuvchi
+   keyingi oyda odatda pastroq natija beradi. Bu «charchash» emas.
+   Buni bugungi ikki ustun bilan tushuntiring.
+
+**Qaror.** Kazino menejeri: «Bugun ruletkada qizil 12 marta ketma-ket
+chiqdi, endi qora chiqishi ehtimoli yuqori — stavkani oshiring». Unga
+**bitta jadval** va **ikki jumla** bilan javob yozing.
+
+---
+
+# 5-topshiriq. MLT panjarasi va Kolmogorov masofasi {#t5}
+
+> **Blum:** Baholash · **Qiyinlik:** 5 (Ilgʻor) · **Ball:** 20 ·
+> **Vaqt:** 22 daqiqa
+
+**Statistik tushuncha.**
+
+> **Markaziy limit teoremasi (MLT).** $X_1,\dots,X_n$ bogʻliqsiz, bir xil
+> taqsimlangan, $\E[X]=\mu$, $0<\Var(X)=\sigma^{2}<\infty$ boʻlsa,
+> $$Z_n=\frac{\Xbar-\mu}{\sigma/\sqrt{n}}\ \xrightarrow{\ d\ }\ \mathcal{N}(0,1).$$
+
+Darsliklarning koʻpchiligida «$n\ge30$ boʻlsa MLT ishlaydi» deb
+yoziladi. **Bu qoida emas.** MLT — *limit* teoremasi; u $n=30$ da
+qanchalik yaqinlashganini **aytmaydi**. Yaqinlashish tezligi bosh
+toʻplamning **qiyshiqligiga** bogʻliq.
+
+Bugun biz «yetarlimi?» degan savolni **koʻz bilan emas, son bilan**
+hal qilamiz. Oʻlchov —
+
+> **Kolmogorov masofasi.**
+> $D_n=\sup_x\bigl|F_{Z_n}(x)-\Phi(x)\bigr|$ — empirik taqsimot
+> funksiyasi bilan standart normal taqsimot funksiyasi orasidagi eng
+> katta farq. $D_n=0{,}05$ degani: har qanday $x$ da ehtimollik xatosi
+> $5$ foiz punktdan oshmaydi.
+
+**Maʼlumot.** Toʻrtta bosh toʻplam, qiyshiqligi oʻsish tartibida:
+tekis $U(0,1)$ ($\gamma_1=0$) · haqiqiy kino byudjetlari ($1{,}617$) ·
+koʻrsatkichli $\Expo(1)$ ($2{,}000$) · $\Bern(0{,}10)$ ($2{,}667$).
+
+**Kod.**
+
+```{r t5-pop}
+# --- 5A: toʻrtta bosh toʻplamni tayyorlash -----------------------------
+# Uchtasi generatsiya qilinadi, toʻrtinchisi HAQIQIY maʼlumot.
+# Urugʻlar maʼruza slaydlaridagi bilan bir xil (gen/01_verify_w07.py).
+gp1 <- minstd(20260101); POP_tekis <- gp1(400000L)
+gp2 <- minstd(20260102); POP_exp   <- -log(gp2(400000L))
+gp3 <- minstd(20260103); POP_bern  <- as.numeric(gp3(400000L) < 0.10)
+
+# Har bir bosh toʻplam uchun: nomi, massiv, mu, sigma, tanlash urugʻi.
+# Urugʻ = 20260200 + n + 7*(nom uzunligi) — maʼruza skriptidagi qoida;
+# quyida u tayyor son sifatida yozilgan (nom uzunligi tildan qatʼi nazar
+# bir xil boʻlishi uchun).
+nomlar <- c("Tekis U(0,1)", "Kino byudjeti", "Koʻrsatkichli Exp(1)",
+            "Bernulli p=0,10")
+urugla <- c(20260284L, 20260361L, 20260340L, 20260305L)
+mu_lar <- c(0.5, mub, 1.0, 0.10)
+sg_lar <- c(sqrt(1 / 12), sigb, 1.0, sqrt(0.09))
+g1_lar <- c(0.0, g1b, 2.0, (1 - 2 * 0.1) / sqrt(0.09))
+
+P_("")
+P_("=== 5-TOPSHIRIQ (A): TOʻRTTA BOSH TOʻPLAM ===")
+P_("%s%s%s%s%s", pad("bosh toʻplam", 24), padl("N", 9), padl("mu", 12),
+   padl("sigma", 12), padl("gamma1", 10))
+for (i in 1:4) {
+  arr <- switch(i, POP_tekis, b, POP_exp, POP_bern)
+  P_("%s%s%s%s%s", pad(nomlar[i], 24), padl(sprintf("%d", length(arr)), 9),
+     padl(sprintf("%.4f", mu_lar[i]), 12), padl(sprintf("%.4f", sg_lar[i]), 12),
+     padl(sprintf("%.4f", g1_lar[i]), 10))
+}
+```
+
+```{r t5-tur}
+# --- 5B: Kolmogorov masofasi -------------------------------------------
+# sup|F_n(x) - Phi(x)| — empirik taqsimot funksiyasini saralab hisoblaymiz.
+kolmogorov <- function(z) {
+  zs <- sort(z); Fn <- seq_along(zs) / length(zs)
+  max(abs(Fn - pnorm(zs)))
+}
+
+n_grid <- c(1L, 2L, 5L, 30L, 100L)
+D_mat  <- matrix(0, nrow = 4, ncol = length(n_grid))
+Q_mat  <- matrix(0, nrow = 4, ncol = length(n_grid))
+
+P_("")
+P_("=== 5-TOPSHIRIQ (B): MLT PANJARASI (m = 20 000) ===")
+P_("Har katakda: qiyshiqlik(Xbar) | Kolmogorov masofasi sup|F-Phi|")
+P_("%s%s", pad("bosh toʻplam", 24),
+   paste(sapply(n_grid, function(n_) padl(sprintf("n=%d", n_), 17)),
+         collapse = ""))
+for (i in 1:4) {
+  arr  <- switch(i, POP_tekis, b, POP_exp, POP_bern)
+  satr <- ""
+  for (j in seq_along(n_grid)) {
+    n_  <- n_grid[j]
+    gl  <- minstd(urugla[i] + n_)
+    idx <- indeks(gl, 20000L * n_, length(arr)) + 1L
+    S   <- matrix(arr[idx], nrow = 20000L, ncol = n_, byrow = TRUE)
+    xb  <- rowMeans(S)
+    z   <- (xb - mu_lar[i]) / (sg_lar[i] / sqrt(n_))
+    Q_mat[i, j] <- qiyshiqlik(xb); D_mat[i, j] <- kolmogorov(z)
+    satr <- paste0(satr, padl(sprintf("%.3f", Q_mat[i, j]), 9),
+                          padl(sprintf("%.4f", D_mat[i, j]), 8))
+  }
+  P_("%s%s", pad(nomlar[i], 24), satr)
+}
+```
+
+```{r t5-xulosa}
+# --- 5C: «n >= 30» qoidasini SINASH ------------------------------------
+j30 <- which(n_grid == 30L)
+P_("")
+P_("=== 5-TOPSHIRIQ (C): «n >= 30» QOIDASI SINOVDAN OʻTDIMI? ===")
+P_("n = 30 dagi Kolmogorov masofasi:")
+for (i in 1:4)
+  P_("  %s gamma1 = %s  D_30 = %s", pad(nomlar[i], 24),
+     padl(sprintf("%.3f", g1_lar[i]), 7), padl(sprintf("%.4f", D_mat[i, j30]), 8))
+P_("")
+P_("Eng yomon / eng yaxshi nisbat = %.4f / %.4f = %.1f barobar",
+   D_mat[4, j30], D_mat[1, j30], D_mat[4, j30] / D_mat[1, j30])
+P_("Ayni bir n da, ayni bir m da. Farqni tugʻdirgan narsa — QIYSHIQLIK.")
+P_("")
+P_("Qiyshiqlik qonuni gamma1(Xbar) = gamma1(X)/sqrt(n) tekshiruvi:")
+P_("%s%s%s%s", padl("n", 6), padl("oʻlchangan", 14), padl("nazariy", 12),
+   padl("farq", 10))
+for (j in seq_along(n_grid)) {
+  n_ <- n_grid[j]
+  P_("%s%s%s%s", padl(sprintf("%d", n_), 6),
+     padl(sprintf("%.4f", Q_mat[2, j]), 14),
+     padl(sprintf("%.4f", g1b / sqrt(n_)), 12),
+     padl(sprintf("%.4f", Q_mat[2, j] - g1b / sqrt(n_)), 10))
+}
+P_("(2-qator: haqiqiy kino byudjetlari bosh toʻplami)")
+P_("")
+P_("XULOSA: «n >= 30» — qoida emas, qoʻpol tavsiya. Kerakli n bosh")
+P_("toʻplamning qiyshiqligiga bogʻliq: D ~ gamma1/sqrt(n) tartibida.")
+```
+
+```{r t5-grafik}
+# --- 5D: Kolmogorov masofasi n ga qarshi, log-log ----------------------
+d5 <- data.frame(
+  n    = rep(n_grid, each = 4),
+  D    = as.vector(D_mat),
+  pop  = rep(c("Uniform U(0,1)  g1 = 0.00", "Film budgets    g1 = 1.62",
+               "Exponential(1)  g1 = 2.00", "Bernoulli(0.10) g1 = 2.67"),
+             times = length(n_grid)))
+d5$pop <- factor(d5$pop, levels = unique(d5$pop))
+
+ggplot(d5, aes(n, D, colour = pop, shape = pop)) +
+  geom_line(linewidth = 0.7) + geom_point(size = 2.4) +
+  geom_hline(yintercept = 0.05, linetype = "dotted", colour = oiGrey) +
+  annotate("text", x = 2.6, y = 0.062, hjust = 0, size = 3,
+           colour = oiGrey, label = "D = 0.05 (working threshold)") +
+  scale_x_log10(breaks = n_grid) + scale_y_log10() +
+  scale_colour_manual(values = c(oiBlue, oiOrange, oiGreen, oiVerm)) +
+  scale_shape_manual(values = c(16, 17, 15, 4)) +
+  labs(title = "How fast does the CLT actually work? Measured, not eyeballed",
+       subtitle = "Kolmogorov distance sup|F - Phi| for four populations",
+       x = "n (log scale)", y = "Kolmogorov distance (log scale)",
+       colour = NULL, shape = NULL,
+       caption = "20000 samples per cell, MINSTD") +
+  theme(legend.position = "bottom", legend.text = element_text(size = 8))
+```
+
+**Natija.**
+
+| bosh toʻplam | $\gamma_1$ | $n=1$ | $n=2$ | $n=5$ | $n=30$ | $n=100$ |
+|---|---|---|---|---|---|---|
+| Tekis $U(0,1)$ | 0,000 | 0,0590 | 0,0196 | 0,0067 | **0,0109** | 0,0067 |
+| Kino byudjeti | 1,617 | 0,1737 | 0,1121 | 0,0516 | **0,0202** | 0,0123 |
+| $\Expo(1)$ | 2,000 | 0,1586 | 0,1007 | 0,0636 | **0,0328** | 0,0245 |
+| $\Bern(0{,}10)$ | 2,667 | 0,5304 | 0,4928 | 0,3664 | **0,1462** | 0,0823 |
+
+**Talqin.**
+
+1. $n=30$ da xato $\Bern(0{,}10)$ uchun tekis taqsimotdagidan
+   **13,4 barobar** katta. «$n\ge30$» qoidasi bu yerda **nimani**
+   notoʻgʻri vaʼda qildi?
+2. $\Bern(0{,}10)$ uchun $D<0{,}05$ boʻlishi uchun taxminan qanday $n$
+   kerak? $D\propto\gamma_1/\sqrt{n}$ munosabatidan **baholang** va
+   javobingizni muvaffaqiyat–muvaffaqiyatsizlik sharti ($np\ge10$) bilan
+   solishtiring.
+3. Tekis taqsimot satrida $n=2$ da $D=0{,}0196$, $n=30$ da esa
+   $0{,}0109$ — **oʻsib** ketdi? Bu qanday tushuntiriladi?
+   (Maslahat: Monte-Karlo xatosining oʻzi $\approx1/\sqrt{m}=0{,}007$.)
+4. Kino byudjetlari satri $\Expo(1)$ satridan **yaxshiroq**, garchi
+   ikkalasi ham kuchli qiyshiq boʻlsa-da. Nima uchun boʻlishi mumkin?
+
+**Qaror.** Sugʻurta kompaniyasi kamdan-kam uchraydigan hodisa
+($p\approx0{,}02$) boʻyicha $n=30$ ta polis asosida normal
+yaqinlashishga tayanib zaxira hisoblamoqchi. Sizning tavsiyangiz nima?
+Sonlar bilan asoslang.
+
+---
+
+# 6-topshiriq. Ulush $\phat$ va muvaffaqiyat–muvaffaqiyatsizlik sharti {#t6}
+
+> **Blum:** Qoʻllash · **Qiyinlik:** 3 (Amaliy) · **Ball:** 15 ·
+> **Vaqt:** 15 daqiqa
+
+**Statistik tushuncha.** Ulush — oʻrtachaning **maxsus holi**. Agar
+$X_i\in\{0,1\}$ boʻlsa, $\phat=\Xbar$. Demak barcha natijalar avtomatik
+koʻchadi:
+$$\E[\phat]=p,\qquad \Var(\phat)=\frac{p(1-p)}{n},\qquad
+  \SE(\phat)=\sqrt{\frac{p(1-p)}{n}}.$$
+
+Ammo bitta farq bor: $\Bern(p)$ ning qiyshiqligi
+$\gamma_1=\frac{1-2p}{\sqrt{p(1-p)}}$ — $p$ nolga yoki birga yaqin
+boʻlsa **juda katta**. Shuning uchun ulush uchun MLT ni qoʻllashdan
+oldin **shart tekshiriladi**:
+
+> **Muvaffaqiyat–muvaffaqiyatsizlik sharti:** $np\ge10$ **va**
+> $n(1-p)\ge10$.
+
+**Maʼlumot.** 2 467 ta filmning reytingi. Bosh toʻplamdagi PG-13
+ulushi — haqiqiy $p$.
+
+**Kod.**
+
+```{r t6-phat}
+# --- 6A: haqiqiy ulush -------------------------------------------------
+# Reyting nomlarini FAYLDAN olamiz (literal yozmaymiz) — 2-hafta qoidasi.
+# DIQQAT: ustunda 9 ta boʻsh katak (NA) bor. R da NA bilan taqqoslash NA
+# beradi va butun hisob jimgina NA ga aylanadi; Python da esa NaN bilan
+# taqqoslash FALSE beradi. Ikki til bir xil ishlashi uchun boʻsh kataklarni
+# OʻZIMIZ aniq boshqaramiz: ular «muvaffaqiyatsizlik» (0) deb sanaladi.
+reytinglar <- unique(kino$reyting)
+reytinglar <- reytinglar[!is.na(reytinglar)]
+P_("")
+P_("=== 6-TOPSHIRIQ (A): ULUSHNING TANLANMA TAQSIMOTI ===")
+P_("Fayldagi reytinglar: %s", paste(reytinglar, collapse = ", "))
+P_("boʻsh (NA) kataklar: %d ta -> 0 deb sanaladi", sum(is.na(kino$reyting)))
+# PG-13 — roʻyxatdagi qaysi pozitsiyada? Uni POZITSIYA boʻyicha olamiz.
+poz  <- 2L                              # roʻyxatdagi ikkinchi toifa
+pg13 <- as.integer(!is.na(kino$reyting) & kino$reyting == reytinglar[poz])
+p0   <- mean(pg13)
+P_("tanlangan toifa: %s (roʻyxatda %d-oʻrin)", reytinglar[poz], poz)
+P_("p = %d/%d = %.6f     sqrt(p(1-p)) = %.6f",
+   sum(pg13), length(pg13), p0, sqrt(p0 * (1 - p0)))
+
+P_("")
+P_("%s%s%s%s%s%s%s", padl("n", 6), padl("E[phat]", 12), padl("p", 12),
+   padl("SD(phat)", 12), padl("sqrt(p(1-p)/n)", 17), padl("np", 8),
+   padl("n(1-p)", 9))
+for (n_ in c(5L, 10L, 25L, 50L, 100L, 400L)) {
+  gl  <- minstd(20260301 + n_)
+  idx <- indeks(gl, 20000L * n_, length(pg13)) + 1L
+  S   <- matrix(pg13[idx], nrow = 20000L, ncol = n_, byrow = TRUE)
+  ph  <- rowMeans(S)
+  P_("%s%s%s%s%s%s%s", padl(sprintf("%d", n_), 6),
+     padl(sprintf("%.5f", mean(ph)), 12), padl(sprintf("%.5f", p0), 12),
+     padl(sprintf("%.5f", ogish_bosh(ph)), 12),
+     padl(sprintf("%.5f", sqrt(p0 * (1 - p0) / n_)), 17),
+     padl(sprintf("%.1f", n_ * p0), 8), padl(sprintf("%.1f", n_ * (1 - p0)), 9))
+}
+P_("")
+P_("Muvaffaqiyat-muvaffaqiyatsizlik sharti np >= 10 birinchi marta")
+P_("n = %d da bajariladi (np = %.2f).", ceiling(10 / p0), ceiling(10 / p0) * p0)
+P_("n = 25 da np = %.1f < 10 -> normal yaqinlashishga hali ishonib boʻlmaydi.",
+   25 * p0)
+```
+
+```{r t6-binom}
+# --- 6B: binomialga normal yaqinlashish va uzluksizlik tuzatmasi -------
+# Bin(50; 0.30): aniq ehtimollik BOR (pbinom), shuning uchun normal
+# yaqinlashishning xatosini AYNAN oʻlchay olamiz.
+nb_ <- 50L; pb_ <- 0.30
+mu_b <- nb_ * pb_; sd_b <- sqrt(nb_ * pb_ * (1 - pb_))
+P_("")
+P_("=== 6-TOPSHIRIQ (B): Bin(50; 0.30) -> normal yaqinlashish ===")
+P_("mu = %.4f   sigma = %.4f   np = %.1f   n(1-p) = %.1f",
+   mu_b, sd_b, mu_b, nb_ * (1 - pb_))
+P_("%s%s%s%s%s%s", padl("x", 5), padl("aniq P(X<=x)", 15),
+   padl("normal", 12), padl("xato", 10), padl("normal +1/2", 14),
+   padl("xato +1/2", 12))
+for (x_ in c(9L, 12L, 15L, 18L, 21L)) {
+  ex  <- pbinom(x_, nb_, pb_)
+  z0  <- (x_ - mu_b) / sd_b
+  z1  <- (x_ + 0.5 - mu_b) / sd_b
+  P_("%s%s%s%s%s%s", padl(sprintf("%d", x_), 5), padl(sprintf("%.5f", ex), 15),
+     padl(sprintf("%.5f", pnorm(z0)), 12),
+     padl(sprintf("%.5f", abs(pnorm(z0) - ex)), 10),
+     padl(sprintf("%.5f", pnorm(z1)), 14),
+     padl(sprintf("%.5f", abs(pnorm(z1) - ex)), 12))
+}
+P_("")
+P_("Uzluksizlik tuzatmasi: diskret X uchun P(X<=x) ni P(Y<=x+0.5) bilan")
+P_("almashtiramiz. Xato har bir nuqtada kamaydi (2 barobardan 70 barobargacha);")
+P_("eng katta foyda taqsimot MARKAZIDA, chunki u yerda zichlik eng yuqori.")
+```
+
+```{r t6-grafik}
+# --- 6C: SE(phat) va shart chegarasi -----------------------------------
+nn6 <- 1:200
+d6  <- data.frame(n = nn6, se = sqrt(p0 * (1 - p0) / nn6))
+nmin <- ceiling(10 / p0)
+
+ggplot(d6, aes(n, se)) +
+  geom_line(colour = oiBlue, linewidth = 0.8) +
+  geom_vline(xintercept = nmin, colour = oiVerm, linetype = "dashed") +
+  annotate("text", x = nmin + 4, y = 0.16, hjust = 0, size = 3.2,
+           colour = oiVerm, label = paste0("n = ", nmin, ": np = 10 reached")) +
+  labs(title = "SE(phat) = sqrt(p(1-p)/n) for the real PG-13 proportion",
+       subtitle = "p = 0.363194 (896 of 2467 films)",
+       x = "n", y = "SE(phat)",
+       caption = "Source: The Numbers / Kaggle")
+```
+
+**Natija.**
+
+| $n$ | $\SD(\phat)$ sim. | $\sqrt{p(1-p)/n}$ | $np$ | $n(1-p)$ |
+|---|---|---|---|---|
+| 10 | 0,15238 | 0,15208 | 3,6 | 6,4 |
+| 25 | 0,09614 | 0,09618 | 9,1 | 15,9 |
+| 50 | 0,06789 | 0,06801 | 18,2 | 31,8 |
+| 100 | 0,04767 | 0,04809 | 36,3 | 63,7 |
+| 400 | 0,02414 | 0,02405 | 145,3 | 254,7 |
+
+Shart birinchi marta $n=28$ da bajariladi.
+
+**Talqin.**
+
+1. $\SD(\phat)$ simulyatsiya qiymati **hamma** $n$ da formulaga mos —
+   hatto $n=5$ da ham. Ammo shart $n=5$ da **bajarilmaydi**. Ziddiyat
+   yoʻqmi? (Maslahat: formula nimani vaʼda qiladi, shart nimani?)
+2. $p=0{,}363$ da shart $n=28$ da bajarildi. $p=0{,}02$ boʻlsa-chi?
+   Hisoblang.
+3. Uzluksizlik tuzatmasi $x=15$ da xatoni $0{,}06918$ dan $0{,}00787$ ga
+   tushirdi — $8{,}8$ barobar. Nima uchun aynan $x=\mu$ nuqtasida
+   tuzatmasiz xato eng yomon?
+
+**Qaror.** Marketing boʻlimi 40 ta respondentdan olingan
+$\phat=0{,}10$ asosida «normal yaqinlashish bilan» xulosa chiqarmoqchi.
+Shartni tekshiring va **ruxsat berasizmi yoki yoʻqmi** — yozing.
+
+---
+
+# 7-topshiriq. Koshi: MLT ishlamaydigan hol {#t7}
+
+> **Blum:** Baholash · **Qiyinlik:** 5 (Ilgʻor) · **Ball:** 15 ·
+> **Vaqt:** 15 daqiqa
+
+**Statistik tushuncha.** MLT ning shartlari uchta:
+(i) bogʻliqsizlik, (ii) bir xil taqsimot, (iii) **chekli dispersiya**
+$0<\sigma^{2}<\infty$. Birinchi ikkitasi odatda muhokama qilinadi,
+uchinchisi esa deyarli hech qachon. Bugun biz uni **buzamiz**.
+
+> **Koshi taqsimoti.** Zichligi $f(x)=\dfrac{1}{\pi(1+x^{2})}$.
+> Dumlari shu qadar ogʻirki, $\E[X]$ **mavjud emas**, $\Var(X)$ ham
+> **mavjud emas**. Nazariy natija: $n$ ta Koshi kuzatuvining oʻrtachasi
+> — **yana aynan oʻsha Koshi taqsimoti**. Yaʼni $n$ ni oshirish
+> **hech narsani** yaxshilamaydi.
+
+**Bu topshiriqning maqsadi — kodni ishlatib, uning ishlamasligini
+koʻrish.** 3-topshiriqdagi ayni oʻsha sxema, faqat bosh toʻplam boshqa.
+
+Koshi sonini teng taqsimlangan $u$ dan olish:
+$X=\tan\!\bigl(\pi(u-\tfrac12)\bigr)$ (teskari funksiya usuli, 5-hafta).
+
+**Kod.**
+
+```{r t7-koshi}
+# --- 7A: 3-topshiriqdagi AYNI sxema, faqat Koshi bosh toʻplamida -------
+# DIQQAT: oʻrtacha va standart ogʻish oʻrniga MEDIAN va IQR ishlatamiz.
+# Sabab: Koshi da E[X] mavjud emas, shuning uchun mean() ning oʻzi
+# maʼnosiz — u hech narsaga yaqinlashmaydi.
+P_("")
+P_("=== 7-TOPSHIRIQ: KOSHI TAQSIMOTI — MLT SHARTI BUZILGANDA ===")
+P_("Nazariy: standart Koshi taqsimotining IQR = 2 (AYNAN).")
+P_("%s%s%s%s%s", padl("n", 8), padl("median(Xbar)", 15), padl("IQR(Xbar)", 13),
+   padl("nazariy IQR", 14), padl("P(|Xbar|>10)", 15))
+koshi_iqr <- numeric(0); koshi_n <- integer(0)
+for (n_ in c(1L, 5L, 30L, 100L, 1000L)) {
+  gl <- minstd(20260401 + n_)
+  u_ <- gl(20000L * n_)
+  C_ <- matrix(tan(pi * (u_ - 0.5)), nrow = 20000L, ncol = n_, byrow = TRUE)
+  xb <- rowMeans(C_)
+  iq <- kv(xb, 0.75) - kv(xb, 0.25)
+  koshi_iqr <- c(koshi_iqr, iq); koshi_n <- c(koshi_n, n_)
+  P_("%s%s%s%s%s", padl(sprintf("%d", n_), 8),
+     padl(sprintf("%.4f", median(xb)), 15), padl(sprintf("%.4f", iq), 13),
+     padl(sprintf("%.1f", 2.0), 14),
+     padl(sprintf("%.5f", mean(abs(xb) > 10)), 15))
+  rm(u_, C_, xb); invisible(gc(verbose = FALSE))
+}
+P_("")
+P_("IQR n oshgani sayin KICHRAYMAYDI — u 2 atrofida qotib qoladi.")
+P_("P(|Xbar| > 10) ham kamaymaydi: n = 1000 da ham ~6.7 %%.")
+```
+
+```{r t7-solishtirish}
+# --- 7B: solishtirish uchun NORMAL bosh toʻplam ------------------------
+# Bir xil kod, bir xil m; farq faqat bosh toʻplamda.
+# Normal sonlar: Boks-Myuller (5-hafta), MINSTD ustida.
+boks_myuller <- function(gen, n) {
+  m2 <- n + (n %% 2)
+  us <- gen(m2)
+  u1 <- us[seq(1, m2, by = 2)]; u2 <- us[seq(2, m2, by = 2)]
+  r  <- sqrt(-2 * log(u1)); th <- 2 * pi * u2
+  c(r * cos(th), r * sin(th))[seq_len(n)]
+}
+P_("")
+P_("Solishtirish: NORMAL bosh toʻplam (nazariy IQR(Xbar) = 1.349/sqrt(n))")
+P_("%s%s%s%s", padl("n", 8), padl("IQR(Xbar)", 14), padl("1.349/sqrt(n)", 16),
+   padl("Koshi IQR", 13))
+norm_iqr <- numeric(0)
+for (k in seq_along(koshi_n)) {
+  n_ <- koshi_n[k]
+  gl <- minstd(20260501 + n_)
+  Z_ <- matrix(boks_myuller(gl, 20000L * n_), nrow = 20000L, ncol = n_,
+               byrow = TRUE)
+  zb <- rowMeans(Z_)
+  iqn <- kv(zb, 0.75) - kv(zb, 0.25)
+  norm_iqr <- c(norm_iqr, iqn)
+  P_("%s%s%s%s", padl(sprintf("%d", n_), 8), padl(sprintf("%.4f", iqn), 14),
+     padl(sprintf("%.4f", 1.3490 / sqrt(n_)), 16),
+     padl(sprintf("%.4f", koshi_iqr[k]), 13))
+  rm(Z_, zb); invisible(gc(verbose = FALSE))
+}
+P_("")
+P_("Normal ustunda IQR 1/sqrt(n) tezligida kichrayadi; Koshi ustunida —")
+P_("umuman kichraymaydi. MLT ning uchinchi sharti (chekli dispersiya)")
+P_("aynan shu farqni tugʻdiradi.")
+```
+
+```{r t7-grafik}
+# --- 7C: ikkita taqsimotning «torayishi» yonma-yon ---------------------
+d7 <- data.frame(
+  n    = rep(koshi_n, 2),
+  iqr  = c(koshi_iqr, norm_iqr),
+  turi = rep(c("Cauchy (no variance): IQR stays at 2",
+               "Normal: IQR = 1.349/sqrt(n)"), each = length(koshi_n)))
+d7$turi <- factor(d7$turi, levels = unique(d7$turi))
+
+ggplot(d7, aes(n, iqr, colour = turi, shape = turi)) +
+  geom_line(linewidth = 0.8) + geom_point(size = 2.6) +
+  scale_x_log10(breaks = koshi_n) + scale_y_log10() +
+  scale_colour_manual(values = c(oiVerm, oiBlue)) +
+  scale_shape_manual(values = c(4, 16)) +
+  labs(title = "Where the CLT fails: the spread of Xbar refuses to shrink",
+       subtitle = "Same code, same m = 20000, only the population changed",
+       x = "n (log scale)", y = "IQR of Xbar (log scale)",
+       colour = NULL, shape = NULL, caption = "MINSTD, seeds 20260401+n / 20260501+n") +
+  theme(legend.position = "bottom")
+```
+
+**Natija.**
+
+| $n$ | median $\Xbar$ | IQR $\Xbar$ | $\Prob(|\Xbar|>10)$ |
+|---|---|---|---|
+| 1 | 0,0044 | 2,0014 | 0,06275 |
+| 5 | 0,0030 | 2,0251 | 0,06380 |
+| 30 | 0,0097 | 1,9958 | 0,06405 |
+| 100 | 0,0111 | 2,0420 | 0,06460 |
+| 1 000 | 0,0075 | 2,0138 | 0,06665 |
+
+**Talqin (diagnostika — bu topshiriqning asosiy qismi).**
+
+1. Kod **xato bermadi**, `NaN` chiqarmadi, ogohlantirish yozmadi.
+   Ammo natija **notoʻgʻri**. MLT ning qaysi sharti buzildi va
+   **qaysi qatorda** buzilishi kerak edi?
+2. Nima uchun bu topshiriqda `mean()` va `sd()` emas, `median()` va
+   `IQR` ishlatildi? Agar `sd(xb)` ni hisoblasangiz nima chiqadi va
+   uni takrorlasangiz nima oʻzgaradi? **Sinab koʻring.**
+3. $\SE=\sigma/\sqrt{n}$ formulasini Koshi uchun yozib boʻladimi?
+   $\sigma$ ni nimaga tenglashtirasiz?
+4. **Iqtisodiyotda qayerda uchraydi?** Moliyaviy daromadlar, sugʻurta
+   zararlari, shahar aholisi, firma hajmi — «ogʻir dumli» kattaliklar.
+   Ulardan **bittasini** tanlang va $n$ ni oshirish nima uchun
+   yetarli boʻlmasligini bir xatboshida yozing.
+
+**Qaror.** Analitik: «Men $n=1000$ ta kuzatuv oldim, MLT boʻyicha
+$\Xbar$ normal taqsimlangan». Uning **birinchi** tekshirishi kerak
+boʻlgan narsa nima? Bir jumla.
+
+---
+
+# 8-topshiriq (bonus). AI yordamida: javobdagi xatoni topish {#t8}
+
+> **Blum:** Yaratish · **Qiyinlik:** 6 (Tadqiqotga yoʻnaltirilgan) ·
+> **Ball:** $+5$ · **Vaqt:** uyda, 30–40 daqiqa
+
+**Nima uchun bu topshiriq bor.** Til modellari statistikada
+ishonchli **ohangda** notoʻgʻri javob berish qobiliyatiga ega. Sizning
+kasbiy qiymatingiz — javobni **tekshira olish**da. Bu topshiriqda AI
+sizga *yordamchi* emas, **tekshiruv obʼyekti**.
+
+**1-qadam (soʻrov).** Ixtiyoriy AI vositasiga quyidagi soʻrovni
+**aynan** bering:
+
+> «Menda 2 467 ta film byudjetidan iborat bosh toʻplam bor:
+> $\mu=35{,}80$ mln \$, $\sigma=37{,}40$ mln \$, qiyshiqligi $1{,}62$.
+> $n=30$ hajmli tanlanma olsam, $\bar X$ ning taqsimoti qanday boʻladi?
+> Markaziy limit teoremasi bu yerda ishlaydimi? Nima uchun?
+> Shuningdek, $n=30$ boʻlgani uchun maʼlumotim normal taqsimotga
+> aylanadimi?»
+
+**2-qadam (tekshirish).** Olingan javobni **qaytadan yozmang** —
+uni **tekshiring**. Quyidagi jadvalni toʻldiring:
+
+| # | AI javobidagi daʼvo | Toʻgʻri / Notoʻgʻri | Qaysi son yoki qaysi topshiriq buni koʻrsatadi |
+|---|---|---|---|
+| 1 | | | |
+| 2 | | | |
+| 3 | | | |
+| 4 | | | |
+| 5 | | | |
+
+**3-qadam (kod bilan tekshirish).** Kamida **bitta** daʼvoni oʻz
+kodingiz bilan tekshiring va natijani keltiring.
+
+**Nazorat roʻyxati — quyidagi yettita xato AI javoblarida muntazam
+uchraydi.** Javobingizda ularning **qaysilari** bor-yoʻqligini
+belgilang:
+
+1. «MLT maʼlumotni normal qiladi» (maʼlumot **oʻzgarmaydi**;
+   faqat $\Xbar$ ning taqsimoti).
+2. «$n\ge30$ — yetarli shart» (5-topshiriqda $\Bern(0{,}10)$ da
+   $D_{30}=0{,}1462$).
+3. $\SE$ va $\sigma$ ni aralashtirish.
+4. «Bosh toʻplam katta boʻlsa, tanlanma ham katta boʻlishi kerak»
+   ($\sigma/\sqrt{n}$ da $N$ **yoʻq**).
+5. $\Var(\Xbar)=\sigma^{2}/n$ ni bogʻliqsizlikni **aytmasdan** yozish.
+6. fpc ni umuman eslamaslik (yoki har doim qoʻllash).
+7. MLT ni **chekli dispersiya** shartisiz bayon qilish (7-topshiriq).
+
+**Topshiriladigan hujjat (1 bet):** soʻrov matni · AI javobining
+nusxasi · toʻldirilgan jadval · kod bilan tekshirilgan bitta daʼvo ·
+**deklaratsiya** (qaysi vosita, qaysi versiya, qachon).
+
+> **Akademik halollik.** AI dan foydalanish **taqiqlanmaydi**, ammo
+> **oshkor qilinishi shart**. Oshkor qilingan foydalanish hech qachon
+> oʻz-oʻzidan ball kamaytirmaydi; oshkor qilinmagani esa akademik
+> halollik buzilishi hisoblanadi. *Talqin* va *qaror* bosqichlari
+> — sizning oʻz matningiz boʻlishi shart.
+
+---
+
+# Yigʻma nazorat jadvali
+
+Topshirishdan oldin quyidagi sonlarni solishtiring. **Bitta ham son
+farq qilmasligi kerak** — R va Python uchun ham.
+
+| Koʻrsatkich | Qiymat | # |
+|---|---|---|
+| $\mu$ (bugʻdoy, $N=5$) | 2.379400 | 1 |
+| $\sigma$ (bugʻdoy) | 1.144150 | 1 |
+| $\sigma$ (kino byudjeti) | 37.404842 | 1 |
+| $\gamma_1$ (kino byudjeti) | 1.616805 | 1 |
+| $\Var(\Xbar)$ qaytarishsiz | 0.490905 | 2 |
+| fpc $=\sqrt{(N-n)/(N-1)}$ | 0.866025 | 2 |
+| $\Var(\Xbar)$ qaytarish bilan | 0.654540 | 2 |
+| $\E[s^{2}]$ | 1.309079 | 2 |
+| $\E[s^{2}_{n}]$ | 0.654540 | 2 |
+| $\SD(\Xbar)$, $n=30$ | 6.8166 | 3 |
+| $\gamma_1(\Xbar)$, $n=30$ | 0.2994 | 3 |
+| $\Xbar$ 95 %, $n=400$ | [32.188; 39.543] | 3 |
+| gerblar, $n=10^{6}$ | 499198 | 4 |
+| $\E\lvert S_n-n/2\rvert$, $n=6400$ | 31.8110 | 4 |
+| $D_{30}$, $\Bern(0{,}10)$ | 0.1462 | 5 |
+| $D_{30}$, tekis | 0.0109 | 5 |
+| $p$ (PG-13) | 0.363194 | 6 |
+| $\SD(\phat)$, $n=100$ | 0.04767 | 6 |
+| $\Prob(X\le15)$, $\Bin(50;0{,}3)$ | 0.56918 | 6 |
+| Koshi IQR, $n=1000$ | 2.0138 | 7 |
+
+# Baholash mezonlari
+
+| Topshiriq | Kod ishlaydi | Toʻgʻri natija | Talqin | Qaror | Jami |
+|---|---|---|---|---|---|
+| 1. Chekli bosh toʻplam | 3 | 3 | 6 | 3 | 15 |
+| 2. Toʻliq sanab chiqish | 4 | 4 | 9 | 3 | 20 |
+| 3. Takroriy tanlash | 4 | 4 | 9 | 3 | 20 |
+| 4. KSQ va qimorboz xatosi | 3 | 3 | 6 | 3 | 15 |
+| 5. MLT panjarasi | 4 | 4 | 9 | 3 | 20 |
+| 6. Ulush $\phat$ | 3 | 3 | 6 | 3 | 15 |
+| 7. Koshi | 3 | 3 | 6 | 3 | 15 |
+| **Jami** | **24** | **24** | **51** | **21** | **120** |
+| 8. AI (bonus) | 1 | 1 | 2 | 1 | $+5$ |
+
+**Baholash falsafasi.** Kod va toʻgʻri sonlar birgalikda $48/120$
+($40\,\%$), talqin va qaror esa $72/120$ ($60\,\%$). **Talqinsiz
+topshirilgan ish oʻta yaxshi baho ololmaydi.**
+
+# Refleksiya savollari
+
+Har biriga **3–4 jumla** bilan yozma javob bering.
+
+1. **Taʼrifdan tajribaga.** Maʼruzada «tanlanma taqsimoti» taʼrifini
+   eshitdingiz. 2-topshiriqda uni **oʻzingiz sanab chiqdingiz**.
+   Taʼrifni tushunishingiz oʻzgardimi? Qaysi qadam eng koʻp yordam berdi?
+2. **Ikki ustun.** $|S_n-n/2|$ oʻsib, $|\phat-0{,}5|$ kamayishi sizga
+   avval qanday tuyulgan edi? Endi buni bir jumlada qanday
+   tushuntirasiz?
+3. **Qoidaning narxi.** «$n\ge30$» ni ilgari qoida deb bilganmisiz?
+   $0{,}1462$ va $0{,}0109$ sonlari sizning amaliyotingizni qanday
+   oʻzgartiradi?
+4. **Ishlamagan kod.** 7-topshiriqda kod xato bermadi, ammo javob
+   notoʻgʻri edi. Kelajakdagi ishingizda **qanday tekshiruv** shu
+   turdagi jimgina xatolarni tutadi?
+5. **Tasodifiy xato va siljish.** $n$ ni oshirish $\SE$ ni kamaytiradi.
+   U **nimani kamaytirmaydi**? Oʻz sohangizdan bitta misol keltiring.
+6. **Ikki til.** Sonlaringiz boshqa tildagi kursdoshingiznikiga mos
+   tushdimi? Mos tushmagan boʻlsa, farq **qaysi qadamda** paydo boʻldi?
+   Bu **takrorlanuvchanlik** haqida nima oʻrgatdi?
+
+# Manbalar
+
+- **Maʼlumot:** FAOSTAT / Our World in Data (hosildorlik) ·
+  *The Numbers* / Kaggle «movie industry» (kino byudjetlari).
+- **Darsliklar:** Çetinkaya-Rundel & Hardin, *Introduction to Modern
+  Statistics* (2e), 12–13-boblar · Newbold, Carlson & Thorne,
+  *Statistics for Business and Economics*, 6-bob · Freedman, Pisani &
+  Purves, *Statistics*, 16–18-boblar · Heumann, Schomaker & Shalabh,
+  *Introduction to Statistics and Data Analysis*, 9-bob.
+- **Birlamchi manbalar:** Bernoulli, J. (1713) *Ars Conjectandi* ·
+  Lyapunov, A. M. (1901) · Tversky, A. & Kahneman, D. (1971),
+  *Belief in the law of small numbers*, Psychological Bulletin 76(2),
+  105–110 · Lehmer, D. H. (1951) — MINSTD generatori.

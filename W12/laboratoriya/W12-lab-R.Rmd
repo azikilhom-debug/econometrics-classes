@@ -1,0 +1,1043 @@
+---
+title: "STAT201 · 12-hafta · Kompyuter laboratoriyasi (R)"
+subtitle: "Regressiyani qurish va qoldiqlarni tashxislash: eng kichik kvadratlar, R^2 va s_e, L-I-N-E, taʼsirchan nuqtalar"
+author: "Toshkent Xalqaro Universiteti · Iqtisodiyot fakulteti"
+date: "2025/2026 oʻquv yili"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    df_print: kable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 7, fig.height = 4.2, dpi = 110,
+  dev = "png", dev.args = list(type = "cairo")
+)
+options(digits = 7)
+```
+
+<!--
+  ==================================================================
+  STAT201 · 12-hafta · Kompyuter laboratoriyasi · R versiyasi
+  Davomiyligi: 2 akademik soat (120 daqiqa)
+  CLO8 — ikki oʻzgaruvchi orasidagi bogʻlanishni chiziqli model bilan
+         tavsiflash, natijani BIRLIKLAR bilan talqin qilish, modelning
+         SHARTLARINI tekshirish va chegaralarini aytish
+         (Blum: Qoʻllash–Tahlil–Baholash)
+  Maʼlumot: data/markaziy-osiyo-hosildorlik.csv (5 mamlakat x 27 yil)
+            data/kinolar-byudjet.csv (2 467 film)
+  Har bir topshiriq bitta zanjirga boʻysunadi:
+  savol -> maʼlumot -> kod -> natija -> SHART TEKSHIRUVI -> talqin ->
+  qaror (va kerak boʻlsa RAD ETISH)
+  Izohlar va oʻzgaruvchi nomlari — oʻzbekcha; funksiya nomlari — inglizcha.
+  R va Python daftarlari BELGI-MA-BELGI bir xil matn chiqaradi; buni
+  gen/11_lab_check_daftarlar_w12.py avtomatik tekshiradi.
+  ==================================================================
+-->
+
+$$
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\SD}{\operatorname{SD}}
+\newcommand{\SE}{\operatorname{SE}}
+\newcommand{\xbar}{\bar{x}}
+\newcommand{\ybar}{\bar{y}}
+$$
+
+# Laboratoriya haqida
+
+**Maqsad.** Bugun siz **chiziqli regressiyani boshidan oxirigacha**
+quriasiz va — bu haftaning asosiy qismi — **unga ishonish mumkinmi**
+degan savolga javob berasiz.
+
+11-haftada savol «*ikki guruh farq qiladimi?*» edi. Bu hafta savol
+boshqacha:
+
+> **«Byudjet 1 mln \$ ga oshsa, daromad *qanchaga* oshadi?»**
+
+Bu savolga bitta son (masalan $r$) javob bera olmaydi. Kerak boʻlgan
+narsa — **ikkita** son: qiyalik va kesishma. Ular bilan birga esa
+yangi obyekt keladi: **qoldiqlar**. Laboratoriyaning yarmi aynan
+qoldiqlar haqida, chunki model qayerda ishlamasligini **faqat ular**
+aytadi.
+
+Ushbu mashgʻulot oltita narsani **isbotlaydi yoki buzadi**:
+
+1. **Formula ishlaydi — buni oʻz qoʻlingiz bilan koʻrasiz.** $b_1$ va
+   $b_0$ avval yigʻindilardan (`sum`), keyin dasturiy vosita bilan
+   hisoblanadi va ikkalasi bir xil chiqadi. Ikkita ayniyat
+   ($\sum e_i=0$, $\sum x_ie_i=0$) tasodif emasligini ham koʻrasiz.
+2. **$R^2$ va $s_e$ ikki xil savolga javob beradi.** Yuqoriroq $R^2$
+   ga ega model **pastroq** aniqlikka ega boʻlishi mumkin — va
+   bugun aynan shunday ikkita model uchraydi.
+3. **Qoldiqlar diagrammasi maʼlumotdagi xatoni topadi.** $2\,467$
+   filmda **31** ta buzuq qator bor va ularni statistik test emas,
+   qoldiqlar diagrammasi topadi. Keyin halol qism: ularni tuzatish
+   qiyalikni atigi $0{,}4650\,\%$ ga oʻzgartiradi — **va shunga
+   qaramay tuzatish shart**.
+4. **L-I-N-E shartlari nomlangan vositalar bilan tekshiriladi.**
+   Bugungi maʼlumotda **I** ham, **E** ham buziladi — va logarifm
+   yelpigʻichni **yoʻqotmaydi**, uni **teskari** aylantiradi.
+5. **Leveraj, qoldiq va Kuk masofasi — uchta boshqa narsa.** Eng
+   katta leverajli nuqta va eng taʼsirchan nuqta **bir xil emas**.
+6. **Model qayerda tugashini siz aytasiz.** $2100$-yil uchun model
+   $68{,}4603$ t/ga deydi va hech qanday ogohlantirish bermaydi.
+
+**Ish zanjiri.** Har bir topshiriqda quyidagi ketma-ketlikni **yozma**
+ravishda bajarasiz:
+
+> **savol → maʼlumot → kod → natija → shart tekshiruvi → talqin →
+> qaror (yoki rad etish)**
+
+Faqat kod yozib, natijani izohsiz qoldirish — topshiriq bajarilmagan
+hisoblanadi. **Har bir model uchun $R^2$ *va* $s_e$ keltiriladi**, va
+**har bir model ortidan shart tekshiruvi keladi**: qaysi shartni,
+qaysi vosita bilan tekshirdingiz va nimaga qaror qildingiz.
+
+**Sababiy feʼl ishlatilmaydi.** Bu hafta chiziq quriladi, sabab
+oʻrganilmaydi. «Bogʻliq», «birga oʻzgaradi» — ha; «taʼsir qiladi»,
+«sabab boʻladi», «oshiradi» — yoʻq. Sabab-oqibat, chalgʻituvchi omil
+va Simpson paradoksi — **13-haftada**.
+
+**Vaqt va ball taqsimoti (120 daqiqa, 120 ball + 5 bonus).**
+
+| # | Mazmun | Daqiqa | Blum | Qiyinlik | Ball |
+|---|---|---|---|---|---|
+| 0 | Muhitni sozlash va maʼlumot | 5 | — | — | — |
+| 1 | Chiziqni **qoʻlda** qurish: yigʻindilardan formulaga | 18 | Qoʻllash | 3 (Amaliy) | 20 |
+| 2 | Talqin: qiyalik birliklar bilan, $R^2$ **va** $s_e$ | 14 | Tahlil | 3 (Amaliy) | 15 |
+| 3 | **Qoldiqlar diagrammasi maʼlumot xatosini topadi** | 20 | Tahlil | 4 (Analitik) | 20 |
+| 4 | L-I-N-E: toʻrt shart, nomlangan toʻrt vosita | 24 | Tahlil | 4 (Analitik) | 25 |
+| 5 | Leveraj, studentlashgan qoldiq va Kuk masofasi | 21 | Baholash | 5 (Ilgʻor) | 22 |
+| 6 | Bashorat va **ekstrapolyatsiyani rad etish** | 18 | Baholash | 5 (Ilgʻor) | 18 |
+| 7 | AI yordamida: modelni tanqid qilish | uyda | Yaratish | 6 (Tadqiqot) | +5 |
+
+**Oldingi bilim.** Sochma diagramma va korrelyatsiya koeffitsiyenti
+$r$ (6-hafta); dispersiya va standart ogʻish (4-hafta); Anskomb
+kvarteti (6-hafta); $t$-taqsimot va erkinlik darajasi (9-hafta);
+shart buzilishi va avtokorrelyatsiya (11-hafta).
+
+**Bu hafta nimani qilmaymiz.** $b_1$ ning standart xatosi, qiyalik
+uchun $t$-test, koeffitsiyentlar uchun ishonch oraligʻi, $\hat y$
+uchun bashorat oraligʻi, koʻp omilli regressiya va **korrelyatsiya
+va sababiyat** — hammasi **13-haftada**.
+
+---
+
+# 0-bosqich. Muhitni sozlash
+
+```{r lokal}
+# --- MUHIM: UTF-8 muhitini kafolatlash --------------------------------
+# Oʻzbekcha nomlarda tutuq belgisi «ʻ» (U+02BB) bor. Agar R UTF-8
+# boʻlmagan lokalda ishga tushsa (masalan LC_CTYPE=C), kod ichidagi
+# oʻzbekcha satr va CSV dan oʻqilgan qiymat TENG DEB HISOBLANMAYDI:
+# filtr BOʻSH jadval qaytaradi va butun tahlil NaN ga aylanadi —
+# hech qanday xato xabarisiz.
+# QOIDA (2-haftadan): oʻzbekcha nomlarni kod ichida LITERAL yozmang —
+# ularni unique(...) orqali FAYLDAN oling va POZITSIYA boʻyicha tanlang.
+if (!grepl("UTF-8", Sys.getlocale("LC_CTYPE"), ignore.case = TRUE)) {
+  for (lokal in c("C.UTF-8", "en_US.UTF-8", "uz_UZ.UTF-8",
+                  "Uzbek_Uzbekistan.utf8", "English_United States.utf8")) {
+    if (suppressWarnings(Sys.setlocale("LC_CTYPE", lokal)) != "") break
+  }
+}
+cat(sprintf("MUHIT: R %s.%s | LC_CTYPE = %s\n",
+            R.version$major, R.version$minor, Sys.getlocale("LC_CTYPE")))
+```
+
+```{r paketlar}
+# --- Kerakli kutubxonalar ---------------------------------------------
+suppressPackageStartupMessages({
+  library(readr)      # CSV oʻqish
+  library(dplyr)      # jadval bilan ishlash
+  library(ggplot2)    # grafiklar
+})
+
+# Okabe–Ito palitrasi: rang koʻrmaslikka moslashgan (2-haftadan beri).
+oiBlue <- "#0072B2"; oiOrange <- "#E69F00"; oiGreen <- "#009E73"
+oiPink <- "#CC79A7"; oiVerm   <- "#D55E00"; oiSky   <- "#56B4E9"
+oiYell <- "#F0E442"; oiGrey   <- "#5A6470"
+
+theme_set(theme_minimal(base_size = 11) +
+          theme(panel.grid.minor = element_blank(),
+                plot.title = element_text(face = "bold")))
+
+# QOIDA (2-haftadan): grafik yorliqlarida faqat ASCII harflar.
+cat(sprintf("MUHIT: ggplot2 %s\n", as.character(packageVersion("ggplot2"))))
+```
+
+```{r yordamchi}
+# --- IKKI DAFTAR BIR XIL MATN CHIQARISHI UCHUN YORDAMCHILAR -----------
+# (1) ha(): R «TRUE», Python «True» yozadi — mantiqiy qiymatni
+#     OʻZIMIZ formatlaymiz.
+ha <- function(b) if (isTRUE(as.logical(b))) "HA" else "YOʻQ"
+
+# (2) pad()/padl(): R ning sprintf("%-16s") formati satrni BAYT
+#     boʻyicha, Python niki BELGI boʻyicha toʻldiradi. «YOʻQ» da
+#     4 ta belgi, ammo 5 ta bayt bor.
+pad  <- function(s, n) {
+  s <- enc2utf8(s); k <- n - nchar(s, type = "chars")
+  if (k > 0) paste0(s, strrep(" ", k)) else s
+}
+padl <- function(s, n) {
+  s <- enc2utf8(s); k <- n - nchar(s, type = "chars")
+  if (k > 0) paste0(strrep(" ", k), s) else s
+}
+P_ <- function(...) cat(sprintf(...), "\n", sep = "")
+
+# (3) Dispersiya: MAXRAJNI HAR DOIM OSHKORA YOZAMIZ.
+varS <- function(x) sum((x - mean(x))^2) / (length(x) - 1)   # maxraj n-1
+sdS  <- function(x) sqrt(varS(x))
+
+# (4) Korrelyatsiya — formulani oshkora yozamiz.
+korr <- function(x, y) {
+  dx <- x - mean(x); dy <- y - mean(y)
+  sum(dx * dy) / sqrt(sum(dx^2) * sum(dy^2))
+}
+
+# (5) ENG KICHIK KVADRATLAR — bitta funksiya, butun laboratoriya uchun.
+#     F161: b1 = Sxy/Sxx · F163: b0 = ybar - b1*xbar
+ols <- function(x, y) {
+  n <- length(x); xb <- mean(x); yb <- mean(y)
+  sxx <- sum((x - xb)^2); syy <- sum((y - yb)^2)
+  sxy <- sum((x - xb) * (y - yb))
+  b1 <- sxy / sxx; b0 <- yb - b1 * xb
+  yh <- b0 + b1 * x; e <- y - yh
+  sse <- sum(e^2); ssr <- syy - sse
+  list(n = n, xb = xb, yb = yb, sxx = sxx, syy = syy, sxy = sxy,
+       b1 = b1, b0 = b0, yh = yh, e = e, sse = sse, ssr = ssr,
+       sst = syy, r2 = ssr / syy, se = sqrt(sse / (n - 2)),
+       r = sxy / sqrt(sxx * syy))
+}
+
+# (6) Diagnostika: leveraj (F176), studentlashgan qoldiq (F177),
+#     Kuk masofasi (F178).
+diagn <- function(x, y) {
+  o <- ols(x, y)
+  h <- 1 / o$n + (x - o$xb)^2 / o$sxx
+  st <- o$e / (o$se * sqrt(1 - h))
+  list(h = h, stud = st, cook = st^2 / 2 * h / (1 - h),
+       chegara = 4 / o$n, ort = 2 / o$n)
+}
+
+# (7) Darbin--Uotson (F180) va lag-1 korrelyatsiya.
+dw <- function(e) sum(diff(e)^2) / sum(e^2)
+lag1 <- function(e) korr(e[-length(e)], e[-1])
+
+# (8) Qiyshiqlik — siljishi tuzatilgan (adjusted Fisher-Pearson).
+qiyshiq <- function(x) {
+  n <- length(x); d <- x - mean(x)
+  m2 <- sum(d^2) / n; m3 <- sum(d^3) / n
+  (m3 / m2^1.5) * sqrt(n * (n - 1)) / (n - 2)
+}
+
+# (9) Chorak boʻyicha qoldiq SD lari — teng dispersiya sharti uchun.
+#     Chegaralar: quantile(type = 7) — Python dagi np.quantile bilan
+#     AYNAN bir xil formula.
+chorakSD <- function(xv, ev) {
+  q <- as.numeric(quantile(xv, c(0, 0.25, 0.5, 0.75, 1), type = 7))
+  out <- numeric(4); nn <- integer(4)
+  for (i in 1:4) {
+    sel <- if (i == 4) (xv >= q[i] & xv <= q[i + 1]) else
+                       (xv >= q[i] & xv <  q[i + 1])
+    out[i] <- sdS(ev[sel]); nn[i] <- sum(sel)
+  }
+  list(q = q, sd = out, n = nn, nisbat = max(out) / min(out))
+}
+
+# (10) Nolga teng deb hisoblash: ikki tilda yigʻindi tartibi biroz
+#      boshqacha boʻlishi mumkin, shuning uchun AYNIYATLAR raqam bilan
+#      emas, CHEGARA bilan tekshiriladi.
+nolmi <- function(v, eps = 1e-9) ha(abs(v) < eps)
+```
+
+```{r malumot}
+# --- Ikkita HAQIQIY maʼlumot toʻplami ---------------------------------
+# A. markaziy-osiyo-hosildorlik.csv — 5 mamlakat x 27 yil (1992–2018),
+#    hosildorlik t/ga. Manba: FAOSTAT / Our World in Data (OWID).
+# B. kinolar-byudjet.csv — 2 467 film, byudjet va daromad AQSh
+#    dollarida. Manba: The Numbers / Kaggle «movie industry».
+DATA  <- "data"
+hosil <- read_csv(file.path(DATA, "markaziy-osiyo-hosildorlik.csv"),
+                  locale = locale(encoding = "UTF-8"), show_col_types = FALSE)
+kino  <- read_csv(file.path(DATA, "kinolar-byudjet.csv"),
+                  locale = locale(encoding = "UTF-8"), show_col_types = FALSE)
+
+# QOIDA: oʻzbekcha mamlakat nomini LITERAL yozmaymiz — fayldan olamiz.
+mamlar <- unique(hosil$mamlakat)
+UZ <- mamlar[1]; KG <- mamlar[2]; KZ <- mamlar[3]
+TJ <- mamlar[4]; TM <- mamlar[5]
+uzq <- hosil[hosil$mamlakat == UZ, ]
+kzq <- hosil[hosil$mamlakat == KZ, ]
+tjq <- hosil[hosil$mamlakat == TJ, ]
+
+P_("")
+P_("=== 0-BOSQICH: MAʼLUMOT ===")
+P_("A. hosildorlik fayli: %d qator, %d mamlakat, %d-%d yillar",
+   nrow(hosil), length(mamlar), min(hosil$yil), max(hosil$yil))
+P_("   pozitsiyalar: 1 = %s · 3 = %s · 4 = %s", UZ, KZ, TJ)
+P_("   har bir mamlakatda %d yil, %d ekin", nrow(uzq), 5L)
+P_("B. kinolar fayli: %d film", nrow(kino))
+P_("   byudjet oraligʻi: %.2f - %.2f mln $",
+   min(kino$byudjet) / 1e6, max(kino$byudjet) / 1e6)
+P_("")
+P_("MANBA: OWID/FAOSTAT (hosildorlik) · The Numbers/Kaggle (kinolar).")
+P_("Ikkalasi ham HAQIQIY maʼlumot — hech qanday simulyatsiya yoʻq.")
+```
+
+---
+
+# 1-topshiriq. Chiziqni **qoʻlda** qurish: yigʻindilardan formulaga {#t1}
+
+> **Blum:** Qoʻllash · **Qiyinlik:** 3 (Amaliy) · **Ball:** 20 ·
+> **Vaqt:** 18 daqiqa
+
+**Savol.** Qozogʻistonda kartoshka hosildorligi $2010$–$2018$
+yillarda yiliga oʻrtacha **necha t/ga** ga oʻzgargan?
+
+**Nega qoʻlda?** Chunki `lm()` bir satrda javob beradi va siz
+formulani hech qachon koʻrmaysiz. Bugun avval **beshta yigʻindi**
+hisoblanadi ($n$, $\xbar$, $\ybar$, $S_{xx}$, $S_{xy}$), keyin
+F161–F163 qoʻllanadi, va **faqat shundan keyin** dasturiy vosita
+bilan tekshiriladi.
+
+$$
+b_1=\frac{S_{xy}}{S_{xx}} \tag{F161}\qquad
+b_0=\ybar-b_1\xbar \tag{F163}\qquad
+b_1=r\,\frac{s_y}{s_x} \tag{F162}
+$$
+
+```{r t1a}
+# --- Maʼlumot: Qozogʻiston, kartoshka, 2010-2018 ----------------------
+kzp <- kzq[kzq$yil >= 2010 & kzq$yil <= 2018, ]
+x1  <- kzp$yil - 2010          # x = yil - 2010  -> b0 maʼnoli boʻladi
+y1  <- kzp$kartoshka           # t/ga
+
+# --- Beshta yigʻindi: FORMULANI OSHKORA YOZAMIZ -----------------------
+n1  <- length(x1)
+xb1 <- sum(x1) / n1
+yb1 <- sum(y1) / n1
+Sxx <- sum((x1 - xb1)^2)
+Syy <- sum((y1 - yb1)^2)
+Sxy <- sum((x1 - xb1) * (y1 - yb1))
+
+b1q <- Sxy / Sxx               # F161
+b0q <- yb1 - b1q * xb1         # F163
+
+P_("=== 1-TOPSHIRIQ: CHIZIQ QOʻLDA ===")
+P_("n = %d   xbar = %.6f   ybar = %.6f", n1, xb1, yb1)
+P_("Sxx = %.6f   Syy = %.6f   Sxy = %.6f", Sxx, Syy, Sxy)
+P_("b1 = Sxy/Sxx      = %.6f  (t/ga har yilda)", b1q)
+P_("b0 = ybar-b1*xbar = %.6f  (t/ga, 2010-yilda)", b0q)
+P_("MODEL: yhat = %.6f + %.6f * x,   x = yil - 2010", b0q, b1q)
+```
+
+```{r t1b}
+# --- Dasturiy vosita bilan tekshiruv ----------------------------------
+mod <- lm(y1 ~ x1)
+b0d <- unname(coef(mod)[1]); b1d <- unname(coef(mod)[2])
+
+P_("")
+P_("-- Dasturiy vosita (lm) bilan taqqoslash --------------------------")
+P_("qoʻlda   : b1 = %.6f   b0 = %.6f", b1q, b0q)
+P_("dasturiy : b1 = %.6f   b0 = %.6f", b1d, b0d)
+P_("ayirma nolga tengmi (< 1e-9): b1 %s · b0 %s",
+   nolmi(b1q - b1d), nolmi(b0q - b0d))
+
+# --- F162: qiyalik korrelyatsiyaning BIRLIKLI shakli ------------------
+r1  <- korr(x1, y1)
+sx1 <- sdS(x1); sy1 <- sdS(y1)
+P_("")
+P_("-- F162: b1 = r * s_y/s_x -----------------------------------------")
+P_("r = %.6f   s_x = %.6f   s_y = %.6f", r1, sx1, sy1)
+P_("r*s_y/s_x = %.6f   b1 = %.6f   teng (< 1e-12): %s",
+   r1 * sy1 / sx1, b1q, nolmi(r1 * sy1 / sx1 - b1q, 1e-12))
+```
+
+```{r t1c}
+# --- Qoldiqlar jadvali va IKKITA AYNIYAT ------------------------------
+o1 <- ols(x1, y1)
+P_("")
+P_("-- Qoldiqlar jadvali ----------------------------------------------")
+P_("%s%s%s%s%s%s", pad("yil", 6), padl("x", 3), padl("y", 9),
+   padl("yhat", 11), padl("e", 11), padl("e^2", 11))
+for (i in seq_len(n1)) {
+  P_("%s%s%s%s%s%s", pad(sprintf("%d", kzp$yil[i]), 6),
+     padl(sprintf("%d", x1[i]), 3), padl(sprintf("%.3f", y1[i]), 9),
+     padl(sprintf("%.6f", o1$yh[i]), 11),
+     padl(sprintf("%+.6f", o1$e[i]), 11),
+     padl(sprintf("%.6f", o1$e[i]^2), 11))
+}
+P_("")
+P_("F166: sum e_i     = 0 ga tengmi? %s", nolmi(sum(o1$e)))
+P_("F167: sum x_i e_i = 0 ga tengmi? %s", nolmi(sum(x1 * o1$e)))
+P_("F181: chiziq (xbar, ybar) nuqtadan oʻtadimi? %s",
+   nolmi(b0q + b1q * xb1 - yb1))
+P_("Bu uchtasi TASODIF EMAS — ular eng kichik kvadratlar")
+P_("tenglamalarining OʻZI. Ular har qanday maʼlumotda bajariladi,")
+P_("model yaroqli boʻlsa ham, boʻlmasa ham. Demak ular MODEL")
+P_("SIFATINING dalili emas.")
+```
+
+```{r p1}
+# --- Sochma diagramma va chiziq (birinchi qadam HAR DOIM shu) ---------
+d1 <- data.frame(x = x1, y = y1, yh = o1$yh)
+gg1 <- ggplot(d1, aes(x, y)) +
+  geom_segment(aes(xend = x, yend = yh), colour = oiGrey,
+               linetype = "dashed", linewidth = 0.3) +
+  geom_line(aes(y = yh), colour = oiVerm, linewidth = 0.8) +
+  geom_point(colour = oiBlue, size = 2.2) +
+  labs(title = "Kazakhstan potato yield 2010-2018",
+       x = "x = year - 2010", y = "yield (t/ha)")
+print(gg1)
+```
+
+**Talqin (birliklar bilan!).** $2010$–$2018$ yillarda Qozogʻistonda
+kartoshka hosildorligi yiliga oʻrtacha **0,5880 t/ga** ga oshgan.
+$b_0=15{,}5373$ t/ga — bu $2010$-yilning **model qiymati**; $x=0$
+maʼlumot oraligʻida boʻlgani uchun bu son maʼnoli. Agar $x$ *yil*
+boʻlganida ($2010,\dots,2018$), $b_0$ nol yilga tegishli boʻlardi va
+hech qanday maʼno bermasdi.
+
+**Topshiriq (yozma).** *(a)* $b_1$ ni bir jumla bilan talqin qiling —
+albatta t/ga birligida va **sababiy feʼlsiz**. *(b)* $b_0$ maʼnolimi?
+Nega? *(c)* $\sum e_i=0$ ayniyati modelning yaxshi ekanini
+koʻrsatadimi? Javobingizni asoslang.
+
+---
+
+# 2-topshiriq. Talqin: qiyalik birliklar bilan, $R^2$ **va** $s_e$ {#t2}
+
+> **Blum:** Tahlil · **Qiyinlik:** 3 (Amaliy) · **Ball:** 15 ·
+> **Vaqt:** 14 daqiqa
+
+**Savol.** Model qanchalik yaxshi? — Bu savol **ikkiga** boʻlinadi:
+«model $x$ ni qanchalik ishlatgan?» ($R^2$) va «bashoratim
+qanchalik aniq?» ($s_e$). **Bu ikki savol bir xil emas.**
+
+$$
+\text{SST}=\text{SSR}+\text{SSE}\tag{F171}\qquad
+R^{2}=\frac{\text{SSR}}{\text{SST}}\tag{F172}\qquad
+s_e=\sqrt{\frac{\text{SSE}}{n-2}}\tag{F174}
+$$
+
+```{r t2a}
+P_("=== 2-TOPSHIRIQ: R^2 VA s_e ===")
+P_("SST = %.6f   SSR = %.6f   SSE = %.6f", o1$sst, o1$ssr, o1$sse)
+P_("F171: SST = SSR + SSE ayniyati bajariladimi? %s",
+   nolmi(o1$sst - (o1$ssr + o1$sse)))
+P_("R^2 = SSR/SST = %.6f", o1$r2)
+P_("r^2           = %.6f   (F173: oddiy regressiyada teng: %s)",
+   r1^2, nolmi(r1^2 - o1$r2, 1e-12))
+P_("s_e = sqrt(SSE/(n-2)) = sqrt(%.6f/%d) = %.6f t/ga",
+   o1$sse, n1 - 2, o1$se)
+P_("erkinlik darajasi = n - 2 = %d   (F175: ikkita parametr baholandi)",
+   n1 - 2)
+P_("s_y = %.6f t/ga  ->  model tipik xatoni %.2f foizga kamaytirdi",
+   sy1, 100 * (1 - o1$se / sy1))
+```
+
+```{r t2b}
+# --- IKKI MODEL, bir xil ekin, ikki mamlakat --------------------------
+# Diqqat: R^2 KATTA boʻlgan model s_e KATTA boʻlishi mumkin.
+oUZ <- ols(uzq$yil, uzq$kartoshka)
+oKZ <- ols(kzq$yil, kzq$kartoshka)
+P_("")
+P_("-- Kartoshka ~ yil, 1992-2018: R^2 va s_e QARAMA-QARSHI tartibda --")
+P_("%s%s%s%s", pad("mamlakat", 14), padl("R^2", 10), padl("s_e (t/ga)", 13),
+   padl("b1 (t/ga)", 12))
+for (m in list(list(UZ, oUZ), list(KZ, oKZ))) {
+  P_("%s%s%s%s", pad(m[[1]], 14), padl(sprintf("%.6f", m[[2]]$r2), 10),
+     padl(sprintf("%.6f", m[[2]]$se), 13),
+     padl(sprintf("%.6f", m[[2]]$b1), 12))
+}
+P_("R^2 farqi = %.6f ;  s_e nisbati = %.6f marta",
+   oUZ$r2 - oKZ$r2, oUZ$se / oKZ$se)
+P_("XULOSA: yuqori R^2 li model PASTROQ aniqlikka ega.")
+P_("'Qanchalik aniq bashorat qilaman?' savoliga faqat s_e javob beradi.")
+
+# --- BITTA ekin, BESH mamlakat: R^2 diapazoni -------------------------
+P_("")
+P_("-- Bugʻdoy ~ yil, besh mamlakat: R^2 0.00 dan 0.93 gacha ----------")
+P_("%s%s%s%s%s", pad("mamlakat", 14), padl("b1", 11), padl("R^2", 10),
+   padl("s_e", 10), padl("r", 10))
+for (m in mamlar) {
+  d <- hosil[hosil$mamlakat == m, ]
+  o <- ols(d$yil, d$bugdoy)
+  P_("%s%s%s%s%s", pad(m, 14), padl(sprintf("%.6f", o$b1), 11),
+     padl(sprintf("%.6f", o$r2), 10), padl(sprintf("%.6f", o$se), 10),
+     padl(sprintf("%.6f", o$r), 10))
+}
+P_("Eng past R^2 --- 2-pozitsiyadagi mamlakat: TREND YOʻQ degani,")
+P_("'model yomon' degani EMAS. Bu QIMMATLI natija.")
+```
+
+**Topshiriq (yozma).** *(a)* Ikki kartoshka modelidan qaysi biri
+$2019$-yil uchun aniqroq bashorat beradi va nega? *(b)* Eng past
+$R^2$ ga ega mamlakat uchun bir jumlalik xulosa yozing — «model
+yomon» soʻzlarini ishlatmasdan. *(c)* $R^2$ ning birligi nima?
+$s_e$ niki-chi?
+
+---
+
+# 3-topshiriq. Qoldiqlar diagrammasi maʼlumotdagi **xatoni** topadi {#t3}
+
+> **Blum:** Tahlil · **Qiyinlik:** 4 (Analitik) · **Ball:** 20 ·
+> **Vaqt:** 20 daqiqa
+
+**Savol.** Film byudjeti va jahon daromadi orasidagi bogʻlanish
+qanday? — Va bu savolga javob berish yoʻlida **maʼlumotdagi
+xatoni** topamiz.
+
+**Bu topshiriqning asosiy gʻoyasi:** statistik test emas, oddiy
+**qoldiqlar diagrammasi** buzuq qatorlarni topadi. Keyin esa halol
+qism keladi: ularni tuzatish natijani deyarli oʻzgartirmaydi — va
+shunga qaramay tuzatish **shart**.
+
+```{r t3a}
+# --- Barcha filmlar (mln $ da) ----------------------------------------
+bx <- kino$byudjet / 1e6
+by <- kino$jahon_daromadi / 1e6
+oF <- ols(bx, by)
+
+P_("=== 3-TOPSHIRIQ: QOLDIQLAR DIAGRAMMASI ===")
+P_("Barcha filmlar: n = %d", oF$n)
+P_("b1 = %.6f mln $ (byudjetning 1 mln $ iga)", oF$b1)
+P_("b0 = %.6f   R^2 = %.6f   s_e = %.6f mln $", oF$b0, oF$r2, oF$se)
+P_("Talqin: byudjet 1 mln $ ga katta boʻlgan filmda jahon daromadi")
+P_("oʻrtacha %.4f mln $ ga katta.", oF$b1)
+```
+
+```{r p2}
+# --- Sochma diagramma va QOLDIQLAR diagrammasi ------------------------
+dF <- data.frame(x = bx, y = by, yh = oF$yh, e = oF$e,
+                 nol = by == 0)
+gg2 <- ggplot(dF, aes(yh, e)) +
+  geom_hline(yintercept = 0, colour = oiGrey) +
+  geom_point(aes(colour = nol, shape = nol), size = 0.7, alpha = 0.55) +
+  scale_colour_manual(values = c(`FALSE` = oiBlue, `TRUE` = oiVerm),
+                      labels = c("normal", "gross = 0"), name = NULL) +
+  scale_shape_manual(values = c(`FALSE` = 16, `TRUE` = 17),
+                     labels = c("normal", "gross = 0"), name = NULL) +
+  labs(title = "Residual plot: worldwide gross ~ budget",
+       x = "fitted value (mln USD)", y = "residual (mln USD)")
+print(gg2)
+```
+
+```{r t3b}
+# --- Qoldiqlar diagrammasi NIMANI koʻrsatdi ---------------------------
+# Eng katta MANFIY qoldiqlar bitta gorizontal chiziqda toʻplangan.
+nol <- kino[kino$jahon_daromadi == 0, ]
+P_("")
+P_("-- Diagrammadagi tekis chiziq: jahon daromadi = 0 ----------------")
+P_("Bunday film soni            : %d / %d", nrow(nol), nrow(kino))
+P_("Ularning ichki daromadi ham 0: %d / %d",
+   sum(nol$ichki_daromad == 0), nrow(nol))
+eng <- nol[which.max(nol$byudjet), ]
+P_("Eng kattasi: %s (%d), byudjet %.1f mln $, jahon daromadi %.1f",
+   eng$nomi, eng$yil, eng$byudjet / 1e6, eng$jahon_daromadi / 1e6)
+P_("Bu MUMKIN emas. %.0f mln $ lik film hech qanday daromad",
+   eng$byudjet / 1e6)
+P_("keltirmagan boʻlolmaydi. Demak nol --- 'daromad nol' emas,")
+P_("'MAʼLUMOT YOʻQ'. Buni statistik test emas, QOLDIQLAR")
+P_("DIAGRAMMASI topdi.")
+```
+
+```{r t3c}
+# --- Buzuq qatorlarni olib tashlab QAYTA baholash ---------------------
+mas <- kino$jahon_daromadi > 0
+oC  <- ols(bx[mas], by[mas])
+P_("")
+P_("-- Tozalangandan keyin --------------------------------------------")
+P_("%s%s%s%s%s", pad("model", 14), padl("n", 7), padl("b1", 11),
+   padl("R^2", 10), padl("s_e", 12))
+P_("%s%s%s%s%s", pad("barchasi", 14), padl(sprintf("%d", oF$n), 7),
+   padl(sprintf("%.6f", oF$b1), 11), padl(sprintf("%.6f", oF$r2), 10),
+   padl(sprintf("%.6f", oF$se), 12))
+P_("%s%s%s%s%s", pad("tozalangan", 14), padl(sprintf("%d", oC$n), 7),
+   padl(sprintf("%.6f", oC$b1), 11), padl(sprintf("%.6f", oC$r2), 10),
+   padl(sprintf("%.6f", oC$se), 12))
+P_("b1 oʻzgarishi: %.4f foiz", 100 * (oC$b1 - oF$b1) / oF$b1)
+P_("")
+P_("HALOL XULOSA: 2 467 kuzatuvdan 31 tasi qiyaliqni deyarli")
+P_("oʻzgartirmadi. LEKIN ularni tuzatish SHART --- keyingi safar")
+P_("n = 30 boʻlishi mumkin, va oʻshanda BITTA shunday nuqta ham")
+P_("natijani buzadi (5-topshiriqqa qarang).")
+```
+
+**Topshiriq (yozma).** *(a)* Qoldiqlar diagrammasida buzuq qatorlar
+qanday koʻrindi va nega ular sochma diagrammada oson sezilmaydi?
+*(b)* Agar $b_1$ atigi $0{,}4650\,\%$ ga oʻzgargan boʻlsa, tuzatish
+nega baribir zarur? Ikki sabab yozing. *(c)* Modelning $R^2$ va
+$s_e$ sini birga keltiring va $s_e$ ni mln \$ da talqin qiling.
+
+---
+
+# 4-topshiriq. **L-I-N-E**: toʻrt shart, nomlangan toʻrt vosita {#t4}
+
+> **Blum:** Tahlil · **Qiyinlik:** 4 (Analitik) · **Ball:** 25 ·
+> **Vaqt:** 24 daqiqa
+
+| | Shart | Vosita | Muhimlik |
+|---|---|---|---|
+| **L** | Chiziqlilik | $e$ vs $\hat y$ — shakl boʻlmasin | **1 (eng muhim)** |
+| **I** | Bogʻliqsizlik | $e$ vs tartib; lag-1; Darbin–Uotson | 2 |
+| **N** | Normallik | QQ-diagramma (test emas!) | **4 (eng kam)** |
+| **E** | Teng dispersiya | $e$ vs $\hat y$ — yelpigʻich boʻlmasin | 3 |
+
+**Shartlar NIMA UCHUN kerak.** $b_0$ va $b_1$ ni hisoblash uchun
+**hech qanday shart kerak emas** — eng kichik kvadratlar har doim
+son beradi. Shartlar $s_e$, bashorat va **13-haftadagi xulosa**
+uchun kerak.
+
+```{r t4a}
+# --- L: chiziqlilik. Bashorat qiymati boʻyicha 5 guruh, har birida
+#        oʻrtacha qoldiq. Chiziqli modelda ular NOL atrofida.
+Lshart <- function(nom, o) {
+  n <- o$n
+  ord <- order(o$yh)               # barqaror tartib (Python: kind="stable")
+  e <- o$e[ord]; m <- numeric(5)
+  for (i in 1:5) {
+    a <- ((i - 1) * n) %/% 5 + 1; b <- (i * n) %/% 5
+    m[i] <- mean(e[a:b])
+  }
+  P_("%s%s", pad(nom, 26),
+     paste(sapply(m, function(v) padl(sprintf("%+.4f", v), 10)),
+           collapse = ""))
+  seg <- o$se / sqrt(n / 5)        # guruh oʻrtachasining standart xatosi
+  list(m = m, seg = seg, z = max(abs(m)) / seg)
+}
+P_("=== 4-TOPSHIRIQ: L-I-N-E ===")
+P_("")
+P_("-- L (chiziqlilik): yhat boʻyicha 5 guruhda oʻrtacha qoldiq -------")
+P_("%s%s", pad("model", 26),
+   paste(sapply(1:5, function(i) padl(sprintf("%d-guruh", i), 10)),
+         collapse = ""))
+kL1 <- Lshart("Qozogʻiston kartoshka", o1)
+kL2 <- Lshart("Filmlar (tozalangan)", oC)
+P_("guruh oʻrtachasining standart xatosi s_e/sqrt(n/5):")
+P_("   kartoshka %.4f t/ga · filmlar %.4f mln $", kL1$seg, kL2$seg)
+P_("eng katta |guruh oʻrtachasi| shu birlikda:")
+P_("   kartoshka %.4f · filmlar %.4f", kL1$z, kL2$z)
+P_("")
+P_("TALQIN. Chiziqli modelda guruh oʻrtachalari nol atrofida TASODIFIY")
+P_("taqsimlanadi. Filmlar modelida esa ular '+ + 0 - -' shaklida ---")
+P_("bu TIZIMLI EGRILIK, yaʼni L SHUBHALI, va bu log-log modelga")
+P_("oʻtishning birinchi sababi.")
+P_("Kartoshka modelida n = 9 va har guruhda 1-2 kuzatuv bor, shuning")
+P_("uchun bu sonli tekshiruv KUCHSIZ: kichik n da L uchun asosiy dalil")
+P_("sonlar emas, DIAGRAMMA. Bu tekshiruvni katta n da ishlating.")
+```
+
+```{r t4b}
+# --- I: bogʻliqsizlik. AYNAN 11-haftadagi qator qaytadi. --------------
+Ishart <- function(nom, d, ustun) {
+  o  <- ols(d$yil, d[[ustun]])
+  l1 <- lag1(o$e); dws <- dw(o$e)
+  cheg <- 1.959964 / sqrt(o$n)
+  P_("%s n = %d  b1 = %.6f  R^2 = %.6f  s_e = %.6f",
+     pad(nom, 22), o$n, o$b1, o$r2, o$se)
+  P_("%s lag-1 = %+.6f   chegara = %.6f   DW = %.6f   -> %s",
+     pad("", 22), l1, cheg, dws,
+     if (abs(l1) > cheg) "SHART BUZILGAN" else "shart bajarilgan")
+  list(l1 = l1, dw = dws, o = o)
+}
+P_("")
+P_("-- I (bogʻliqsizlik): bir xil model, ikki mamlakat, ikki natija ---")
+iu <- Ishart("Oʻzbekiston bugʻdoy", uzq, "bugdoy")
+ik <- Ishart("Qozogʻiston bugʻdoy", kzq, "bugdoy")
+P_("Nazariy bogʻliqlik: DW ~ 2(1 - lag1) = %.6f, kuzatilgan %.6f",
+   2 * (1 - iu$l1), iu$dw)
+P_("11-HAFTADAN ESLATMA: AYNAN shu qator oʻshanda ham bogʻliqsizlik")
+P_("shartini buzgan edi. Bir xil maʼlumot nuqsoni har bir usulda")
+P_("qayta paydo boʻladi. Shart formuladan MUHIMROQ.")
+```
+
+```{r p3}
+# --- I sharti: qoldiqlar TARTIB boʻyicha ------------------------------
+dI <- rbind(
+  data.frame(yil = uzq$yil, e = iu$o$e, qator = "Uzbekistan wheat"),
+  data.frame(yil = kzq$yil, e = ik$o$e, qator = "Kazakhstan wheat"))
+gg3 <- ggplot(dI, aes(yil, e)) +
+  geom_hline(yintercept = 0, colour = oiGrey) +
+  geom_line(aes(colour = qator), linewidth = 0.6) +
+  geom_point(aes(colour = qator, shape = qator), size = 1.4) +
+  scale_colour_manual(values = c(oiBlue, oiVerm), name = NULL) +
+  scale_shape_manual(values = c(15, 16), name = NULL) +
+  facet_wrap(~qator, ncol = 2, scales = "free_y") +
+  labs(title = "Residuals in time order: independence check",
+       x = "year", y = "residual (t/ha)") +
+  theme(legend.position = "none")
+print(gg3)
+```
+
+```{r t4c}
+# --- N: normallik. Test EMAS, QQ-diagramma qaror qiladi. --------------
+Nshart <- function(nom, e) {
+  sw <- shapiro.test(e)
+  P_("%s n = %5d   qiyshiqlik = %+.4f   Shapiro-Wilk p = %.6f  -> %s",
+     pad(nom, 26), length(e), qiyshiq(e), sw$p.value,
+     if (sw$p.value < 0.05) "H0 RAD ETILADI" else "H0 rad etilmaydi")
+}
+lx <- log10(bx[mas]); ly <- log10(by[mas])
+oL <- ols(lx, ly)
+P_("")
+P_("-- N (normallik): Shapiro-Wilk va qiyshiqlik ---------------------")
+Nshart("Qozogʻiston kartoshka", o1$e)
+Nshart("Oʻzbekiston bugʻdoy", iu$o$e)
+Nshart("Filmlar (tozalangan)", oC$e)
+Nshart("Filmlar (log-log)", oL$e)
+P_("DIQQAT: n katta boʻlganda normallik testi ARZIMAS ogʻishni ham")
+P_("rad etadi. Shuning uchun qaror TEST bilan emas, QQ-DIAGRAMMA")
+P_("bilan qabul qilinadi. Va N --- eng KAM muhim shart: markaziy")
+P_("limit teoremasi tufayli n katta boʻlsa u kerak emas.")
+```
+
+```{r t4d}
+# --- E: teng dispersiya. Yelpigʻich bormi? ----------------------------
+cX <- chorakSD(bx[mas], oC$e)
+cL <- chorakSD(lx, oL$e)
+P_("")
+P_("-- E (teng dispersiya): byudjet choragi boʻyicha qoldiq SD --------")
+P_("%s%s%s%s%s%s", pad("model", 14), padl("1-chorak", 12),
+   padl("2-chorak", 12), padl("3-chorak", 12), padl("4-chorak", 12),
+   padl("nisbat", 10))
+P_("%s%s%s%s%s%s", pad("xom", 14),
+   paste(sapply(cX$sd, function(v) padl(sprintf("%.6f", v), 12)),
+         collapse = ""),
+   "", "", "", padl(sprintf("%.4f", cX$nisbat), 10))
+P_("%s%s%s%s%s%s", pad("log-log", 14),
+   paste(sapply(cL$sd, function(v) padl(sprintf("%.6f", v), 12)),
+         collapse = ""),
+   "", "", "", padl(sprintf("%.4f", cL$nisbat), 10))
+P_("Qoʻpol mezon: nisbat < 2 boʻlsa shart bajarilgan.")
+P_("xom     : %s   log-log : %s",
+   if (cX$nisbat < 2) "bajarilgan" else "BUZILGAN",
+   if (cL$nisbat < 2) "bajarilgan" else "BUZILGAN")
+P_("")
+P_("Log-log model: n = %d  b1 = %.6f  b0 = %.6f  R^2 = %.6f  s_e = %.6f",
+   oL$n, oL$b1, oL$b0, oL$r2, oL$se)
+P_("F183 talqin: byudjet 1 foizga katta boʻlsa, daromad oʻrtacha")
+P_("%.4f foizga katta (ELASTIKLIK). b1 > 1: daromad byudjetdan",
+   oL$b1)
+P_("tezroq oʻsadi.")
+P_("")
+P_("BU KUTILGAN NATIJA EMAS EDI. Xom modelda SD byudjet bilan OʻSADI")
+P_("(%.4f -> %.4f), log modelda esa KAMAYADI (%.4f -> %.4f).",
+   cX$sd[1], cX$sd[4], cL$sd[1], cL$sd[4])
+P_("Yaʼni logarifm yelpigʻichni YOʻQOTMADI --- uni TESKARI aylantirdi")
+P_("va kuchini %.4f dan %.4f ga tushirdi. IKKALA modelda ham E sharti",
+   cX$nisbat, cL$nisbat)
+P_("BUZILGAN. QOIDA: aylantirish sehrli tayoqcha emas.")
+```
+
+```{r p4}
+# --- E sharti: xom va log-log yonma-yon -------------------------------
+dE <- rbind(
+  data.frame(yh = oC$yh, e = oC$e, model = "raw"),
+  data.frame(yh = oL$yh, e = oL$e, model = "log-log"))
+gg4 <- ggplot(dE, aes(yh, e)) +
+  geom_hline(yintercept = 0, colour = oiGrey) +
+  geom_point(aes(colour = model), size = 0.6, alpha = 0.5) +
+  scale_colour_manual(values = c(oiGreen, oiOrange), name = NULL) +
+  facet_wrap(~model, ncol = 2, scales = "free") +
+  labs(title = "Equal variance: the log transform reverses the fan",
+       x = "fitted value", y = "residual") +
+  theme(legend.position = "none")
+print(gg4)
+```
+
+**Topshiriq (yozma).** *(a)* Toʻrt shartning har biri uchun: qaysi
+vositani ishlatdingiz, qanday son chiqdi, qanday qaror qildingiz?
+*(b)* Nega log–log modelning $R^2$ sini xom modelnikiga solishtirib
+boʻlmaydi? *(c)* Qaysi shart buzilganda $b_1$ ga **baribir**
+ishonish mumkin, qaysi biri buzilganda esa yoʻq?
+
+---
+
+# 5-topshiriq. Leveraj, studentlashgan qoldiq va Kuk masofasi {#t5}
+
+> **Blum:** Baholash · **Qiyinlik:** 5 (Ilgʻor) · **Ball:** 22 ·
+> **Vaqt:** 21 daqiqa
+
+$$
+h_i=\frac1n+\frac{(x_i-\xbar)^2}{S_{xx}}\tag{F176}\qquad
+\text{stud}_i=\frac{e_i}{s_e\sqrt{1-h_i}}\tag{F177}
+$$
+$$
+D_i=\frac{\text{stud}_i^{2}}{2}\cdot\frac{h_i}{1-h_i}\tag{F178}
+\qquad D_i>\frac4n\ \Rightarrow\ \text{qarab chiq}\tag{F179}
+$$
+
+**Uchta boshqa-boshqa tushuncha.** $h_i$ — nuqta $x$ boʻyicha
+qanchalik chetda (**$y$ ga bogʻliq emas**). $e_i$ — nuqta chiziqdan
+qanchalik uzoq. $D_i$ — nuqtani olib tashlasa chiziq qanchalik
+siljiydi. **Faqat uchinchisi «taʼsirchanlik» ni oʻlchaydi.**
+
+```{r t5a}
+# --- Tojikiston, kartoshka, 1992-2018 ---------------------------------
+xt <- tjq$yil; yt <- tjq$kartoshka
+oT <- ols(xt, yt); dT <- diagn(xt, yt)
+
+P_("=== 5-TOPSHIRIQ: TAʼSIRCHAN NUQTALAR ===")
+P_("Tojikiston kartoshka 1992-2018 (toʻliq model):")
+P_("b1 = %.6f t/ga har yilda   b0 = %.6f", oT$b1, oT$b0)
+P_("R^2 = %.6f   s_e = %.6f t/ga", oT$r2, oT$se)
+P_("")
+P_("-- Uchta koʻrsatkich, uchta BOSHQA javob ------------------------")
+iL <- which.max(dT$h); iR <- which.max(abs(dT$stud)); iC <- which.max(dT$cook)
+P_("Eng katta leveraj      : %d-yil  h = %.6f   (oʻrtacha 2/n = %.6f)",
+   xt[iL], dT$h[iL], dT$ort)
+P_("Eng katta |stud. qoldiq|: %d-yil  stud = %.6f", xt[iR], dT$stud[iR])
+P_("Eng katta Kuk masofasi : %d-yil  D = %.6f   (chegara 4/n = %.6f)",
+   xt[iC], dT$cook[iC], dT$chegara)
+P_("")
+P_("Eng katta LEVERAJLI nuqtaning Kuk masofasi atigi %.6f.", dT$cook[iL])
+P_("Yaʼni KATTA LEVERAJ TAʼSIRCHANLIK DEGANI EMAS.")
+P_("Eng taʼsirchan nuqtani taʼsirchan qilgan narsa leveraj emas,")
+P_("STUDENTLASHGAN QOLDIQ: %.6f.", dT$stud[iC])
+```
+
+```{r t5b}
+# --- Taʼsirchan nuqtasiz QAYTA baholash: IKKALA natija ham beriladi ---
+kes <- seq_along(xt) != iC
+oT2 <- ols(xt[kes], yt[kes])
+P_("")
+P_("-- %d-yil qiymati va qoʻshnilari -------------------------------", xt[iC])
+for (yy in (xt[iC] - 1):(xt[iC] + 1)) {
+  P_("   %d : %.3f t/ga", yy, yt[xt == yy])
+}
+P_("")
+P_("%s%s%s", pad("model", 22), padl("barchasi", 14),
+   padl(sprintf("%d-yilsiz", xt[iC]), 14))
+P_("%s%s%s", pad("b1 (t/ga har yil)", 22),
+   padl(sprintf("%.6f", oT$b1), 14), padl(sprintf("%.6f", oT2$b1), 14))
+P_("%s%s%s", pad("b0", 22), padl(sprintf("%.6f", oT$b0), 14),
+   padl(sprintf("%.6f", oT2$b0), 14))
+P_("%s%s%s", pad("R^2", 22), padl(sprintf("%.6f", oT$r2), 14),
+   padl(sprintf("%.6f", oT2$r2), 14))
+P_("%s%s%s", pad("s_e (t/ga)", 22), padl(sprintf("%.6f", oT$se), 14),
+   padl(sprintf("%.6f", oT2$se), 14))
+P_("b1 oʻzgarishi: %+.4f foiz", 100 * (oT2$b1 - oT$b1) / oT$b1)
+P_("")
+P_("QAROR EMAS, DALIL: bu nuqtani oʻchirish yoki saqlash qarori")
+P_("MAʼLUMOTNING KELIB CHIQISHIDAN chiqadi, natijadan emas.")
+P_("R^2 ning %.4f dan %.4f ga koʻtarilishi --- SABAB emas,",
+   oT$r2, oT2$r2)
+P_("OGOHLANTIRISH. Ikkala natija ham hisobotda koʻrsatiladi.")
+```
+
+```{r t5c}
+# --- TAQQOSLASH: bir xil diagnostika, IKKI XIL toʻgʻri javob ----------
+xr <- kzq$yil; yr <- kzq$sholi
+oR <- ols(xr, yr); dR <- diagn(xr, yr)
+jC <- which.max(dR$cook)
+kes2 <- seq_along(xr) != jC
+oR2 <- ols(xr[kes2], yr[kes2])
+P_("")
+P_("-- Qozogʻiston sholi 1992-2018 -----------------------------------")
+P_("b1 = %.6f   b0 = %.6f   R^2 = %.6f   s_e = %.6f",
+   oR$b1, oR$b0, oR$r2, oR$se)
+P_("Eng taʼsirchan: %d-yil  y = %.3f  h = %.6f  stud = %.6f  D = %.6f",
+   xr[jC], yr[jC], dR$h[jC], dR$stud[jC], dR$cook[jC])
+P_("Shu nuqtasiz  : b1 = %.6f  R^2 = %.6f  s_e = %.6f ; %+.4f foiz",
+   oR2$b1, oR2$r2, oR2$se, 100 * (oR2$b1 - oR$b1) / oR$b1)
+P_("Keyingi yillar: %s",
+   paste(sapply(1992:1995,
+                function(v) sprintf("%d = %.3f", v, yr[xr == v])),
+         collapse = " · "))
+P_("")
+P_("IKKI NUQTA, BIR XIL DIAGNOSTIKA, IKKI XIL TOʻGʻRI JAVOB:")
+P_("  Tojikiston 1995 --- qoʻshnilaridan ikki baravar yuqori, keyingi")
+P_("    yil qaytib tushadi, mexanizm yoʻq -> ehtimol MANBADAGI XATO.")
+P_("    Qaror: manbani tekshir; tuzat yoki chiqarib tashla va YOZIB QOʻY.")
+P_("  Qozogʻiston 1992 --- pasayish 1995 gacha UZLUKSIZ davom etadi va")
+P_("    mexanizmi maʼlum (sugʻorish tizimining qulashi) -> REAL TARIX.")
+P_("    Qaror: nuqtani SAQLA, MODELNI oʻzgartir.")
+P_("Chetlashgan kuzatuvni 'natija chiroyli boʻlsin' deb oʻchirish ---")
+P_("bu 11-haftadagi p-hacking ning regressiyadagi shakli.")
+```
+
+```{r p5}
+# --- Kuk masofasi va leveraj: IKKI BOSHQA rasm ------------------------
+dC <- data.frame(yil = xt, cook = dT$cook, h = dT$h)
+gg5 <- ggplot(dC, aes(yil)) +
+  geom_hline(yintercept = dT$chegara, colour = oiVerm,
+             linetype = "dashed") +
+  geom_col(aes(y = cook), fill = oiOrange, width = 0.6) +
+  geom_line(aes(y = h * 5), colour = oiBlue, linewidth = 0.6) +
+  geom_point(aes(y = h * 5), colour = oiBlue, size = 1.2) +
+  scale_y_continuous(name = "Cook's distance",
+    sec.axis = sec_axis(~ . / 5, name = "leverage h")) +
+  labs(title = "Cook's distance (bars) and leverage (line) are different",
+       x = "year")
+print(gg5)
+```
+
+**Topshiriq (yozma).** *(a)* Uch koʻrsatkich uchta **boshqa** yilni
+koʻrsatdi. Har birini bir jumla bilan izohlang. *(b)* Tojikiston
+holatida siz qanday qaror qabul qilardingiz va hisobotda **aynan
+nima** yozardingiz? *(c)* Qozogʻiston holatida modelni qanday
+oʻzgartirasiz? Aniq taklif bering.
+
+---
+
+# 6-topshiriq. Bashorat va **ekstrapolyatsiyani rad etish** {#t6}
+
+> **Blum:** Baholash · **Qiyinlik:** 5 (Ilgʻor) · **Ball:** 18 ·
+> **Vaqt:** 18 daqiqa
+
+**Savol.** 1-topshiriqdagi model bilan nimani bashorat qilish
+mumkin — va nimani **rad etish** kerak?
+
+```{r t6a}
+P_("=== 6-TOPSHIRIQ: BASHORAT VA EKSTRAPOLYATSIYA ===")
+P_("Model: yhat = %.6f + %.6f x,  x = yil - 2010,  x in [%d; %d]",
+   b0q, b1q, min(x1), max(x1))
+P_("s_e = %.6f t/ga", o1$se)
+P_("")
+P_("%s%s%s%s", pad("yil", 7), padl("x", 5), padl("yhat", 11),
+   padl("holat", 22))
+for (yy in 2010 + c(4, 8, 9, 15, 40, 90)) {   # 2014 ... 2100
+  xx <- yy - 2010
+  P_("%s%s%s%s", pad(sprintf("%d", yy), 7), padl(sprintf("%d", xx), 5),
+     padl(sprintf("%.4f", b0q + b1q * xx), 11),
+     padl(if (xx >= min(x1) && xx <= max(x1)) "maʼlumot ichida"
+          else "EKSTRAPOLYATSIYA", 22))
+}
+P_("")
+P_("2100-yil uchun model %.4f t/ga deydi. Bugungi JAHON REKORDI",
+   b0q + b1q * 90)
+P_("taxminan 45-50 t/ga. Model MAʼNOSIZ javob berdi va hech qanday")
+P_("ogohlantirish bermadi --- chunki u shunchaki toʻgʻri chiziq.")
+P_("R^2 = %.6f ham buni koʻrsatmaydi.", o1$r2)
+```
+
+```{r t6b}
+# --- Ekstrapolyatsiyaning IKKINCHI turi: notoʻgʻri OBYEKT -------------
+uzp <- uzq[uzq$yil >= 2010 & uzq$yil <= 2018, ]
+bash <- b0q + b1q * (uzp$yil - 2010)
+rmse <- sqrt(mean((uzp$kartoshka - bash)^2))
+P_("")
+P_("-- Notoʻgʻri obyekt: Qozogʻiston modeli Oʻzbekistonga -----------")
+P_("Kuzatilgan : %s",
+   paste(sprintf("%.3f", uzp$kartoshka), collapse = " "))
+P_("Bashorat   : %s", paste(sprintf("%.3f", bash), collapse = " "))
+P_("RMSE = %.6f t/ga ; modelning oʻz s_e si = %.6f", rmse, o1$se)
+P_("Yaʼni %.4f marta yomonroq. x oraligʻi TOʻGʻRI edi ---",
+   rmse / o1$se)
+P_("OBYEKT notoʻgʻri edi.")
+P_("")
+P_("XULOSA (yozib qoʻying): har bir model IKKI chegara bilan")
+P_("chegaralangan --- x ning ORALIGʻI va modelning OBYEKTI.")
+P_("Chiziq bu chegaralarni bilmaydi. Ularni siz aytasiz.")
+```
+
+```{r p6}
+# --- Ekstrapolyatsiya rasmi -------------------------------------------
+dX <- data.frame(x = 0:90, y = b0q + b1q * (0:90))
+gg6 <- ggplot(dX, aes(x, y)) +
+  geom_ribbon(data = subset(dX, x > 8), aes(ymin = -Inf, ymax = y),
+              fill = oiVerm, alpha = 0.07) +
+  geom_line(colour = oiVerm, linewidth = 0.8) +
+  geom_hline(yintercept = 48, colour = "#A8410F", linetype = "dotted") +
+  geom_vline(xintercept = 8, colour = oiGrey, linetype = "dashed") +
+  geom_point(data = data.frame(x = x1, y = y1), colour = oiBlue,
+             size = 2) +
+  annotate("text", x = 30, y = 44, label = "world record ~ 48 t/ha",
+           size = 3, colour = "#A8410F", hjust = 0) +
+  annotate("text", x = 10, y = 70, label = "data ends here",
+           size = 3, colour = oiGrey, hjust = 0) +
+  labs(title = "The line does not know where the data ended",
+       x = "x = year - 2010", y = "potato yield (t/ha)")
+print(gg6)
+```
+
+**Topshiriq (yozma) — mijozga xat.** Mijoz sizdan $2035$-yil uchun
+bashorat soʻradi. **Rad etish xatini yozing** ($120$–$180$ soʻz):
+*(1)* modelning oraligʻi qanday, *(2)* $2035$ uchun model qanday
+son beradi va nega unga ishonib boʻlmaydi, *(3)* mijozga
+buning oʻrniga nima taklif qilasiz.
+
+---
+
+# 7-topshiriq (uyda, bonus $+5$). AI yordamida: modelni tanqid qilish
+
+> **Blum:** Yaratish · **Qiyinlik:** 6 (Tadqiqotga yoʻnaltirilgan)
+
+**Vazifa.** Sunʼiy intellekt vositasidan (ChatGPT, Claude, Gemini)
+quyidagi soʻrov bilan foydalaning:
+
+> «Menda $27$ ta yillik kuzatuv bor va men $y\sim x$ chiziqli
+> regressiya qurdim. $R^2=0{,}82$, $s_e=0{,}51$. Modelim toʻgʻrimi?»
+
+**Sizning ishingiz — AI ning javobini tanqid qilish**, unga
+ishonish emas. Yozma hisobot ($1$ sahifa):
+
+1. AI **qaysi shartlarni** eslatdi va qaysilarini **eslatmadi**?
+2. AI $R^2$ va $s_e$ ni farqladimi? Agar yoʻq boʻlsa, farqni
+   oʻzingiz yozing.
+3. AI **avtokorrelyatsiya** haqida ogohlantirdimi? Yillik qatorda bu
+   eng ehtimolli buzilish (bugungi 4-topshiriq).
+4. AI **sababiy feʼl** ishlatdimi («taʼsir qiladi», «oshiradi»)?
+   Har bir holatni koʻchiring va toʻgʻri shaklga oʻzgartiring.
+5. Xulosa: AI javobining **qaysi qismi foydali** boʻldi va qaysi
+   qismi **xavfli** edi?
+
+**Akademik halollik.** AI ning javobini **koʻchirib qoʻyish taqiqlanadi**.
+Hisobotingizda: ishlatilgan vosita nomi, sana, aniq soʻrov matni va
+javobning skrinshoti yoki toʻliq koʻchirmasi **ilova** qilinadi;
+tahlil esa **sizniki** boʻlishi shart. AI dan olingan har bir jumla
+tirnoq ichida va manbasi koʻrsatilgan holda beriladi.
+
+---
+
+# Yakuniy tekshiruv roʻyxati
+
+Topshirishdan oldin har bir band uchun «ha» deb javob bera
+olishingiz kerak:
+
+- [ ] Har bir model uchun $b_1$ **birliklar bilan** talqin qilingan.
+- [ ] Har bir model uchun $R^2$ **va** $s_e$ birga keltirilgan.
+- [ ] Har bir model ortidan **shart tekshiruvi** yozilgan: qaysi
+      shart, qaysi vosita, qanday qaror.
+- [ ] Buzilgan shartlar aniq nomlangan (bu hafta **I** va **E**).
+- [ ] Taʼsirchan nuqta uchun **ikkala** model natijasi keltirilgan.
+- [ ] Hech qayerda sababiy feʼl ishlatilmagan.
+- [ ] Ekstrapolyatsiya qilingan har bir son shunday deb belgilangan.
+- [ ] Grafik yorliqlari ASCII, ranglar Okabe–Ito, maʼno faqat rang
+      bilan berilmagan.
+
+# Baholash mezonlari
+
+| Mezon | Ball | Nima kutiladi |
+|---|---|---|
+| Kod ishlaydi va natija toʻgʻri | 30 | Barcha sonlar qoʻllanmadagi bilan mos |
+| **Talqin birliklar bilan** | 20 | Har bir $b_1$, $s_e$ oʻz birligida |
+| **Shart tekshiruvi** | 25 | Toʻrt shart, nomlangan vosita, aniq qaror |
+| **Taʼsirchan nuqta tahlili** | 20 | Ikkala model, qaror manbadan chiqadi |
+| **Chegaralarni aytish** | 15 | Ekstrapolyatsiya belgilangan, rad etish asoslangan |
+| Kasbiy yozuv va grafik sifati | 10 | Sarlavha, birlik, inklyuziv rang |
+| **Jami** | **120** | |
+| Bonus: AI tanqidi | $+5$ | Halol, manbali, mustaqil tahlil |
+
+# Fikr yuritish savollari
+
+1. Bugun ikki marta «formula toʻgʻri, lekin natijaga ishonib
+   boʻlmaydi» holati uchradi. Ularni nomlang. Bu holat oʻtgan
+   haftalarda ham boʻlganmi?
+2. $\sum e_i=0$ ayniyati **har doim** bajariladi. Nega bu model
+   sifatining dalili emas? Bunday «har doim toʻgʻri» tekshiruvlarni
+   yana bilasizmi?
+3. Logarifm yelpigʻichni teskari aylantirdi. Bu sizni aylantirishlar
+   haqida nimaga oʻrgatdi?
+4. Bir xil Kuk masofasi ikki xil qarorga olib keldi. Statistikada
+   yana qaysi holatda «bir xil son, ikki xil qaror» boʻlishi mumkin?
+5. $2100$-yil bashoratini model hech qanday ogohlantirishsiz berdi.
+   Sizning kasbiy javobgarligingiz qayerdan boshlanadi?

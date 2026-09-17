@@ -1,0 +1,38 @@
+STAT201 · 12-HAFTA · TALABA PAKETI
+Regressiyani qurish va qoldiqlarni tashxislash: eng kichik kvadratlar, R^2 va s_e, L-I-N-E, taʼsirchan nuqtalar
+Toshkent Xalqaro Universiteti · Iqtisodiyot fakulteti · 2026/2027
+
+UCHTA QOIDA
+1. ZIP ni TOʻLIQ oching (Extract All) — fayllarni ZIP ichidan alohida ochmang.
+   Laboratoriya kodi «data» papkasini oʻzi yonida kutadi.
+2. CSV fayllarni Excel da OCHMANG. Ochsangiz — SAQLAMANG. Excel oʻzbekcha «ʻ»
+   belgisini buzadi va kod jimgina notoʻgʻri natija beradi.
+3. .Rmd faylni faqat RStudio da oching (File > Open File). Ochgach:
+   Session > Set Working Directory > To Source File Location.
+
+PAKET TARKIBI
+  W12-slaydlar.pdf                           — maʼruza slaydlari
+  W12-talaba-tarqatmasi.pdf                  — talaba tarqatmasi (asosiy konspekt)
+  W12-oqish-royxati.pdf                      — oʻqish roʻyxati
+  W12-keys.pdf                               — keys-stadi (talaba nusxasi)
+  W12-individual-topshiriq.pdf               — individual topshiriq + rubrika
+  W12-guruh-topshirigi.pdf                   — guruh topshirigʻi
+  W12-uy-vazifasi.pdf                        — uy vazifasi
+  W12-refleksiya.pdf                         — refleksiya mashqi
+  W12-si-topshiriqlari.pdf                   — sunʼiy intellekt bilan ishlash topshiriqlari
+  W12-loyiha-11-bosqich.pdf                  — semestr loyihasi, 11-bosqich
+  W12-muddatlar.pdf                          — muddatlar jadvali
+  laboratoriya/
+     W12-lab.pdf              — laboratoriya topshiriqlari (bosma)
+     W12-lab-R.Rmd            — R daftari (RStudio)
+     W12-lab-Python.ipynb     — Python varianti (ixtiyoriy, bir xil natija)
+     data/                    — ikkala maʼlumot toʻplami
+
+LABORATORIYADAN KEYIN TOPSHIRILADI
+  RStudio da Knit tugmasi → hosil boʻlgan W12-lab-R.html fayli.
+  Fayl nomi:  W12-Familiya-Ism.html   (kanalda eʼlon qilingan tartibda).
+  Har topshiriqning «Qaror» boʻlimi oʻz soʻzingiz bilan toʻldirilgan boʻlishi shart —
+  faqat kod ishga tushirilgan daftar «bajarilmagan» hisoblanadi.
+
+Bu paketdagi hujjatlar talaba nusxasi: oʻqituvchi uchun yechim va kalit boʻlimlari
+olib tashlangan. Kalitlar dars muhokamasidan keyin alohida eʼlon qilinadi.

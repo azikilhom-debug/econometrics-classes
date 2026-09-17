@@ -1,0 +1,37 @@
+STAT201 · 9-HAFTA · TALABA PAKETI
+Nuqtaviy va oraliqli baholash: baholovchi xossalari, t-taqsimot, ishonch oraligʻi, butstrep
+Toshkent Xalqaro Universiteti · Iqtisodiyot fakulteti · 2026/2027
+
+UCHTA QOIDA
+1. ZIP ni TOʻLIQ oching (Extract All) — fayllarni ZIP ichidan alohida ochmang.
+   Laboratoriya kodi «data» papkasini oʻzi yonida kutadi.
+2. CSV fayllarni Excel da OCHMANG. Ochsangiz — SAQLAMANG. Excel oʻzbekcha «ʻ»
+   belgisini buzadi va kod jimgina notoʻgʻri natija beradi.
+3. .Rmd faylni faqat RStudio da oching (File > Open File). Ochgach:
+   Session > Set Working Directory > To Source File Location.
+
+PAKET TARKIBI
+  W09-slaydlar.pdf                           — maʼruza slaydlari
+  W09-talaba-tarqatmasi.pdf                  — talaba tarqatmasi (asosiy konspekt)
+  W09-oqish-royxati.pdf                      — oʻqish roʻyxati
+  W09-keys.pdf                               — keys-stadi (talaba nusxasi)
+  W09-individual-topshiriq.pdf               — individual topshiriq + rubrika
+  W09-guruh-topshirigi.pdf                   — guruh topshirigʻi
+  W09-uy-vazifasi.pdf                        — uy vazifasi
+  W09-refleksiya.pdf                         — refleksiya mashqi
+  W09-si-topshiriqlari.pdf                   — sunʼiy intellekt bilan ishlash topshiriqlari
+  W09-loyiha-8-bosqich.pdf                   — semestr loyihasi, 8-bosqich
+  laboratoriya/
+     W09-lab.pdf              — laboratoriya topshiriqlari (bosma)
+     W09-lab-R.Rmd            — R daftari (RStudio)
+     W09-lab-Python.ipynb     — Python varianti (ixtiyoriy, bir xil natija)
+     data/                    — ikkala maʼlumot toʻplami
+
+LABORATORIYADAN KEYIN TOPSHIRILADI
+  RStudio da Knit tugmasi → hosil boʻlgan W09-lab-R.html fayli.
+  Fayl nomi:  W09-Familiya-Ism.html   (kanalda eʼlon qilingan tartibda).
+  Har topshiriqning «Qaror» boʻlimi oʻz soʻzingiz bilan toʻldirilgan boʻlishi shart —
+  faqat kod ishga tushirilgan daftar «bajarilmagan» hisoblanadi.
+
+Bu paketdagi hujjatlar talaba nusxasi: oʻqituvchi uchun yechim va kalit boʻlimlari
+olib tashlangan. Kalitlar dars muhokamasidan keyin alohida eʼlon qilinadi.

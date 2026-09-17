@@ -1,0 +1,1507 @@
+---
+title: "STAT201 · 10-hafta · Kompyuter laboratoriyasi (R)"
+subtitle: "Gipotezalarni tekshirish I: nol taqsimotini qurish, p-qiymat, quvvat va p-hacking"
+author: "Toshkent Xalqaro Universiteti · Iqtisodiyot fakulteti"
+date: "2025/2026 oʻquv yili"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    df_print: kable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 7, fig.height = 4.2, dpi = 110,
+  # dev.args: oʻzbekcha «ʻ» belgisi grafikda chiqishi uchun cairo kerak.
+  # Shunga qaramay YORLIQLARDA faqat ASCII ishlatamiz — qoida 2-haftadan beri.
+  dev = "png", dev.args = list(type = "cairo")
+)
+options(digits = 7)
+```
+
+<!--
+  ==================================================================
+  STAT201 · 10-hafta · Kompyuter laboratoriyasi · R versiyasi
+  Davomiyligi: 2 akademik soat (120 daqiqa)
+  CLO7 — gipotezalarni shakllantirish, tekshirish va p-qiymatni
+         toʻgʻri talqin qilish (Blum: Tahlil–Baholash–Yaratish)
+  Maʼlumot: data/markaziy-osiyo-hosildorlik.csv (5 mamlakat x 27 yil)
+            data/kinolar-byudjet.csv (2 467 film, 2000–2018)
+  Har bir topshiriq bitta zanjirga boʻysunadi:
+  statistik tushuncha -> maʼlumot -> kod -> natija -> talqin -> qaror
+  Izohlar va oʻzgaruvchi nomlari — oʻzbekcha; funksiya nomlari — inglizcha.
+  Simulyatsiya generatori: MINSTD (2-haftadagi bilan AYNAN bir xil).
+  Urugʻlar maʼruza slaydlaridagi bilan bir xil, shu sababli R va Python
+  daftarlari BELGI-MA-BELGI bir xil matn chiqaradi.
+  ==================================================================
+-->
+
+$$
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\SD}{\operatorname{SD}}
+\newcommand{\SE}{\operatorname{SE}}
+\newcommand{\Xbar}{\bar{X}}
+\newcommand{\phat}{\hat{p}}
+\newcommand{\xbar}{\bar{x}}
+\newcommand{\Norm}{\mathcal{N}}
+\newcommand{\Bin}{\operatorname{Bin}}
+$$
+
+# Laboratoriya haqida
+
+**Maqsad.** Bugun siz **nol taqsimotini oʻz qoʻlingiz bilan quradingiz**
+— soʻng uni **qanchalik oson suiisteʼmol qilish mumkinligini
+oʻlchaysiz**. Maʼruzada $p$-qiymatning taʼrifi aytildi: *agar $H_0$
+toʻgʻri boʻlsa, kuzatilganidek yoki undan keskinroq natija olish
+ehtimolligi*. Bu taʼrif — **sanaladigan** daʼvo. Bugun biz uni
+sanaymiz: hech qanday formulaga tayanmasdan, $H_0$ toʻgʻri boʻlgan
+dunyoni 20 000 marta yaratib, natijalarni **sanab**.
+
+9-haftada savol «$\mu$ qancha?» edi va javob **son** boʻlgan. Bu hafta
+savol «$\mu$ falon songa tengmi?» va javob **qaror**. Har bir qaror
+xato boʻlishi mumkin — shuning uchun bugun xatolarning ikkala turini
+ham **oʻlchaymiz**.
+
+Ushbu mashgʻulot yettita narsani **isbotlaydi yoki buzadi**:
+
+1. **Test — ishonch oraligʻining boshqa tomoni.** Oraliqning
+   *chegarasida* $p$ aynan $0{,}050000$ ga teng chiqadi. Taxminan
+   emas — **aynan**.
+2. **$p$-qiymatni formulasiz hisoblash mumkin.** Nol taqsimotini
+   quramiz va **sanaymiz**; keyin aniq binomial, $z$-test va
+   uzluksizlik tuzatmasi bilan solishtiramiz.
+3. **$H_0$ ostida $p$ tekis taqsimlangan.** Bu bitta oʻlchangan fakt
+   butun haftani tushuntiradi.
+4. **I va II tur xatolari almashtiriladi.** Quvvatni nazariy
+   hisoblaymiz va bitta nuqtasini **simulyatsiya bilan tekshiramiz**.
+5. **$p$-hacking oʻlchanadi, aytilmaydi.** Uchta suiisteʼmol shakli sof
+   shovqin ustida ishga tushiriladi: $0{,}05$ oʻrniga $0{,}6411$,
+   $0{,}3476$ va $0{,}2624$ chiqadi.
+6. **Statistik ahamiyat amaliy ahamiyat emas.** Bir xil, arzimas
+   effekt $n$ oshgani sayin «ahamiyatli» boʻlib qoladi.
+7. **Natijani yozish — alohida koʻnikma.** $p$ hech qachon yolgʻiz
+   berilmaydi: **effekt hajmi $+$ ishonch oraligʻi $+$ $p$**.
+
+> **Haftaning markaziy gʻoyasi.** 9-hafta yakunida shunday deyilgan
+> edi: «ishonch oraligʻi ikkinchi savolga ham javob beradi». Bugun
+> buni **isbotlaymiz**, keyin esa shu asbobning qanchalik oson
+> sinishini **oʻlchaymiz**.
+
+**Ish zanjiri.** Har bir topshiriqda quyidagi ketma-ketlikni yozma
+ravishda bajarasiz:
+
+> **statistik tushuncha → maʼlumot → kod → natija → talqin → qaror**
+
+Faqat kod yozib, natijani izohsiz qoldirish — topshiriq bajarilmagan
+hisoblanadi. Baholashning $60\,\%$ i aynan *talqin* va *qaror*
+bosqichlariga beriladi.
+
+**Vaqt va ball taqsimoti (120 daqiqa, 120 ball + 5 bonus).**
+
+| # | Mazmun | Daqiqa | Blum | Qiyinlik | Ball |
+|---|---|---|---|---|---|
+| 0 | Muhitni sozlash, MINSTD va maʼlumot | 5 | — | — | — |
+| 1 | Koʻprik: oraliq $\leftrightarrow$ test | 12 | Qoʻllash | 3 (Amaliy) | 14 |
+| 2 | Nol taqsimotini qurish va sanash | 16 | Tahlil | 4 (Analitik) | 18 |
+| 3 | $H_0$ ostida $p$ tekis taqsimlangan | 14 | Tahlil | 4 (Analitik) | 16 |
+| 4 | I va II tur xatolari, quvvat | 16 | Tahlil | 4 (Analitik) | 16 |
+| 5 | $p$-hacking laboratoriyasi | 28 | Baholash | 5 (Ilgʻor) | 26 |
+| 6 | Statistik va amaliy ahamiyat | 15 | Baholash | 5 (Ilgʻor) | 16 |
+| 7 | Natijani yozish: hisobot tili | 14 | Yaratish | 5 (Ilgʻor) | 14 |
+| 8 | AI yordamida: $p$-qiymat talqinidagi xato | uyda | Yaratish | 6 (Tadqiqot) | +5 |
+
+**Oldingi bilim.** Sizga quyidagilar allaqachon maʼlum boʻlishi kerak:
+MINSTD generatori va urugʻ (2-hafta); shartli ehtimollik va prokuror
+xatosi (3-hafta); normal taqsimot va $z$-baho (5-hafta); binomial
+taqsimot va **uzluksizlik tuzatmasi** (7-hafta); tanlanma taqsimoti,
+$\SE$ va muvaffaqiyat–muvaffaqiyatsizlik sharti (7-hafta);
+$t$-taqsimot, erkinlik darajasi va ishonch oraligʻi (9-hafta).
+
+**Bu hafta nimani qilmaymiz.** Ikki tanlanmani solishtirish, juftlashgan
+testlar, $\chi^{2}$, ANOVA, noparametrik usullar va regressiya —
+**11-haftadan** boshlanadi. Bugun **faqat bitta tanlanma**: bitta
+oʻrtacha yoki bitta ulush. Bonferroni tuzatmasi bugun faqat *eslatib*
+oʻtiladi; toʻliq muolajasi 11-haftada.
+
+---
+
+# 0-bosqich. Muhitni sozlash
+
+```{r lokal}
+# --- MUHIM: UTF-8 muhitini kafolatlash --------------------------------
+# Oʻzbekcha nomlarda tutuq belgisi «ʻ» (U+02BB) bor. Agar R UTF-8
+# boʻlmagan lokalda ishga tushsa (masalan LC_CTYPE=C), kod ichidagi
+# oʻzbekcha satr va CSV dan oʻqilgan qiymat BAYTLARI bir xil boʻlsa ham
+# TENG DEB HISOBLANMAYDI: filtr BOʻSH jadval qaytaradi va butun tahlil
+# NaN ga aylanadi — hech qanday xato xabari chiqmasdan.
+# QOIDA (2-haftadan): toifa nomlarini kod ichida literal yozmang —
+# ularni unique(...) orqali FAYLDAN oling va POZITSIYA boʻyicha tanlang.
+if (!grepl("UTF-8", Sys.getlocale("LC_CTYPE"), ignore.case = TRUE)) {
+  for (lokal in c("C.UTF-8", "en_US.UTF-8", "uz_UZ.UTF-8",
+                  "Uzbek_Uzbekistan.utf8", "English_United States.utf8")) {
+    if (suppressWarnings(Sys.setlocale("LC_CTYPE", lokal)) != "") break
+  }
+}
+cat("MUHIT: LC_CTYPE =", Sys.getlocale("LC_CTYPE"), "\n")
+```
+
+```{r paketlar}
+# --- Kerakli paketlar -------------------------------------------------
+library(readr)     # CSV oʻqish
+library(ggplot2)   # grafiklar
+
+# Okabe–Ito palitrasi: rang koʻrmaslikka moslashgan.
+oiBlue <- "#0072B2"; oiOrange <- "#E69F00"; oiGreen  <- "#009E73"
+oiPink <- "#CC79A7"; oiVerm   <- "#D55E00"; oiSky    <- "#56B4E9"
+oiYell <- "#F0E442"; oiGrey   <- "#5A6470"
+
+theme_set(theme_minimal(base_size = 11))
+theme_update(
+  panel.grid.minor = element_blank(),
+  plot.title    = element_text(face = "bold"),
+  plot.subtitle = element_text(colour = "grey30")
+)
+
+# QOIDA (2-haftadan): grafik yorliqlarida faqat ASCII harflar.
+# R ning standart pdf() qurilmasi U+02BB belgisini chiza olmaydi.
+cat("MUHIT: cairo mavjudmi:", capabilities("cairo"), "\n")
+```
+
+```{r yordamchi}
+# --- IKKI DAFTAR BIR XIL MATN CHIQARISHI UCHUN YORDAMCHILAR ------------
+# (1) ha(): R «TRUE», Python esa «True» yozadi. Mantiqiy qiymatni
+#     OʻZIMIZ formatlaymiz.
+ha <- function(b) if (isTRUE(as.logical(b))) "HA" else "YOʻQ"
+
+# (2) pad()/padl(): R ning sprintf("%-16s") formati satrni BAYT boʻyicha
+#     toʻldiradi, Python esa BELGI boʻyicha. «YOʻQ» da 4 ta belgi, ammo
+#     5 ta bayt bor — shu sababli oʻzbekcha yorliqlarni sprintf ga
+#     bermay, kenglikni OʻZIMIZ hisoblaymiz.
+pad  <- function(s, n) {           # chapga tekislash (oʻngdan boʻshliq)
+  s <- enc2utf8(s); k <- n - nchar(s, type = "chars")
+  if (k > 0) paste0(s, strrep(" ", k)) else s
+}
+padl <- function(s, n) {           # oʻngga tekislash (chapdan boʻshliq)
+  s <- enc2utf8(s); k <- n - nchar(s, type = "chars")
+  if (k > 0) paste0(strrep(" ", k), s) else s
+}
+
+# (3) P_(): sprintf + cat qisqartmasi. Har bir son QOʻLDA formatlanadi.
+P_ <- function(...) cat(sprintf(...), "\n", sep = "")
+
+# (4) Dispersiya: MAXRAJNI HAR DOIM OSHKORA YOZAMIZ.
+#     R da var() -> n-1, Python da np.var() -> N. Chalkashlik shu yerdan
+#     chiqadi, shuning uchun ikkala daftarda ham oʻz funksiyamiz bor.
+varS <- function(x) sum((x - mean(x))^2) / (length(x) - 1)   # maxraj n-1
+varP <- function(x) sum((x - mean(x))^2) / length(x)         # maxraj n
+sdS  <- function(x) sqrt(varS(x))
+sdP  <- function(x) sqrt(varP(x))
+
+# (5) Qator boʻyicha koʻrsatkichlar: matritsaning HAR BIR QATORI —
+#     bitta tanlanma. apply() sekin, shuning uchun vektorlashtiramiz.
+qatorOrtacha <- function(M) rowMeans(M)
+qatorVarS    <- function(M) {                    # maxraj n-1 (STATISTIKA)
+  mu <- rowMeans(M); rowSums((M - mu)^2) / (ncol(M) - 1)
+}
+
+# (6) p-qiymat funksiyalari — bu haftaning asosiy asboblari.
+p_t2 <- function(t, df) 2 * (1 - pt(abs(t), df))     # ikki tomonlama t
+p_z2 <- function(z)     2 * pnorm(-abs(z))           # ikki tomonlama z
+
+# (7) Kolmogorov masofasi: empirik taqsimot bilan TEKIS taqsimot
+#     orasidagi eng katta farq. Formulani oshkora yozamiz — shunda
+#     ikkala tilda AYNAN bir xil son chiqadi.
+kolm <- function(p) {
+  N <- length(p); ps <- sort(p); i <- seq_len(N)
+  max(max(i / N - ps), max(ps - (i - 1) / N))
+}
+
+# (8) Kritik qiymatlar. z ni LITERAL yozamiz (ikki tilda bir xil bit).
+Z975 <- 1.959964      # z_{0,975}
+Z80  <- 0.841621      # z_{0,80}  — quvvat hisobida kerak
+tkr  <- function(daraja, df) qt(daraja, df)
+```
+
+```{r minstd}
+# --- MINSTD generatori (2-haftadan beri oʻzgarmagan) -------------------
+# Nima uchun oʻzimizning generatorimiz kerak?
+#   R:      set.seed(2026); runif(3)
+#   Python: np.random.default_rng(2026).random(3)
+# Bu ikkisi BOSHQA-BOSHQA sonlar beradi. Ikkalasi ham toʻgʻri, lekin
+# ikkalasi ham bir-biriga mos emas. Shu sababli kursda tasodifiylik
+# kerak boʻlganda HAR DOIM quyidagi 4 qatorli generator ishlatiladi:
+#     x <- (48271 * x) mod 2147483647,    u <- x / 2147483647
+# Bu — Lehmer (1951) generatori, «MINSTD» nomi bilan mashhur.
+A_ <- 48271; M_ <- 2147483647
+
+minstd <- function(urug) {
+  x <- urug %% M_
+  function(n) {                      # n ta u ~ U(0,1) qaytaradi
+    o <- numeric(n); xx <- x
+    for (i in seq_len(n)) { xx <- (A_ * xx) %% M_; o[i] <- xx }
+    x <<- xx
+    o / M_
+  }
+}
+
+# Indeks tanlash: 0 dan hi-1 gacha butun son (Python bilan bir xil).
+# R da vektor 1 dan boshlanadi, shuning uchun ishlatishda +1L qilamiz.
+indeks <- function(gen, n, hi) as.integer(gen(n) * hi)
+
+# Box–Muller: tekis sonlardan normal sonlar.
+# DIQQAT — CHIQISH TARTIBI ATAYLAB QAYD ETILGAN: avval BARCHA
+# kosinuslar, keyin BARCHA sinuslar. Tartib qayd etilmasa, R va Python
+# bir xil urugʻdan bir xil sonlarni BOSHQA KETMA-KETLIKDA beradi va
+# ikki daftar ajralib ketadi.
+minstd_norm <- function(gen, n) {
+  m2 <- n + (n %% 2)                       # juft songa toʻldiramiz
+  us <- matrix(gen(m2), ncol = 2, byrow = TRUE)
+  r  <- sqrt(-2 * log(us[, 1])); th <- 2 * pi * us[, 2]
+  c(r * cos(th), r * sin(th))[seq_len(n)]
+}
+
+# Nazorat qiymati: urugʻ 2026 dan keyingi uchta son.
+g <- minstd(2026); u3 <- g(3)
+P_("=== 0-BOSQICH: MINSTD NAZORATI ===")
+P_("urugʻ 2026 -> u1 = %.10f  u2 = %.10f  u3 = %.10f", u3[1], u3[2], u3[3])
+P_("bu uchta son ikkinchi tildagi daftarda ham AYNAN shunday chiqishi shart")
+g <- minstd(7); z4 <- minstd_norm(g, 4)
+P_("Box-Muller nazorati (urugʻ 7): %+.8f %+.8f %+.8f %+.8f",
+   z4[1], z4[2], z4[3], z4[4])
+P_("birinchi ikkitasi KOSINUSLAR, keyingi ikkitasi SINUSLAR")
+
+# Solishtirish uchun: tilning OʻZ generatori (bu satr ikki tilda FARQ QILADI)
+set.seed(2026)
+cat(sprintf("MUHIT: R ning runif(1) = %.10f  (Python da boshqa son chiqadi)\n",
+            runif(1)))
+```
+
+```{r malumot}
+# --- Ikkita haqiqiy maʼlumot toʻplami ---------------------------------
+# A. markaziy-osiyo-hosildorlik.csv — 5 mamlakat x 27 yil (1992–2018),
+#    hosildorlik t/ga. Manba: FAOSTAT / Our World in Data (OWID).
+# B. kinolar-byudjet.csv — 2 467 film (2000–2018), byudjet AQSh
+#    dollarida. Manba: The Numbers / Kaggle «movie industry».
+#    BUGUN HAM BU FAYL — BUTUN BOSH TOʻPLAM (9-haftadagi kabi).
+DATA  <- "data"
+hosil <- read_csv(file.path(DATA, "markaziy-osiyo-hosildorlik.csv"),
+                  locale = locale(encoding = "UTF-8"), show_col_types = FALSE)
+kino  <- read_csv(file.path(DATA, "kinolar-byudjet.csv"),
+                  locale = locale(encoding = "UTF-8"), show_col_types = FALSE)
+
+# QOIDA: mamlakat nomini kod ichida LITERAL yozmaymiz — fayldan olamiz
+# va POZITSIYA boʻyicha tanlaymiz (yuqoridagi lokal tuzogʻi).
+mamlar <- unique(hosil$mamlakat)
+UZ     <- mamlar[1]                       # faylda birinchi kelgan mamlakat
+uz     <- hosil[hosil$mamlakat == UZ & hosil$yil >= 2009 & hosil$yil <= 2018, ]
+xw     <- as.numeric(uz$bugdoy)           # 9-haftadagi AYNI tanlanma
+
+b    <- as.numeric(kino$byudjet) / 1e6    # mln dollarda
+Nb   <- length(b)
+MU   <- mean(b)                           # PARAMETR
+SIG  <- sdP(b)                            # PARAMETR (maxraj N)
+SIG2 <- SIG^2
+
+P_("")
+P_("=== 0-BOSQICH: MAʼLUMOT ===")
+P_("A. hosildorlik fayli: %d qator, %d ta mamlakat, %d-%d yillar",
+   nrow(hosil), length(mamlar), min(hosil$yil), max(hosil$yil))
+P_("   tanlangan mamlakat (pozitsiya 1) = %s", UZ)
+P_("   bugʻdoy 2009-2018, n = %d, birlik t/ga", length(xw))
+P_("   qiymatlar: %s", paste(sprintf("%.3f", xw), collapse = ", "))
+P_("B. kinolar fayli (BOSH TOʻPLAM): N = %d, birlik mln $", Nb)
+P_("   mu    = %.6f   <- PARAMETR, qatʼiy son", MU)
+P_("   sigma = %.6f   <- PARAMETR (maxraj N)", SIG)
+P_("")
+P_("MANBA: OWID/FAOSTAT (hosildorlik) · The Numbers/Kaggle (kinolar).")
+P_("Ikkalasi ham HAQIQIY maʼlumot. Simulyatsiya natijalari yonida esa")
+P_("har doim generator nomi (MINSTD) va urugʻ koʻrsatiladi.")
+```
+
+---
+
+# 1-topshiriq. Koʻprik: ishonch oraligʻi va test — bir xil narsa {#t1}
+
+> **Blum:** Qoʻllash · **Qiyinlik:** 3 (Amaliy) · **Ball:** 14 ·
+> **Vaqt:** 12 daqiqa
+
+**Statistik tushuncha.** 9-haftada siz $\mu$ uchun ishonch oraligʻini
+qurdingiz. Bugungi test yangi matematika emas: u **aynan oʻsha
+hisobni boshqa tomondan** oʻqiydi.
+
+$$t=\frac{\xbar-\mu_0}{s/\sqrt{n}},\qquad
+p = 2\,\Prob\bigl(T_{n-1} > |t|\bigr).$$
+
+**Daʼvo (aynan, taxminan emas):**
+
+$$\mu_0 \in \bigl[\xbar \pm t_{1-\alpha/2}(n-1)\cdot \SE\bigr]
+\iff p \ge \alpha .$$
+
+Buni **isbotlamaymiz — tekshiramiz**. Agar daʼvo toʻgʻri boʻlsa,
+oraliqning *chegarasida* $p$ aynan $\alpha$ ga teng chiqishi shart.
+
+**Maʼlumot.** Oʻzbekistonda bugʻdoy hosildorligi, 2009–2018, $n=10$,
+t/ga (OWID / FAOSTAT — **haqiqiy**).
+
+> **Halollik sharti.** Bu — *vaqt qatori*, tasodifiy tanlanma emas.
+> Ketma-ket yillar bir-biriga bogʻliq (ob-havo, texnologiya, siyosat),
+> demak bogʻliqsizlik sharti buzilgan. Testni **mashq sifatida**
+> oʻtkazamiz va bu buzilishni talqin bosqichida **ochiq aytamiz**.
+
+**Kod.**
+
+```{r t1}
+# --- 1A: bitta tanlanma, mu_0 lar toʻri boʻyicha test -----------------
+n1  <- length(xw); xb1 <- mean(xw); s1 <- sdS(xw); se1 <- s1 / sqrt(n1)
+tc1 <- tkr(0.975, n1 - 1)
+lo1 <- xb1 - tc1 * se1; hi1 <- xb1 + tc1 * se1
+
+P_("=== 1-TOPSHIRIQ: ORALIQ VA TEST -- AYNI BIR NARSA ===")
+P_("maʼlumot: Oʻzbekiston bugʻdoy hosildorligi 2009-2018 (OWID/FAOSTAT)")
+P_("n = %d   xbar = %.6f   s = %.6f   SE = %.6f", n1, xb1, s1, se1)
+P_("t_0,975(%d) = %.6f", n1 - 1, tc1)
+P_("9-haftadagi 95 foizli ishonch oraligʻi: [%.6f; %.6f]", lo1, hi1)
+P_("")
+P_("%s%s%s%s%s", padl("mu_0", 12), padl("t", 12), padl("p (2 tomonl.)", 16),
+   padl("alpha=0,05 da", 16), padl("oraliq ichidami?", 18))
+for (mu0 in c(4.30, 4.40, lo1, 4.50, xb1, 4.75, hi1, 4.90)) {
+  tt <- (xb1 - mu0) / se1; pv <- p_t2(tt, n1 - 1)
+  qrr <- if (abs(pv - 0.05) < 1e-9) "CHEGARA" else
+    if (pv < 0.05) "RAD ETILADI" else "rad etilmaydi"
+  ins <- if (abs(pv - 0.05) < 1e-9) "chegara" else ha(lo1 <= mu0 && mu0 <= hi1)
+  P_("%s%s%s%s%s",
+     padl(sprintf("%.6f", mu0), 12), padl(sprintf("%+.6f", tt), 12),
+     padl(sprintf("%.6f", pv), 16), padl(qrr, 16), padl(ins, 18))
+}
+P_("")
+P_("DIQQAT: chegaradagi ikki satrda p = 0,050000 -- AYNAN, taxminan emas.")
+P_("Demak ishonch oraligʻi = RAD ETILMAYDIGAN barcha mu_0 larning toʻplami.")
+```
+
+```{r t1b}
+# --- 1B: koʻprik har qanday alpha da ishlaydimi? ----------------------
+# Nazariya: p = alpha boʻladigan mu_0 aynan (1-alpha) oraligʻining
+# chegarasi. Uni ikki yoʻl bilan topamiz va solishtiramiz.
+P_("")
+P_("--- 1B: koʻprik uchta ishonch darajasida ---")
+P_("%s%s%s%s%s", padl("alpha", 9), padl("t_krit", 11),
+   padl("oraliq quyi", 14), padl("oraliq yuqori", 15),
+   padl("chegarada p", 14))
+for (al in c(0.10, 0.05, 0.01)) {
+  tk <- tkr(1 - al / 2, n1 - 1)
+  lo <- xb1 - tk * se1; hi <- xb1 + tk * se1
+  pv <- p_t2((xb1 - lo) / se1, n1 - 1)
+  P_("%s%s%s%s%s", padl(sprintf("%.2f", al), 9), padl(sprintf("%.6f", tk), 11),
+     padl(sprintf("%.6f", lo), 14), padl(sprintf("%.6f", hi), 15),
+     padl(sprintf("%.6f", pv), 14))
+}
+P_("")
+P_("--- 1C: chegara atrofida p ning ishorasi qanday almashadi ---")
+P_("%s%s%s%s", padl("mu_0", 12), padl("t", 12), padl("p", 12),
+   padl("qaror", 16))
+for (d in c(-0.004, -0.002, 0, 0.002, 0.004)) {
+  mu0 <- lo1 + d; tt <- (xb1 - mu0) / se1; pv <- p_t2(tt, n1 - 1)
+  P_("%s%s%s%s", padl(sprintf("%.6f", mu0), 12),
+     padl(sprintf("%+.6f", tt), 12), padl(sprintf("%.6f", pv), 12),
+     padl(if (pv < 0.05) "RAD ETILADI" else "rad etilmaydi", 16))
+}
+P_("")
+P_("Yaxlitlangan chegara bilan ehtiyot boʻling:")
+P_("  mu_0 = 4.460000 (yaxlitlangan) -> p = %.6f -> %s",
+   p_t2((xb1 - 4.46) / se1, n1 - 1),
+   if (p_t2((xb1 - 4.46) / se1, n1 - 1) < 0.05) "RAD ETILADI" else "rad etilmaydi")
+P_("  mu_0 = %.6f (aniq)         -> p = %.6f -> CHEGARA",
+   lo1, p_t2((xb1 - lo1) / se1, n1 - 1))
+P_("Chegara CHEKSIZ nozik: 0,0001 t/ga farq qarorni almashtiradi.")
+P_("Bu -- 'p = 0,049 va p = 0,051 tubdan farq qiladi' xatosining ildizi.")
+```
+
+**Talqin.** Yozma javob bering:
+
+1. Chegaradagi $p$ nima uchun **aynan** $0{,}050000$ chiqdi? Buni
+   $t$ ning taʼrifidan bir qatorda koʻrsating.
+2. 1B jadvalida uchta $\alpha$ uchun ham koʻprik ishladi. Bu qoida
+   $t$-taqsimotning **qaysi xossasiga** tayanadi?
+3. 1C dagi $0{,}0001$ t/ga farq qarorni oʻzgartirdi. «$p=0{,}049$
+   kashfiyot, $p=0{,}051$ muvaffaqiyatsizlik» degan amaliyot haqida
+   bundan nima kelib chiqadi?
+4. $\mu_0=4{,}635$ da $p=1{,}000000$. Bu «$H_0$ isbotlandi» degani
+   emas — nima uchun? Javobingizda **quvvat** soʻzini ishlating
+   (4-topshiriqdan keyin qaytib keling).
+5. **Halollik.** Bu vaqt qatori edi. Bogʻliqsizlik buzilgani $p$ ga
+   qaysi tomonga taʼsir qiladi deb oʻylaysiz?
+
+**Qaror.** Hamkasbingiz «men ishonch oraligʻini hisobladim, endi
+alohida test ham oʻtkazishim kerak» deydi. Unga **bir jumlada** javob
+bering va javobingizni yuqoridagi jadvalning qaysi satri bilan
+asoslaysiz — koʻrsating.
+
+---
+
+# 2-topshiriq. Nol taqsimotini qurish va $p$ ni sanash {#t2}
+
+> **Blum:** Tahlil · **Qiyinlik:** 4 (Analitik) · **Ball:** 18 ·
+> **Vaqt:** 16 daqiqa
+
+**Statistik tushuncha.** $p$-qiymat — bu **formula emas, taʼrif**:
+
+$$p=\Prob\bigl(\text{shunday yoki keskinroq maʼlumot}\mid H_0\bigr).$$
+
+Taʼrifda «hisoblash» degan soʻz yoʻq — «ehtimollik» bor. Ehtimollikni
+esa **sanash** mumkin: $H_0$ toʻgʻri boʻlgan dunyoni koʻp marta
+yaratamiz va kuzatilganidek keskin natijalar necha marta chiqqanini
+sanaymiz. Formulalar keyin keladi — va ular shu sanoqqa **yaqinlashish**
+uchun mavjud.
+
+**Savol.** Kinolarning $40\,\%$ i PG-13 mi?
+$H_0: p=0{,}40$, $H_1: p\ne0{,}40$. 9-haftadagi tanlanma: $n=100$,
+kuzatilgan PG-13 soni $=34$, $\phat=0{,}34$.
+
+**Maʼlumot.** Bosh toʻplamda 2 467 film bor, ammo **9 tasida reyting
+yoʻq**. Bu 9 ta filmni jimgina «PG-13 emas» deb hisoblash — xato
+emas, *tanlov*; ammo u **oshkora aytilishi** shart.
+
+**Kod.**
+
+```{r t2a}
+# --- 2A: yoʻq qiymatlar. MAXRAJNI OSHKORA EʼLON QILAMIZ ---------------
+# R da  NA == "PG-13"  ->  NA,  va yigʻindi jimgina NA ga aylanadi.
+# Python (pandas) da  NaN == "PG-13"  ->  False, yaʼni «PG-13 emas».
+# IKKI TIL IKKI XIL JAVOB BERADI. Yechim: NA ni OSHKORA boshqarish.
+yoq  <- is.na(kino$reyting)
+pg13 <- as.integer(!yoq & kino$reyting == "PG-13")
+
+P_("=== 2-TOPSHIRIQ (A): MAXRAJNI TANLASH ===")
+P_("jami film = %d · reytingi yoʻq (NA) = %d · reytingi bor = %d",
+   length(yoq), sum(yoq), sum(!yoq))
+P_("PG-13 soni = %d", sum(pg13))
+P_("p (barcha filmlar,   maxraj %d) = %.6f", length(yoq), sum(pg13) / length(yoq))
+P_("p (reytingi borlar,  maxraj %d) = %.6f", sum(!yoq), sum(pg13) / sum(!yoq))
+P_("farq = %.6f -- kichik, AMMO uni JIM oʻtkazib yuborish mumkin emas.",
+   sum(pg13) / sum(!yoq) - sum(pg13) / length(yoq))
+P_("Bugungi testda bu son ISHLATILMAYDI: H_0 ni maʼlumotdan OLMAYMIZ.")
+P_("H_0: p = 0,40 -- bu tashqi daʼvo (masalan prodyuserlar uyushmasi).")
+```
+
+```{r t2}
+# --- 2B: NOL TAQSIMOTINI QURAMIZ (hech qanday formula yoʻq) -----------
+# 1-qadam: H_0 toʻgʻri deb faraz qilamiz -> har bir kino 0,40
+#          ehtimollik bilan PG-13.
+# 2-qadam: 100 ta kinoni shu qoida bilan «yaratamiz».
+# 3-qadam: buni 20 000 marta takrorlaymiz -> NOL TAQSIMOTI.
+# 4-qadam: kuzatilganidek yoki keskinroq natijalarni SANAYMIZ.
+p0 <- 0.40; nobs <- 100; xobs <- 34; phat <- xobs / nobs
+M  <- 20000
+g  <- minstd(20261001)
+sim <- rowSums(matrix(g(M * nobs) < p0, nrow = M, byrow = TRUE))
+
+dobs <- abs(xobs - nobs * p0)          # kuzatilgan chetlashish
+keskin <- abs(sim - nobs * p0) >= dobs # «shunday yoki keskinroq»
+
+P_("")
+P_("=== 2-TOPSHIRIQ (B): NOL TAQSIMOTI -- SIMULYATSIYA ===")
+P_("generator MINSTD, urugʻ 20261001, M = %d takror", M)
+P_("nol taqsimotining oʻrtachasi = %.4f   (nazariy n*p_0 = %.1f)",
+   mean(sim), nobs * p0)
+P_("nol taqsimotining SD si      = %.4f   (nazariy sqrt(n p(1-p)) = %.4f)",
+   sdS(sim), sqrt(nobs * p0 * (1 - p0)))
+P_("kuzatilgan chetlashish |%d - %.0f| = %.0f", xobs, nobs * p0, dobs)
+P_("«shunday yoki keskinroq» degani: X <= %.0f  YOKI  X >= %.0f",
+   nobs * p0 - dobs, nobs * p0 + dobs)
+P_("shunday natijalar soni = %d (jami %d dan)", sum(keskin), M)
+P_("p-QIYMAT (simulyatsiya) = %d/%d = %.6f", sum(keskin), M, mean(keskin))
+P_("")
+P_("Nol taqsimotining dumi (har bir qiymat necha marta chiqdi):")
+P_("%s%s%s%s", padl("X", 6), padl("chastota", 11), padl("ulush", 11),
+   padl("keskinmi?", 12))
+for (v in c(30, 32, 34, 36, 40, 44, 46, 48)) {
+  P_("%s%s%s%s", padl(sprintf("%d", v), 6),
+     padl(sprintf("%d", sum(sim == v)), 11),
+     padl(sprintf("%.5f", mean(sim == v)), 11),
+     padl(ha(abs(v - nobs * p0) >= dobs), 12))
+}
+```
+
+```{r t2fig}
+# --- Nol taqsimoti va keskin soha (Okabe–Ito, ASCII yorliqlar) --------
+dfh <- data.frame(x = sim, keskin = ifelse(keskin, "as-or-more extreme",
+                                           "not extreme"))
+print(
+  ggplot(dfh, aes(x = x, fill = keskin)) +
+    geom_bar(width = 0.9) +
+    scale_fill_manual(values = c("as-or-more extreme" = oiVerm,
+                                 "not extreme" = oiGrey), name = NULL) +
+    geom_vline(xintercept = xobs, linetype = "dashed",
+               colour = oiBlue, linewidth = 0.8) +
+    annotate("text", x = xobs - 1, y = Inf, label = "observed = 34",
+             hjust = 1, vjust = 1.6, colour = oiBlue, size = 3.2) +
+    labs(title = "Null distribution: 20000 simulated samples, n = 100, p0 = 0.40",
+         subtitle = "MINSTD generator, seed 20261001 - simulated, not real data",
+         x = "number of PG-13 films under H0", y = "frequency",
+         caption = "STAT201 W10 lab, exercise 2")
+)
+```
+
+```{r t2b}
+# --- 2C: AYNI SAVOL, TOʻRT USUL --------------------------------------
+pv_sim <- mean(keskin)
+# (2) Aniq binomial
+pv_ex  <- pbinom(xobs, nobs, p0) + (1 - pbinom(nobs * p0 + dobs - 1, nobs, p0))
+# (3) z-test. DIQQAT: maxrajda p_0, phat EMAS.
+se0    <- sqrt(p0 * (1 - p0) / nobs)
+z0     <- (phat - p0) / se0
+pv_z   <- p_z2(z0)
+# (3b) z-test + uzluksizlik tuzatmasi (7-hafta)
+zc     <- (phat + 0.5 / nobs - p0) / se0
+pv_zc  <- p_z2(zc)
+
+P_("")
+P_("=== 2-TOPSHIRIQ (C): AYNI SAVOL, TOʻRT USUL ===")
+P_("shart tekshiruvi: n*p_0 = %.1f >= 10 va n(1-p_0) = %.1f >= 10 -> %s",
+   nobs * p0, nobs * (1 - p0), ha(nobs * p0 >= 10 && nobs * (1 - p0) >= 10))
+P_("SE_0 = sqrt(0,40*0,60/100) = %.6f   (p_0 dan! phat dan EMAS)", se0)
+P_("z    = (%.4f - %.2f)/%.6f = %.6f", phat, p0, se0, z0)
+P_("z_tuzatilgan = (%.4f + %.3f - %.2f)/%.6f = %.6f",
+   phat, 0.5 / nobs, p0, se0, zc)
+P_("")
+P_("%s%s%s", pad("usul", 30), padl("p-qiymat", 12),
+   padl("aniqdan farq foizi", 22))
+P_("%s%s%s", pad("simulyatsiya (20 000)", 30), padl(sprintf("%.6f", pv_sim), 12),
+   padl(sprintf("%+.2f", (pv_sim - pv_ex) / pv_ex * 100), 22))
+P_("%s%s%s", pad("aniq binomial", 30), padl(sprintf("%.6f", pv_ex), 12),
+   padl("--", 22))
+P_("%s%s%s", pad("z-test (tuzatmasiz)", 30), padl(sprintf("%.6f", pv_z), 12),
+   padl(sprintf("%+.2f", (pv_z - pv_ex) / pv_ex * 100), 22))
+P_("%s%s%s", pad("z-test + uzluksizlik tuzatmasi", 30),
+   padl(sprintf("%.6f", pv_zc), 12),
+   padl(sprintf("%+.2f", (pv_zc - pv_ex) / pv_ex * 100), 22))
+P_("")
+P_("Tuzatmasiz z-test aniq qiymatdan %.1f foiz PAST; tuzatma bilan farq %.1f foiz.",
+   abs(pv_z - pv_ex) / pv_ex * 100, abs(pv_zc - pv_ex) / pv_ex * 100)
+P_("Bu -- 7-haftadagi uzluksizlik tuzatmasining AYNAN oʻsha roli:")
+P_("X diskret, normal esa uzluksiz.")
+P_("")
+P_("--- Bir tomonlama test (agar savol 'kamroqmi?' boʻlsa) ---")
+P_("aniq:  P(X <= %d | p=0,40) = %.6f", xobs, pbinom(xobs, nobs, p0))
+P_("z ile: Phi(%.4f)          = %.6f", z0, pnorm(z0))
+P_("simul: X <= %d ulushi     = %.6f", xobs, mean(sim <= xobs))
+P_("DIQQAT: yoʻnalish maʼlumotni KOʻRISHDAN OLDIN tanlanishi shart.")
+P_("Keyin tanlash -- p-hacking (5-topshiriq).")
+P_("")
+P_("XULOSA: qaror alpha = 0,05 da -> %s",
+   if (pv_ex < 0.05) "H_0 RAD ETILADI" else "H_0 RAD ETILMAYDI")
+P_("Effekt: phat - p_0 = %+.4f (%.1f foiz nisbiy)", phat - p0,
+   (phat - p0) / p0 * 100)
+```
+
+**Talqin.**
+
+1. Simulyatsiya ($0{,}2616$) va aniq binomial ($0{,}2614$) farqi
+   nechanchi xonada? Bu farq **Monte-Karlo xatosi** bilan izohlanadimi?
+   ($\SE\approx\sqrt{p(1-p)/M}$ ni hisoblang.)
+2. Tuzatmasiz $z$-test $15{,}6\,\%$ xato qildi. Bu xato **qaysi
+   tomonga** — $p$ ni kattalashtirdimi yoki kichraytirdimi? Bu
+   xavfliroqmi yoki xavfsizroqmi?
+3. Nol taqsimotining SD si $4{,}8956$, nazariy qiymat $4{,}8990$.
+   Uchinchi xonadagi farqni nima tushuntiradi?
+4. Bir tomonlama $p$ ikki tomonlamaning taxminan yarmiga teng. Nima
+   uchun **aynan** yarmi emas?
+5. **Tuzoq.** «$p=0{,}26$ — demak $H_0$ toʻgʻri boʻlish ehtimoli
+   $26\,\%$». Bu jumlaning qayeri xato? 3-haftadagi qaysi tushuncha
+   bilan bogʻliq?
+
+**Qaror.** Sizga «$z$-test tez, simulyatsiya sekin — nega umuman
+simulyatsiya oʻrgatiladi?» degan savol berildi. Ikki sabab keltiring
+va biriga bugungi jadvaldan **son** bilan dalil bering.
+
+---
+
+# 3-topshiriq. $H_0$ ostida $p$ tekis taqsimlangan {#t3}
+
+> **Blum:** Tahlil · **Qiyinlik:** 4 (Analitik) · **Ball:** 16 ·
+> **Vaqt:** 14 daqiqa
+
+**Statistik tushuncha.** Bu — butun mavzuning kaliti va u
+**isbotlanmaydi, oʻlchanadi**. Agar $H_0$ **toʻgʻri** boʻlsa,
+$p$-qiymat $[0,1]$ da **tekis** taqsimlanadi:
+
+$$H_0 \text{ toʻgʻri} \implies P \sim \mathrm{Unif}(0,1)
+\implies \Prob(P<0{,}05)=0{,}05 .$$
+
+Demak «$p<0{,}05$ chiqdi» degan xabar $H_0$ notoʻgʻri ekanini
+**bildirmaydi**: $H_0$ toʻgʻri boʻlganda ham har $20$ testdan bittasi
+shunday chiqadi. Butun 5-topshiriq shu bitta faktdan oʻsib chiqadi.
+
+**Maʼlumot.** *Simulyatsiya qilingan* normal bosh toʻplam
+$\Norm(0,1)$; $H_0:\mu=0$ **toʻgʻri**; har bir $n$ uchun $40\,000$ ta
+$t$-test; urugʻ $20261100+n$.
+
+**Kod.**
+
+```{r t3}
+# --- 3A: H_0 TOʻGʻRI boʻlgan holda 40 000 ta test ---------------------
+mm <- 40000
+P_("=== 3-TOPSHIRIQ: H_0 OSTIDA p TEKIS TAQSIMLANGAN ===")
+P_("normal bosh toʻplam N(0,1); H_0: mu = 0 -- va u HAQIQATAN TOʻGʻRI")
+P_("mm = %d ta test har bir n uchun; generator MINSTD, urugʻ 20261100+n", mm)
+P_("")
+P_("%s%s%s%s%s", padl("n", 5), padl("P(p<0,05)", 13), padl("P(p<0,01)", 13),
+   padl("P(p<0,10)", 13), padl("Kolmogorov", 13))
+psaqla <- list()
+for (n2 in c(5, 10, 30)) {
+  g  <- minstd(20261100 + n2)
+  Z  <- matrix(minstd_norm(g, mm * n2), nrow = mm, byrow = TRUE)
+  tt <- rowMeans(Z) / (sqrt(qatorVarS(Z)) / sqrt(n2))
+  pv <- p_t2(tt, n2 - 1)
+  psaqla[[as.character(n2)]] <- pv
+  P_("%s%s%s%s%s", padl(sprintf("%d", n2), 5),
+     padl(sprintf("%.5f", mean(pv < 0.05)), 13),
+     padl(sprintf("%.5f", mean(pv < 0.01)), 13),
+     padl(sprintf("%.5f", mean(pv < 0.10)), 13),
+     padl(sprintf("%.5f", kolm(pv)), 13))
+  rm(Z, tt)
+}
+P_("kutilgan qiymatlar:      0,05000      0,01000      0,10000     -> 0")
+P_("")
+P_("n = 30 uchun 20 ta teng kenglikdagi katakcha (har birida ~2000 kutiladi):")
+pv30 <- psaqla[["30"]]
+for (blok in 0:3) {
+  s <- ""
+  for (k in 1:5) {
+    j <- blok * 5 + k
+    s <- paste0(s, padl(sprintf("%d", sum(pv30 >= (j - 1) / 20 & pv30 < j / 20)), 8))
+  }
+  P_("  [%.2f-%.2f)%s", blok * 0.25, (blok + 1) * 0.25, s)
+}
+P_("")
+P_("eng kichik katakcha = %d, eng katta = %d, oʻrtacha = %.1f",
+   min(sapply(1:20, function(j) sum(pv30 >= (j-1)/20 & pv30 < j/20))),
+   max(sapply(1:20, function(j) sum(pv30 >= (j-1)/20 & pv30 < j/20))),
+   mm / 20)
+P_("")
+P_("XULOSA: H_0 toʻgʻri boʻlsa, p hech qanday qiymatni afzal koʻrmaydi.")
+P_("Demak 'p kichik chiqdi' -- H_0 notoʻgʻri degani EMAS.")
+P_("20 tadan bittasi H_0 TOʻGʻRI boʻlganda ham 'ahamiyatli' chiqadi.")
+```
+
+```{r t3fig}
+# --- p-qiymat gistogrammalari: n = 5 va n = 30 ------------------------
+dfp <- rbind(
+  data.frame(p = psaqla[["5"]],  grp = "n = 5"),
+  data.frame(p = psaqla[["30"]], grp = "n = 30"))
+dfp$grp <- factor(dfp$grp, levels = c("n = 5", "n = 30"))
+print(
+  ggplot(dfp, aes(x = p, fill = grp)) +
+    geom_histogram(aes(y = after_stat(density)), bins = 20,
+                   colour = "white", linewidth = 0.2) +
+    geom_hline(yintercept = 1, linetype = "dashed", colour = "black",
+               linewidth = 0.7) +
+    facet_wrap(~grp) +
+    scale_fill_manual(values = c("n = 5" = oiBlue, "n = 30" = oiGreen),
+                      guide = "none") +
+    coord_cartesian(ylim = c(0, 1.4)) +
+    labs(title = "Distribution of the p-value when H0 is TRUE",
+         subtitle = "40000 t-tests per panel; dashed line = Uniform(0,1) density",
+         x = "p-value", y = "density",
+         caption = "MINSTD, seeds 20261105 / 20261130 - simulated data")
+)
+```
+
+**Talqin.**
+
+1. Uchta $n$ uchun ham $\Prob(p<0{,}05)\approx0{,}05$. Bu **nimani**
+   isbotlaydi va nimani **isbotlamaydi**?
+2. Kolmogorov masofasi $n$ bilan tizimli ravishda kamayadimi? Agar
+   yoʻq boʻlsa — nima uchun? ($40\,000$ ta kuzatuv uchun kutilgan
+   masofa $\approx1{,}36/\sqrt{40000}$ ni hisoblang.)
+3. 20 ta katakchaning eng kichigi va eng kattasi orasidagi farq
+   tasodifiy tebranish bilan izohlanadimi? (Har bir katakcha uchun
+   $\SD\approx\sqrt{mm\cdot0{,}05\cdot0{,}95}$.)
+4. Agar $H_0$ **notoʻgʻri** boʻlsa, gistogramma qanday koʻrinadi?
+   Bashoratingizni **hozir** yozib qoʻying — 4-topshiriqda
+   tekshiramiz.
+5. Bu natija «$\alpha=0{,}05$ ni tanlash» degan qarorga qanday maʼno
+   beradi? $\alpha$ — bu aslida **nima**ning nomi?
+
+**Qaror.** Jurnal muharriri sizga «faqat $p<0{,}05$ boʻlgan
+maqolalarni chop etamiz» deydi. Yuqoridagi jadvalga tayanib, bu
+siyosat adabiyotga qanday taʼsir qilishini tushuntiring. (Bu — *nashr
+siljishi*, ingliz tilida *publication bias*.)
+
+---
+
+# 4-topshiriq. I va II tur xatolari va quvvat {#t4}
+
+> **Blum:** Tahlil · **Qiyinlik:** 4 (Analitik) · **Ball:** 16 ·
+> **Vaqt:** 16 daqiqa
+
+**Statistik tushuncha.**
+
+| | $H_0$ toʻgʻri | $H_0$ notoʻgʻri |
+|---|---|---|
+| **rad etildi** | **I tur xatosi** ($\alpha$) | toʻgʻri qaror ($1-\beta$) |
+| **rad etilmadi** | toʻgʻri qaror | **II tur xatosi** ($\beta$) |
+
+$$\text{Quvvat}=1-\beta=\Prob(\text{rad etish}\mid H_0\ \text{notoʻgʻri}).$$
+
+Quvvat **uch** narsaga bogʻliq: effekt hajmi $\delta$, tanlanma hajmi
+$n$ va $\alpha$. Va u **tadqiqotdan oldin** hisoblanadi — keyin emas.
+
+$$n \ \ge\ \left(\frac{z_{1-\alpha/2}+z_{1-\beta}}{d}\right)^{2},
+\qquad d=\frac{\delta}{\sigma}\ \ (\text{Koen } d).$$
+
+**Maʼlumot.** **FARAZIY** model (haqiqiy maʼlumot emas, oʻquv
+maqsadida tuzilgan): $\sigma=12$ **maʼlum**, $H_0:\mu=100$,
+$H_1:\mu\ne100$, $\alpha=0{,}05$.
+
+**Kod.**
+
+```{r t4}
+# --- 4A: quvvat jadvali (nazariy, simulyatsiyasiz) --------------------
+# sigma MAʼLUM deb olinadi -> z-test. Quvvat formulasi:
+#   quvvat = Phi(-z_krit + d) + Phi(-z_krit - d),  d = (mu_1 - mu_0)/SE
+sg <- 12; mu0d <- 100
+quvvat <- function(mu1, n, alpha) {
+  se <- sg / sqrt(n); zk <- qnorm(1 - alpha / 2); d <- (mu1 - mu0d) / se
+  pnorm(-zk + d) + pnorm(-zk - d)
+}
+
+P_("=== 4-TOPSHIRIQ: XATOLAR VA QUVVAT ===")
+P_("FARAZIY model: sigma = 12 maʼlum, H_0: mu = 100, alpha = 0,05")
+P_("(bu sonlar oʻquv maqsadida tanlangan, rasmiy statistika EMAS)")
+P_("")
+P_("%s%s%s%s%s%s", padl("n", 6), padl("SE", 9),
+   padl("rad qilish chegarasi", 24), padl("quvvat mu=103", 15),
+   padl("quvvat mu=106", 15), padl("quvvat mu=110", 15))
+for (n2 in c(9, 16, 25, 36, 64, 100, 200)) {
+  se <- sg / sqrt(n2); kr <- Z975 * se
+  P_("%s%s%s%s%s%s", padl(sprintf("%d", n2), 6), padl(sprintf("%.4f", se), 9),
+     padl(sprintf("100 +- %.4f", kr), 24),
+     padl(sprintf("%.4f", quvvat(103, n2, 0.05)), 15),
+     padl(sprintf("%.4f", quvvat(106, n2, 0.05)), 15),
+     padl(sprintf("%.4f", quvvat(110, n2, 0.05)), 15))
+}
+P_("")
+P_("--- 80 foiz quvvatga erishish uchun kerakli n ---")
+P_("%s%s%s", padl("effekt delta", 14), padl("Koen d", 12), padl("kerakli n", 12))
+for (delta in c(2, 3, 4, 6, 8, 12)) {
+  d <- delta / sg
+  P_("%s%s%s", padl(sprintf("%.1f", delta), 14), padl(sprintf("%.4f", d), 12),
+     padl(sprintf("%d", ceiling(((Z975 + Z80) / d)^2)), 12))
+}
+P_("Effekt IKKI barobar kichraysa, n TOʻRT barobar oshadi -- sqrt(n) qonuni.")
+P_("")
+P_("--- alpha va beta OʻZARO ALMASHTIRILADI (n = 36, mu = 106) ---")
+P_("%s%s%s%s", padl("alpha", 9), padl("z_krit", 11), padl("quvvat", 11),
+   padl("beta", 11))
+for (al in c(0.10, 0.05, 0.01, 0.001)) {
+  pw <- quvvat(106, 36, al)
+  P_("%s%s%s%s", padl(sprintf("%.3f", al), 9),
+     padl(sprintf("%.4f", qnorm(1 - al / 2)), 11),
+     padl(sprintf("%.4f", pw), 11), padl(sprintf("%.4f", 1 - pw), 11))
+}
+P_("alpha ni kichraytirish I tur xatosini kamaytiradi, II turnikini OSHIRADI.")
+P_("Bepul tushadigan narsa yoʻq -- faqat n ni oshirish ikkalasini yaxshilaydi.")
+```
+
+```{r t4sim}
+# --- 4B: nazariy quvvatni SIMULYATSIYA bilan tekshiramiz --------------
+# Nazariya n=36, mu=106 uchun 0,8508 deydi. Endi shu dunyoni YARATAMIZ.
+msim <- 20000; n4 <- 36
+# (i) H_0 TOʻGʻRI boʻlgan dunyo -> I tur xatosini oʻlchaymiz
+g  <- minstd(20261037)
+Z0 <- matrix(minstd_norm(g, msim * n4), nrow = msim, byrow = TRUE)
+xb0 <- 100 + sg * rowMeans(Z0)
+z0s <- (xb0 - mu0d) / (sg / sqrt(n4))
+# (ii) H_0 NOTOʻGʻRI (haqiqiy mu = 106) -> quvvatni oʻlchaymiz
+g  <- minstd(20261036)
+Z1 <- matrix(minstd_norm(g, msim * n4), nrow = msim, byrow = TRUE)
+xb1s <- 106 + sg * rowMeans(Z1)
+z1s <- (xb1s - mu0d) / (sg / sqrt(n4))
+
+P_("")
+P_("--- 4B: nazariyani simulyatsiya bilan tekshirish (urugʻ 20261037/20261036) ---")
+P_("%d ta takror, n = %d, sigma = %.0f, alpha = 0,05", msim, n4, sg)
+P_("")
+P_("%s%s%s%s", pad("dunyo", 26), padl("rad etildi", 13),
+   padl("kuzatilgan", 13), padl("nazariy", 12))
+P_("%s%s%s%s", pad("H_0 TOʻGʻRI (mu = 100)", 26),
+   padl(sprintf("%d", sum(abs(z0s) > Z975)), 13),
+   padl(sprintf("%.4f", mean(abs(z0s) > Z975)), 13),
+   padl(sprintf("%.4f", 0.05), 12))
+P_("%s%s%s%s", pad("H_0 NOTOʻGʻRI (mu = 106)", 26),
+   padl(sprintf("%d", sum(abs(z1s) > Z975)), 13),
+   padl(sprintf("%.4f", mean(abs(z1s) > Z975)), 13),
+   padl(sprintf("%.4f", quvvat(106, n4, 0.05)), 12))
+P_("")
+P_("Birinchi satr -- I TUR XATOSI (alpha). Ikkinchi satr -- QUVVAT (1-beta).")
+P_("II tur xatosi beta = %.4f: haqiqiy farq BOR, ammo biz uni koʻra olmadik.",
+   1 - mean(abs(z1s) > Z975))
+P_("")
+P_("3-topshiriqdagi bashoratingizni tekshiramiz: H_0 NOTOʻGʻRI boʻlganda")
+P_("p-qiymat qanday taqsimlanadi?")
+pv1 <- p_z2(z1s)
+P_("%s%s%s", padl("soha", 14), padl("H_0 toʻgʻri", 14), padl("H_0 notoʻgʻri", 16))
+for (lim in c(0.01, 0.05, 0.10, 0.50)) {
+  P_("%s%s%s", padl(sprintf("p < %.2f", lim), 14),
+     padl(sprintf("%.4f", mean(p_z2(z0s) < lim)), 14),
+     padl(sprintf("%.4f", mean(pv1 < lim)), 16))
+}
+P_("H_0 toʻgʻri -> TEKIS. H_0 notoʻgʻri -> nolga QIYSHIQ. Farq shu.")
+rm(Z0, Z1)
+```
+
+```{r t4fig}
+# --- Quvvat egri chiziqlari va ikki zichlik (alpha/beta) --------------
+mus <- seq(92, 108, by = 0.1)
+dfq <- do.call(rbind, lapply(c(9, 25, 100), function(n2)
+  data.frame(mu = mus, pw = quvvat(mus, n2, 0.05),
+             n = factor(paste("n =", n2), levels = c("n = 9", "n = 25", "n = 100")))))
+print(
+  ggplot(dfq, aes(x = mu, y = pw, colour = n)) +
+    geom_line(linewidth = 0.9) +
+    geom_hline(yintercept = 0.8, linetype = "dashed", colour = "black") +
+    geom_hline(yintercept = 0.05, linetype = "dotted", colour = oiGrey) +
+    scale_colour_manual(values = c("n = 9" = oiVerm, "n = 25" = oiOrange,
+                                   "n = 100" = oiGreen), name = NULL) +
+    labs(title = "Power curves: H0 mu = 100, sigma = 12, alpha = 0.05",
+         subtitle = "dashed = conventional target 0.80; dotted = alpha",
+         x = "true mu", y = "power", caption = "hypothetical model, not real data")
+)
+
+xs  <- seq(90, 116, by = 0.05); se4 <- sg / 6; kr4 <- mu0d + Z975 * se4
+dfd <- rbind(
+  data.frame(x = xs, y = dnorm(xs, 100, se4), gr = "H0: mu = 100"),
+  data.frame(x = xs, y = dnorm(xs, 106, se4), gr = "H1: mu = 106"))
+print(
+  ggplot(dfd, aes(x = x, y = y, colour = gr)) +
+    geom_area(data = subset(dfd, gr == "H0: mu = 100" & x >= kr4),
+              fill = oiVerm, alpha = 0.35, colour = NA) +
+    geom_area(data = subset(dfd, gr == "H1: mu = 106" & x <= kr4),
+              fill = oiOrange, alpha = 0.35, colour = NA) +
+    geom_line(linewidth = 0.9) +
+    geom_vline(xintercept = kr4, linetype = "dashed", colour = "black") +
+    scale_colour_manual(values = c("H0: mu = 100" = oiBlue,
+                                   "H1: mu = 106" = oiGreen), name = NULL) +
+    annotate("text", x = 105.4, y = 0.010, label = "alpha/2", colour = oiVerm,
+             size = 3.2) +
+    annotate("text", x = 100.9, y = 0.020, label = "beta", colour = oiOrange,
+             size = 3.2) +
+    labs(title = "Type I and Type II error areas (n = 36)",
+         subtitle = sprintf("rejection boundary at %.4f", kr4),
+         x = "sample mean", y = "density",
+         caption = "hypothetical model: sigma = 12 known")
+)
+```
+
+**Talqin.**
+
+1. $n=9$ dan $n=200$ ga oʻtganda $\mu=103$ dagi quvvat qanday oʻzgardi?
+   Bu oʻsish **chiziqlimi**?
+2. Simulyatsiya nazariy $0{,}8508$ ni tasdiqladimi? Farqni Monte-Karlo
+   xatosi ($1{,}96\sqrt{pq/m}$) bilan solishtiring.
+3. $\alpha$ ni $0{,}05$ dan $0{,}001$ ga tushirsangiz quvvat qanchaga
+   tushadi? **Qaysi holatda** bunday almashtirish oqilona?
+4. 3-topshiriqdagi bashoratingiz toʻgʻri chiqdimi? $H_0$ notoʻgʻri
+   boʻlganda $p$ ning taqsimoti qanday oʻzgardi?
+5. Effekt $\delta=2$ uchun $n=283$ kerak. Agar byudjetingiz $n=100$ ga
+   yetsa, **nima qilasiz**? Uchta variantni sanang va har birining
+   narxini ayting.
+
+**Qaror.** Sizdan «$n=25$ bilan tadqiqot oʻtkazamiz, kutilayotgan
+effekt $d=0{,}25$» degan reja tasdiqlashingiz soʻraldi. Rejani
+tasdiqlaysizmi? Javobingizni **jadvaldagi son** bilan asoslang va
+muqobil taklif bering.
+
+---
+
+# 5-topshiriq. $p$-hacking laboratoriyasi {#t5}
+
+> **Blum:** Baholash · **Qiyinlik:** 5 (Ilgʻor) · **Ball:** 26 ·
+> **Vaqt:** 28 daqiqa
+
+**Statistik tushuncha.** 3-topshiriqda oʻlchadingiz: $H_0$ toʻgʻri
+boʻlsa ham har $20$ testdan bittasi «ahamiyatli» chiqadi. Bu haqiqat
+suiisteʼmol qilinishi mumkin — va u **muntazam ravishda** suiisteʼmol
+qilinadi. Bugun siz **oʻzingiz** suiisteʼmolchi boʻlasiz va zararni
+**oʻz sonlaringiz bilan** oʻlchaysiz.
+
+Uchta shakl:
+
+* **Koʻp test.** $m$ ta bogʻliqsiz test oʻtkazing, eng yaxshisini
+  eʼlon qiling: $\Prob(\text{kamida bitta } p<0{,}05)=1-0{,}95^{m}$.
+* **Toʻxtash qoidasini buzish.** Har bir yangi kuzatuvdan keyin
+  testni qaytaring, $p<0{,}05$ boʻlishi bilan toʻxtang.
+* **Kichik guruhlar boʻyicha izlash.** Umumiy test ishlamasa,
+  maʼlumotni ahamiyatsiz belgilar boʻyicha boʻlib qayta tekshiring.
+
+**Har uchala tajribada $H_0$ HAR DOIM TOʻGʻRI.** Maʼlumot — **sof
+shovqin**, $\Norm(0,1)$. Topilgan har bir «kashfiyot» — yolgʻon.
+
+**Kod.**
+
+```{r t5a}
+# --- 5A: KOʻP TEST -----------------------------------------------------
+# m ta MUSTAQIL test (har birida yangi maʼlumot), H_0 hamma joyda toʻgʻri.
+P_("=== 5-TOPSHIRIQ (A): KOʻP TEST ===")
+P_("%s%s", padl("testlar soni m", 16), padl("1 - 0,95^m", 14))
+for (mtst in c(1, 2, 5, 10, 14, 20, 50, 100))
+  P_("%s%s", padl(sprintf("%d", mtst), 16),
+     padl(sprintf("%.6f", 1 - 0.95^mtst), 14))
+P_("")
+P_("Endi buni SIMULYATSIYA bilan tekshiramiz (urugʻ 20261200).")
+P_("20 000 ta 'tadqiqot'; har birida m=20 ta test, n=30, SOF SHOVQIN.")
+g <- minstd(20261200); sims <- 20000; mtest <- 20; nn <- 30
+cnt <- 0; nsig <- integer(sims)
+for (r in seq_len(sims)) {
+  Z  <- matrix(minstd_norm(g, mtest * nn), nrow = mtest, byrow = TRUE)
+  tt <- rowMeans(Z) / (sqrt(qatorVarS(Z)) / sqrt(nn))
+  k  <- sum(p_t2(tt, nn - 1) < 0.05)
+  nsig[r] <- k
+  if (k > 0) cnt <- cnt + 1
+}
+P_("kamida bitta 'ahamiyatli' natija chiqqan tadqiqotlar: %d/%d = %.4f",
+   cnt, sims, cnt / sims)
+P_("nazariy 1 - 0,95^20 = %.4f -> MOS KELDI (testlar MUSTAQIL edi)",
+   1 - 0.95^20)
+P_("")
+P_("20 ta testdan nechtasi 'ahamiyatli' chiqdi:")
+P_("%s%s%s", padl("ahamiyatli soni", 17), padl("tadqiqotlar", 13),
+   padl("ulush", 11))
+for (k in 0:4)
+  P_("%s%s%s", padl(sprintf("%d", k), 17), padl(sprintf("%d", sum(nsig == k)), 13),
+     padl(sprintf("%.4f", mean(nsig == k)), 11))
+P_("%s%s%s", padl("5 va koʻproq", 17), padl(sprintf("%d", sum(nsig >= 5)), 13),
+   padl(sprintf("%.4f", mean(nsig >= 5)), 11))
+P_("oʻrtacha 'ahamiyatli' testlar soni = %.4f (nazariy 20*0,05 = 1,0)",
+   mean(nsig))
+```
+
+```{r t5b}
+# --- 5B: TOʻXTASH QOIDASINI BUZISH ------------------------------------
+# Tadqiqotchi n=10 dan boshlab HAR BIR yangi kuzatuvdan keyin testni
+# qaytaradi va p<0,05 boʻlishi bilan toʻxtaydi. H_0 HAR DOIM TOʻGʻRI.
+# TEZLIK QOIDASI: ichma-ich sikl OʻRNIGA kumulyativ yigʻindilar.
+P_("")
+P_("=== 5-TOPSHIRIQ (B): TOʻXTASH QOIDASINI BUZISH ===")
+P_("urugʻ 20261300; har bir chegara uchun 5 000 ta 'tadqiqotchi'")
+P_("H_0 HAR DOIM TOʻGʻRI -- topilgan har bir natija YOLGʻON")
+P_("")
+P_("%s%s%s%s", padl("n oraligʻi", 14), padl("haqiqiy I tur xatosi", 22),
+   padl("eʼlon qilingan", 16), padl("necha barobar", 15))
+g <- minstd(20261300); sims2 <- 5000
+toxtash <- NULL
+for (nmax in c(30, 50, 100, 200)) {
+  hit <- 0; qachon <- integer(0)
+  for (r in seq_len(sims2)) {
+    z   <- minstd_norm(g, nmax)
+    cs  <- cumsum(z); cs2 <- cumsum(z * z)
+    j   <- 10:nmax
+    mn  <- cs[j] / j
+    va  <- (cs2[j] - j * mn * mn) / (j - 1)
+    tt  <- mn / sqrt(va / j)
+    pv  <- p_t2(tt, j - 1)
+    if (any(pv < 0.05)) { hit <- hit + 1; qachon <- c(qachon, j[which(pv < 0.05)[1]]) }
+  }
+  if (nmax == 200) toxtash <- qachon
+  P_("%s%s%s%s", padl(sprintf("10 -> %d", nmax), 14),
+     padl(sprintf("%.4f", hit / sims2), 22), padl("0,0500", 16),
+     padl(sprintf("%.1f", hit / sims2 / 0.05), 15))
+}
+P_("")
+P_("n = 200 gacha tekshirilganda toʻxtash nuqtasi (yolgʻon 'kashfiyot' joyi):")
+P_("median n = %.1f · birinchi kvartil = %.1f · uchinchi kvartil = %.1f",
+   median(toxtash), quantile(toxtash, 0.25, names = FALSE),
+   quantile(toxtash, 0.75, names = FALSE))
+P_("n <= 30 da toʻxtaganlar ulushi = %.4f", mean(toxtash <= 30))
+P_("Yaʼni yolgʻon natijalarning deyarli yarmi n <= 30 da topiladi -- va")
+P_("tadqiqotchi 'maʼlumot yetarli boʻldi' deb toʻxtaydi. Aynan shu -- tuzoq.")
+```
+
+```{r t5c}
+# --- 5C: KICHIK GURUHLAR BOʻYICHA IZLASH ------------------------------
+# Umumiy test + 4 ta AHAMIYATSIZ belgi boʻyicha ikkiga boʻlish
+# = 1 + 8 = 9 ta test, hammasi AYNI maʼlumot ustida.
+P_("")
+P_("=== 5-TOPSHIRIQ (C): KICHIK GURUHLAR BOʻYICHA IZLASH ===")
+P_("urugʻ 20261400; 20 000 ta takror; n = 40; SOF SHOVQIN")
+P_("1 ta umumiy test + 4 ta belgi x 2 ta yarim = 9 ta test")
+g <- minstd(20261400); sims3 <- 20000
+hit3 <- 0; nsig3 <- integer(sims3)
+tU <- numeric(sims3); tA <- numeric(sims3); tB <- numeric(sims3)
+for (r in seq_len(sims3)) {
+  z   <- minstd_norm(g, 40)
+  lab <- matrix(g(4 * 40) < 0.5, nrow = 4, byrow = TRUE)
+  tv  <- mean(z) / (sdS(z) / sqrt(40)); dv <- 39
+  tU[r] <- tv
+  for (q in 1:4) for (val in c(FALSE, TRUE)) {
+    sub <- z[lab[q, ] == val]
+    if (length(sub) >= 5) {
+      tv <- c(tv, mean(sub) / (sdS(sub) / sqrt(length(sub))))
+      dv <- c(dv, length(sub) - 1)
+    }
+  }
+  ps <- p_t2(tv, dv)
+  k  <- sum(ps < 0.05); nsig3[r] <- k
+  if (k > 0) hit3 <- hit3 + 1
+  # 1-belgining ikki yarmi -- bogʻliqlikni oʻlchash uchun saqlaymiz
+  yarimA <- z[!lab[1, ]]; yarimB <- z[lab[1, ]]
+  tA[r] <- if (length(yarimA) >= 5)
+    mean(yarimA) / (sdS(yarimA) / sqrt(length(yarimA))) else NA
+  tB[r] <- if (length(yarimB) >= 5)
+    mean(yarimB) / (sdS(yarimB) / sqrt(length(yarimB))) else NA
+}
+P_("")
+P_("kamida bitta 'ahamiyatli' chiqqan takrorlar: %d/%d = %.4f",
+   hit3, sims3, hit3 / sims3)
+P_("agar 9 ta test MUSTAQIL boʻlganda: 1 - 0,95^9 = %.6f", 1 - 0.95^9)
+P_("eʼlon qilingan daraja 0,05 ga nisbatan: %.1f barobar", hit3 / sims3 / 0.05)
+P_("")
+P_("DIQQAT: simulyatsiya nazariy %.4f dan PAST chiqdi.", 1 - 0.95^9)
+P_("Bu XATO EMAS. Sababini oʻzingiz topasiz -- quyidagi ikki oʻlchov yordam beradi:")
+yaxshi <- !is.na(tA) & !is.na(tB)
+P_("  korrelyatsiya(umumiy test t, 1-belgi 1-yarim t) = %+.4f",
+   cor(tU[yaxshi], tA[yaxshi]))
+P_("  korrelyatsiya(1-belgi 1-yarim t, 1-belgi 2-yarim t) = %+.4f",
+   cor(tA[yaxshi], tB[yaxshi]))
+P_("  oʻrtacha 'ahamiyatli' testlar soni (9 tadan) = %.4f", mean(nsig3))
+P_("  agar bogʻliqsiz boʻlganda kutilar edi: 9*0,05 = 0,4500")
+```
+
+```{r t5d}
+# --- 5D: NAZORAT TAJRIBASI -- 9 ta HAQIQATAN MUSTAQIL test ------------
+# 5C dagi 9 ta test bir xil maʼlumotdan hisoblangan edi. Endi AYNI 9 ta
+# testni har biriga YANGI maʼlumot berib takrorlaymiz. Agar bogʻliqlik
+# haqiqatan sabab boʻlsa, natija 1-0,95^9 ga QAYTISHI kerak.
+P_("")
+P_("=== 5-TOPSHIRIQ (D): NAZORAT -- 9 TA MUSTAQIL TEST ===")
+P_("urugʻ 20261450; 20 000 ta takror; har bir test uchun YANGI n=40 tanlanma")
+g <- minstd(20261450); hit4 <- 0
+for (r in seq_len(20000)) {
+  Z  <- matrix(minstd_norm(g, 9 * 40), nrow = 9, byrow = TRUE)
+  tt <- rowMeans(Z) / (sqrt(qatorVarS(Z)) / sqrt(40))
+  if (any(p_t2(tt, 39) < 0.05)) hit4 <- hit4 + 1
+}
+P_("kamida bitta 'ahamiyatli': %.4f   ·   nazariy 1-0,95^9 = %.4f",
+   hit4 / 20000, 1 - 0.95^9)
+P_("MOS KELDI -> demak 5C dagi past qiymatning sababi BOGʻLIQLIK edi.")
+P_("")
+P_("=== 5-TOPSHIRIQ (E): YECHIM -- BONFERRONI VA OLDINDAN QAYD ETISH ===")
+P_("Bonferroni: har bir test uchun alpha/m ishlatilsin.")
+P_("%s%s%s", padl("m", 6), padl("alpha/m", 12), padl("umumiy I tur xatosi", 22))
+for (mtst in c(5, 10, 20, 50))
+  P_("%s%s%s", padl(sprintf("%d", mtst), 6),
+     padl(sprintf("%.6f", 0.05 / mtst), 12),
+     padl(sprintf("%.6f", 1 - (1 - 0.05 / mtst)^mtst), 22))
+P_("Bonferroni umumiy xatoni 0,05 atrofida ushlaydi (biroz konservativ).")
+P_("Batafsili -- 11-haftada (koʻp taqqoslash).")
+P_("")
+P_("AMMO Bonferroni 5B (toʻxtash) va 5C (izlash) ni TUZATMAYDI:")
+P_("u faqat testlar SONI oldindan maʼlum boʻlganda ishlaydi.")
+P_("Yagona toʻliq himoya -- OLDINDAN QAYD ETISH (preregistration):")
+P_("gipoteza, n, alpha, yoʻnalish va tahlil rejasi maʼlumot")
+P_("yigʻilishidan OLDIN yoziladi va oʻzgartirilmaydi.")
+```
+
+```{r t5fig}
+# --- Koʻp test: nazariya va uchta oʻlchangan nuqta --------------------
+ms <- 1:50
+dfm <- rbind(
+  data.frame(m = ms, y = 1 - 0.95^ms, gr = "no correction: 1 - 0.95^m"),
+  data.frame(m = ms, y = 1 - (1 - 0.05 / ms)^ms, gr = "Bonferroni"))
+dfn <- data.frame(
+  m = c(20, 9, 9),
+  y = c(cnt / sims, hit3 / sims3, hit4 / 20000),
+  lab = c("multiple testing", "subgroup fishing", "9 independent tests"))
+print(
+  ggplot(dfm, aes(x = m, y = y, colour = gr)) +
+    geom_line(linewidth = 0.9) +
+    geom_point(data = dfn, aes(x = m, y = y), inherit.aes = FALSE,
+               size = 2.6, colour = oiBlue) +
+    geom_text(data = dfn, aes(x = m, y = y, label = lab), inherit.aes = FALSE,
+              hjust = -0.08, vjust = 1.6, size = 3.0, colour = oiBlue) +
+    geom_hline(yintercept = 0.05, linetype = "dashed", colour = "black") +
+    scale_colour_manual(values = c("no correction: 1 - 0.95^m" = oiVerm,
+                                   "Bonferroni" = oiGreen), name = NULL) +
+    coord_cartesian(xlim = c(1, 52), ylim = c(0, 1)) +
+    labs(title = "How often pure noise produces a 'discovery'",
+         subtitle = "H0 true everywhere; dashed line = advertised 0.05",
+         x = "number of tests m", y = "P(at least one p < 0.05)",
+         caption = "points measured by simulation, MINSTD seeds 20261200/20261400/20261450")
+)
+```
+
+**Talqin.**
+
+1. 5A da simulyatsiya nazariy formulaga **aynan** mos tushdi
+   ($0{,}6411$ va $0{,}6415$), 5C da esa **past** chiqdi
+   ($0{,}2624$ va $0{,}3698$). Ikki oʻlchagan korrelyatsiyangizdan
+   foydalanib, **nima uchun** ekanini tushuntiring. Qaysi test qaysi
+   test bilan bogʻlangan?
+2. 5D nazorat tajribasi sizning tushuntirishingizni tasdiqladimi?
+   Agar tasdiqlagan boʻlsa — bu **qanday turdagi dalil**?
+3. Bogʻliqlik muammoni **yoʻqotdimi** yoki faqat **kichraytirdimi**?
+   $0{,}2624$ soni bu savolga qanday javob beradi?
+4. 5B da yolgʻon natijalarning yarmidan koʻpi $n\le30$ da topildi.
+   Tadqiqotchi buni «maʼlumot yetarli boʻldi» deb izohlaydi. Bu
+   izohning qayeri xato?
+5. Bonferroni 5A ni tuzatadi, 5B va 5C ni esa yoʻq. **Nima uchun?**
+   Uchala holatda «testlar soni» tushunchasi qanday farq qiladi?
+6. Yuqoridagi uchala amaliyot ham **yolgʻon** emas: har bir alohida
+   qadam qonuniy. Unda muammo **qayerda**? Javobingizda «oldindan
+   qayd etish» iborasini ishlating.
+
+**Qaror.** Siz jurnal muharririsiz. Qoʻlingizga maqola tushdi:
+$n=47$, bitta ahamiyatli natija ($p=0{,}041$), maqolada 6 ta boshqa
+oʻlchov ham eslatiladi, ammo ularning natijalari keltirilmagan.
+**Uchta aniq savol** yozing, muallifga yuboradigan. Har bir savol
+bugungi qaysi tajribadan kelib chiqqanini koʻrsating.
+
+---
+
+# 6-topshiriq. Statistik ahamiyat $\ne$ amaliy ahamiyat {#t6}
+
+> **Blum:** Baholash · **Qiyinlik:** 5 (Ilgʻor) · **Ball:** 16 ·
+> **Vaqt:** 15 daqiqa
+
+**Statistik tushuncha.** $p$-qiymat **effekt hajmini oʻlchamaydi**. U
+ikkita narsani aralashtiradi: effekt qanchalik katta va tanlanma
+qanchalik katta. Yetarlicha katta $n$ da **istalgan** noldan farq
+«ahamiyatli» boʻladi.
+
+$$t=\frac{\xbar-\mu_0}{s/\sqrt{n}}
+=\underbrace{\frac{\xbar-\mu_0}{s}}_{\text{effekt (Koen } d)}
+\cdot\underbrace{\sqrt{n}}_{\text{tanlanma hajmi}} .$$
+
+Teskari xato ham bor: kichik $n$ da **katta** effekt ham «ahamiyatsiz»
+chiqadi. «Ahamiyatli emas» degani **«farq yoʻq» emas**, «koʻra
+olmadik» degani.
+
+**Maʼlumot.** Kino byudjetlari — **haqiqiy bosh toʻplam**,
+$\mu=35{,}804977$, $\sigma=37{,}404842$ mln \$. Testni
+$H_0:\mu=34$ ga qarshi oʻtkazamiz. Biz **haqiqatni bilamiz**: farq
+$1{,}805$ mln \$ bor, ammo Koen $d=0{,}0483$ — arzimas.
+
+**Kod.**
+
+```{r t6}
+# --- 6A: bir xil effekt, ortib boruvchi n (nazariy) -------------------
+mu06 <- 34; farq <- MU - mu06; d6 <- farq / SIG
+P_("=== 6-TOPSHIRIQ: STATISTIK VA AMALIY AHAMIYAT ===")
+P_("HAQIQIY bosh toʻplam: mu = %.6f, sigma = %.6f (mln $)", MU, SIG)
+P_("H_0: mu = %.0f. HAQIQIY farq = %.4f mln $. Koen d = %.4f (juda kichik).",
+   mu06, farq, d6)
+P_("Effekt HECH QACHON oʻzgarmaydi -- faqat n oshadi.")
+P_("")
+P_("%s%s%s%s%s%s", padl("n", 7), padl("SE", 10), padl("kutilgan z", 13),
+   padl("kutilgan p", 14), padl("quvvat", 10), padl("xulosa", 18))
+for (n2 in c(30, 100, 400, 1000, 2000)) {
+  se <- SIG / sqrt(n2); tt <- farq / se
+  pv <- p_z2(tt)
+  pw <- pnorm(-Z975 + abs(tt)) + pnorm(-Z975 - abs(tt))
+  P_("%s%s%s%s%s%s", padl(sprintf("%d", n2), 7), padl(sprintf("%.4f", se), 10),
+     padl(sprintf("%.4f", tt), 13), padl(sprintf("%.6f", pv), 14),
+     padl(sprintf("%.4f", pw), 10),
+     padl(if (pv < 0.05) "AHAMIYATLI" else "ahamiyatli emas", 18))
+}
+P_("")
+# Qaysi n dan boshlab 'ahamiyatli' boʻladi?
+nmin <- 1
+while (p_z2(farq / (SIG / sqrt(nmin))) >= 0.05) nmin <- nmin + 1
+P_("Eng kichik n (kutilgan z bilan) 'ahamiyatli' boʻlishi uchun: n = %d", nmin)
+P_("Bu n da effekt HAMON %.4f mln $ -- standart ogʻishning %.1f foizi.",
+   farq, d6 * 100)
+P_("Hech bir prodyuser bu farq asosida qaror qabul qilmaydi.")
+P_("")
+P_("--- Teskari xato: KATTA effekt, KICHIK n (FARAZIY) ---")
+P_("faraziy holat: haqiqiy farq = 15 mln $ (Koen d = %.4f -- KATTA), n = 10",
+   15 / SIG)
+se6 <- SIG / sqrt(10); t6 <- 15 / se6
+P_("  z = %.4f, p = %.6f, quvvat = %.4f", t6, p_z2(t6),
+   pnorm(-Z975 + t6) + pnorm(-Z975 - t6))
+P_("  'Ahamiyatli emas' -- ammo bu 'farq yoʻq' degani EMAS,")
+P_("  'koʻra olmadik' degani. Quvvat atigi %.1f foiz edi.",
+   (pnorm(-Z975 + t6) + pnorm(-Z975 - t6)) * 100)
+```
+
+```{r t6sim}
+# --- 6B: nazariy quvvatni HAQIQIY bosh toʻplamda tekshirish -----------
+# Yuqoridagi 'kutilgan z' -- oʻrtacha holat. Endi haqiqatan tanlanma
+# olamiz va 'ahamiyatli' chiqqanlarini SANAYMIZ. Bu -- empirik quvvat.
+P_("")
+P_("--- 6B: empirik quvvat (haqiqiy bosh toʻplamdan tanlanma) ---")
+P_("urugʻ 20261060; har bir n uchun 2 000 ta tanlanma (qaytarish bilan)")
+P_("")
+P_("%s%s%s%s%s", padl("n", 7), padl("p<0,05 ulushi", 16),
+   padl("nazariy quvvat", 16), padl("oʻrtacha p", 13), padl("median p", 12))
+g <- minstd(20261060); reps <- 2000
+for (n2 in c(30, 100, 400, 1000, 2000)) {
+  S  <- matrix(b[indeks(g, reps * n2, Nb) + 1L], nrow = reps, byrow = TRUE)
+  xb <- rowMeans(S); ss <- sqrt(qatorVarS(S))
+  tt <- (xb - mu06) / (ss / sqrt(n2))
+  pv <- p_t2(tt, n2 - 1)
+  se <- SIG / sqrt(n2); td <- farq / se
+  P_("%s%s%s%s%s", padl(sprintf("%d", n2), 7),
+     padl(sprintf("%.4f", mean(pv < 0.05)), 16),
+     padl(sprintf("%.4f", pnorm(-Z975 + td) + pnorm(-Z975 - td)), 16),
+     padl(sprintf("%.4f", mean(pv)), 13),
+     padl(sprintf("%.4f", median(pv)), 12))
+  rm(S, xb, ss, tt, pv)
+}
+P_("")
+P_("DIQQAT: n = 2000 da ham tanlanmalarning atigi ~58 foizida p < 0,05.")
+P_("Yaʼni 'ahamiyatli' natija chiqishi ham TASODIFGA bogʻliq.")
+P_("Bitta tadqiqotning natijasi -- bitta tanlanmaning natijasi, xolos.")
+```
+
+```{r t6fig}
+# --- p va n: bir xil effekt, ortib boruvchi tanlanma ------------------
+nn6 <- c(10, 20, 30, 50, 100, 200, 400, 700, 1000, 1500, 2000, 3000, 5000)
+df6 <- data.frame(n = nn6, p = p_z2(farq / (SIG / sqrt(nn6))))
+print(
+  ggplot(df6, aes(x = n, y = p)) +
+    geom_line(colour = oiBlue, linewidth = 0.9) +
+    geom_point(colour = oiBlue, size = 2) +
+    geom_hline(yintercept = 0.05, linetype = "dashed", colour = oiVerm) +
+    annotate("text", x = 12, y = 0.09, label = "alpha = 0.05", hjust = 0,
+             colour = oiVerm, size = 3.2) +
+    scale_x_log10(breaks = c(10, 30, 100, 300, 1000, 3000)) +
+    labs(title = "Same effect (Cohen d = 0.048), growing sample size",
+         subtitle = "real population: 2467 film budgets; H0: mu = 34 mln $",
+         x = "sample size n (log scale)", y = "expected p-value",
+         caption = "The effect never changes. Only n does.")
+)
+```
+
+**Talqin.**
+
+1. $n=30$ dan $n=2000$ ga oʻtganda effekt qanchaga oʻzgardi?
+   $p$ qanchaga oʻzgardi? Ikki javobni yonma-yon yozing.
+2. 6B da $n=2000$ da ham tanlanmalarning $\approx58\,\%$ ida $p<0{,}05$
+   chiqdi. Qolgan $42\,\%$ i **qanday xato** qildi?
+3. Teskari holatda ($d=0{,}40$, $n=10$) quvvat $0{,}245$. Bunday
+   tadqiqotni **umuman oʻtkazish** kerakmi? Javobingizni
+   4-topshiriqdagi $n$ jadvali bilan bogʻlang.
+4. **Koen $d$** ni hisoblash uchun $\sigma$ kerak. Amalda $\sigma$
+   nomaʼlum. Nima qilasiz va bu qanday yangi noaniqlik keltiradi?
+5. Kimdir «$p<0{,}001$, demak effekt juda katta» deydi. Bugungi qaysi
+   satr bu daʼvoni bir zarbada rad etadi?
+
+**Qaror.** Kompaniya reklama kampaniyasini baholadi: $n=50\,000$
+foydalanuvchi, konversiya $2{,}00\,\%$ dan $2{,}06\,\%$ ga oshgan,
+$p=0{,}03$. Kampaniyani davom ettirasizmi? **Qaysi qoʻshimcha son**
+sizga kerak va nima uchun?
+
+---
+
+# 7-topshiriq. Natijani yozish: hisobot tili {#t7}
+
+> **Blum:** Yaratish · **Qiyinlik:** 5 (Ilgʻor) · **Ball:** 14 ·
+> **Vaqt:** 14 daqiqa
+
+**Statistik tushuncha.** Tahlil tugadi — endi eng koʻp xato
+qilinadigan qadam boshlanadi: **yozish**. Qatʼiy qoida:
+
+> **$p$ hech qachon yolgʻiz berilmaydi.**
+> Har doim uchtasi birga: **effekt hajmi $+$ ishonch oraligʻi $+$ $p$**,
+> aynan shu tartibda.
+
+Sabab oddiy: effekt hajmi *nima* topilganini, ishonch oraligʻi
+*qanchalik aniq* bilganimizni, $p$ esa *tasodif bilan izohlash
+qanchalik qiyin* ekanini aytadi. Uchtasidan biri yetishmasa, oʻquvchi
+qolganini notoʻgʻri oʻqiydi.
+
+**Kod.** Ikkita natijani hisobot uchun **toʻliq** tayyorlaymiz.
+
+```{r t7}
+# --- 7A: oʻrtacha uchun t-test (haqiqiy maʼlumot) ---------------------
+P_("=== 7-TOPSHIRIQ: HISOBOT UCHUN TOʻLIQ NATIJA ===")
+P_("--- 7A: bugʻdoy hosildorligi, H_0: mu = 4,40 t/ga ---")
+mu7 <- 4.40
+t7  <- (xb1 - mu7) / se1; p7 <- p_t2(t7, n1 - 1)
+d7  <- (xb1 - mu7) / s1
+flo <- (xb1 - mu7) - tc1 * se1; fhi <- (xb1 - mu7) + tc1 * se1
+P_("1. EFFEKT HAJMI")
+P_("   farq          = %+.4f t/ga  (xbar %.4f, H_0 qiymati %.2f)",
+   xb1 - mu7, xb1, mu7)
+P_("   nisbiy farq   = %+.2f foiz", (xb1 - mu7) / mu7 * 100)
+P_("   Koen d        = %.4f  (katta effekt)", d7)
+P_("2. ISHONCH ORALIGʻI")
+P_("   mu uchun 95 foizli oraliq        = [%.4f; %.4f]", lo1, hi1)
+P_("   FARQ (mu - 4,40) uchun oraliq    = [%.4f; %.4f]", flo, fhi)
+P_("   oraliq nolni oʻz ichiga oladimi? %s -> test bilan MOS", ha(flo <= 0 && 0 <= fhi))
+P_("3. TEST")
+P_("   t(%d) = %.4f,  p = %.6f,  alpha = 0,05 -> %s", n1 - 1, t7, p7,
+   if (p7 < 0.05) "H_0 RAD ETILADI" else "H_0 rad etilmaydi")
+P_("")
+P_("HISOBOT JUMLASI (shu tartibda yoziladi):")
+P_("  «2009-2018 yillarda Oʻzbekiston bugʻdoy hosildorligining oʻrtachasi")
+P_("   %.3f t/ga boʻlib, 4,40 t/ga taxminiy darajadan %.3f t/ga yuqori", xb1, xb1 - mu7)
+P_("   (95 foizli ishonch oraligʻi farq uchun [%.3f; %.3f] t/ga;", flo, fhi)
+P_("   Koen d = %.2f; bir tanlanmali t-test, t(%d) = %.2f, p = %.3f).", d7, n1 - 1, t7, p7)
+P_("   Maʼlumot vaqt qatori boʻlgani uchun kuzatuvlar bogʻliqsiz emas;")
+P_("   natija ehtiyotkorlik bilan talqin qilinishi kerak.»")
+P_("")
+# --- 7B: ulush uchun z-test -------------------------------------------
+P_("--- 7B: ulush, H_0: p = 0,40 (2-topshiriqdagi natija) ---")
+selo <- sqrt(phat * (1 - phat) / nobs)          # ORALIQ uchun: phat dan!
+wlo  <- phat - Z975 * selo; whi <- phat + Z975 * selo
+P_("1. EFFEKT HAJMI")
+P_("   phat - p_0 = %+.4f  (%.4f va %.2f)", phat - p0, phat, p0)
+P_("   nisbiy     = %+.1f foiz", (phat - p0) / p0 * 100)
+P_("2. ISHONCH ORALIGʻI (Wald, SE phat dan)")
+P_("   SE_oraliq = sqrt(phat(1-phat)/n) = %.6f", selo)
+P_("   95 foizli oraliq = [%.6f; %.6f]", wlo, whi)
+P_("   p_0 = 0,40 oraliq %s -> test bilan MOS",
+   if (wlo <= p0 && p0 <= whi) "ICHIDA" else "TASHQARISIDA")
+P_("3. TEST (SE p_0 dan!)")
+P_("   SE_test = sqrt(p_0(1-p_0)/n) = %.6f", se0)
+P_("   z = %.4f,  p (aniq binomial) = %.6f -> %s", z0, pv_ex,
+   if (pv_ex < 0.05) "RAD ETILADI" else "rad etilmaydi")
+P_("")
+P_("DIQQAT -- haftaning eng koʻp uchraydigan TEXNIK xatosi:")
+P_("   ORALIQDA SE phat dan (%.6f), TESTDA esa p_0 dan (%.6f).", selo, se0)
+P_("   Ikkisi %.1f foizga farq qiladi. Ularni almashtirmang.",
+   abs(selo - se0) / se0 * 100)
+P_("")
+P_("HISOBOT JUMLASI:")
+P_("  «100 ta filmdan 34 tasi PG-13 reytingiga ega boʻldi (%.1f foiz;", phat * 100)
+P_("   95 foizli ishonch oraligʻi [%.1f foiz; %.1f foiz]).", wlo * 100, whi * 100)
+P_("   Bu ulush 40 foiz degan farazdan statistik jihatdan ajralib")
+P_("   turmaydi (aniq binomial test, p = %.3f).»", pv_ex)
+```
+
+**Talqin va yaratish.**
+
+1. Yuqoridagi ikki hisobot jumlasida **uchta** element ham bormi?
+   Har birini belgilab koʻrsating.
+2. 7B da $\SE$ ning ikki xil qiymati ishlatildi. **Bir jumlada**
+   nima uchun ekanini tushuntiring.
+3. **Tuzatish mashqi.** Quyidagi beshta jumla — haqiqiy maqolalarda
+   uchraydigan uslubda yozilgan. Har birining **xatosini nomlang** va
+   **tuzatilgan variantini** yozing:
+
+   * (a) «Natija statistik jihatdan ahamiyatli ($p<0{,}05$), demak
+     yangi usul samarali.»
+   * (b) «$p=0{,}06$ boʻlgani uchun guruhlar orasida farq yoʻq.»
+   * (c) «$p=0{,}001$ — bu effekt juda kuchli ekanini koʻrsatadi.»
+   * (d) «$p=0{,}03$, yaʼni natija tasodifiy boʻlish ehtimoli
+     $3\,\%$.»
+   * (e) «Tahlil davomida bir necha koʻrsatkich sinaldi va ulardan
+     biri ahamiyatli chiqdi ($p=0{,}04$).»
+
+4. **Yozing.** 6-topshiriqdagi $n=2000$ holati uchun (haqiqiy
+   maʼlumot, $d=0{,}048$) toʻliq hisobot jumlasini oʻzingiz yozing.
+   Jumlangizda **amaliy ahamiyat** haqidagi bahoni ham bering.
+5. Bir jurnalist sizdan «bir jumlada, oddiy til bilan» xulosa
+   soʻradi. $p$ soʻzini **ishlatmasdan** 7A natijasini yozing.
+
+**Qaror.** Rahbaringiz hisobotdan ishonch oraligʻini olib tashlashni
+soʻradi: «juda texnik koʻrinadi». Nima deb javob berasiz? Bugungi
+qaysi son sizning dalilingiz boʻladi?
+
+---
+
+# 8-topshiriq (bonus, uyda). AI yordamida: $p$-qiymat talqinidagi xatoni topish {#t8}
+
+> **Blum:** Yaratish · **Qiyinlik:** 6 (Tadqiqotga yoʻnaltirilgan) ·
+> **Ball:** $+5$
+
+**Maqsad.** $p$-qiymat — statistikadagi **eng koʻp notoʻgʻri
+tushuniladigan** tushuncha, va til modellari bu xatolarni
+*muntazam ravishda* takrorlaydi, chunki ular internetdagi matnlardan
+oʻrgangan. Bugun siz ularni tanib olishni oʻrgandingiz — endi buni
+sinaymiz. **Bu topshiriqda AI — tekshiruv obyekti, hammuallif emas.**
+
+**Bosqichlar.**
+
+1. Ixtiyoriy AI vositasiga **aynan shu** soʻrovni bering:
+
+   > «Bir tadqiqotda ikki guruh solishtirildi va $p=0{,}03$ chiqdi.
+   > Buni oddiy til bilan, bir xatboshida tushuntir. Natija qanchalik
+   > ishonchli?»
+
+2. Javobni **oʻzgartirmasdan** hisobotingizga qoʻying (skrinshot yoki
+   matn).
+3. Quyidagi tekshiruv jadvalini toʻldiring.
+4. **Kod bilan tekshiring.** Agar AI son keltirgan boʻlsa, uni
+   hisoblang. Xususan: Sellke–Bayarri–Berger chegarasi boʻyicha
+   $p=0{,}03$ da $H_0$ ning toʻgʻri boʻlish ehtimoli **kamida**
+   $0{,}2224$ (dastlabki ehtimollik $0{,}5$ boʻlganda) — yaʼni
+   $3\,\%$ emas, $22\,\%$ dan yuqori.
+5. AI ga **ikkinchi** soʻrov bering: topilgan xatoni koʻrsating va
+   tuzatishni soʻrang. Tuzatilgan javob toʻgʻri boʻldimi?
+6. Bir sahifalik xulosa: AI **hisob** xatosi qildimi yoki **talqin**
+   xatosi? Nima uchun bu farq muhim?
+
+| # | Tekshiruv | AI javobida | Toʻgʻrimi |
+|---|---|---|---|
+| 1 | «$H_0$ toʻgʻri boʻlish ehtimoli $3\,\%$» deyildimi | | |
+| 2 | «Natija tasodifiy boʻlish ehtimoli $3\,\%$» deyildimi | | |
+| 3 | «$97\,\%$ ishonch» yoki shunga oʻxshash ibora bormi | | |
+| 4 | Effekt hajmi soʻralganmi yoki eslatilganmi | | |
+| 5 | Ishonch oraligʻi soʻralganmi | | |
+| 6 | «Ahamiyatli» va «muhim» ajratilganmi | | |
+| 7 | Necha ta test oʻtkazilgani soʻralganmi | | |
+| 8 | $n$ va farazlar (bogʻliqsizlik, normallik) soʻralganmi | | |
+
+> **Kutilayotgan natija (oʻqituvchining tajribasidan).** Til
+> modellari deyarli har doim «$p=0{,}03$ — natijaning tasodifiy
+> boʻlish ehtimoli $3\,\%$» yoki «$97\,\%$ ishonch bilan» degan
+> jumlani yozadi. Ikkalasi ham **notoʻgʻri**: birinchisi shartli
+> ehtimollikni teskari oʻqiydi (3-haftadagi prokuror xatosi),
+> ikkinchisi $1-p$ ni ishonch darajasi deb talqin qiladi. Effekt
+> hajmi va ishonch oraligʻi deyarli hech qachon soʻralmaydi. Necha
+> ta test oʻtkazilgani esa **hech qachon** soʻralmaydi — holbuki
+> 5-topshiriq shuni koʻrsatdiki, bu **eng muhim** savol.
+
+**AI dan qonuniy foydalanish (bu haftada):** kod xatosini topish;
+funksiya hujjatini tushuntirish; oʻz yozgan hisobot jumlangizni
+tahrirlash; muqobil yondashuvni soʻrash; AI javobini **tanqid
+qilish**. **Mumkin emas:** talqin va qaror bosqichlarini AI ga
+yozdirish — aynan shu qism baholanadi.
+
+---
+
+# Yakuniy eslatma
+
+Bugun siz nol taqsimotini qurdingiz, $p$ ni sanadingiz, uning $H_0$
+ostida tekis taqsimlanganini oʻlchadingiz va shu bitta faktdan uchta
+suiisteʼmol shakli oʻsib chiqishini koʻrdingiz. Eng muhim uchta son:
+
+* **$0{,}050000$** — oraliqning chegarasidagi $p$. Test va oraliq —
+  ayni bir narsa.
+* **$0{,}6411$** — $20$ ta testda sof shovqindan «kashfiyot» topish
+  ehtimolligi.
+* **$0{,}2624$** — bitta maʼlumot toʻplamini $9$ marta tekshirishning
+  narxi.
+
+11-haftada tanlanma **ikkita** boʻladi: ikki guruh farqi, juftlashgan
+kuzatuvlar va kategorik maʼlumot uchun $\chi^{2}$. Koʻp taqqoslash
+muammosi ham oʻsha yerda toʻliq hal qilinadi.
+
+**Manbalar.** Çetinkaya-Rundel & Hardin, *Introduction to Modern
+Statistics* (2-nashr), 11-bob va 17–19-boblar · Newbold, Carlson &
+Thorne, *Statistics for Business and Economics*, 9-bob · Heumann,
+Schomaker & Shalabh, *Introduction to Statistics and Data Analysis*,
+10-bob · Wasserstein, R. & Lazar, N. (2016), *The ASA statement on
+p-values*, The American Statistician 70(2), 129–133 · Greenland, S.
+et al. (2016), *Statistical tests, P values, confidence intervals,
+and power: a guide to misinterpretations*, European Journal of
+Epidemiology 31, 337–350 · Simmons, J., Nelson, L. & Simonsohn, U.
+(2011), *False-positive psychology*, Psychological Science 22(11),
+1359–1366 · Sellke, T., Bayarri, M. & Berger, J. (2001),
+*Calibration of p values for testing precise null hypotheses*, The
+American Statistician 55(1), 62–71 · Ioannidis, J. (2005), *Why most
+published research findings are false*, PLoS Medicine 2(8), e124 ·
+Lehmer, D. H. (1951) — MINSTD.
+**Maʼlumot:** FAOSTAT / Our World in Data (Markaziy Osiyo
+hosildorligi, 1992–2018) · *The Numbers* / Kaggle «movie industry»
+(2 467 ta film byudjeti, 2000–2018; 2 458 tasida reyting bor).

@@ -1,0 +1,38 @@
+STAT201 · 10-HAFTA · TALABA PAKETI
+Gipotezalarni tekshirish I: nol taqsimotini qurish, p-qiymat, quvvat va p-hacking
+Toshkent Xalqaro Universiteti · Iqtisodiyot fakulteti · 2026/2027
+
+UCHTA QOIDA
+1. ZIP ni TOʻLIQ oching (Extract All) — fayllarni ZIP ichidan alohida ochmang.
+   Laboratoriya kodi «data» papkasini oʻzi yonida kutadi.
+2. CSV fayllarni Excel da OCHMANG. Ochsangiz — SAQLAMANG. Excel oʻzbekcha «ʻ»
+   belgisini buzadi va kod jimgina notoʻgʻri natija beradi.
+3. .Rmd faylni faqat RStudio da oching (File > Open File). Ochgach:
+   Session > Set Working Directory > To Source File Location.
+
+PAKET TARKIBI
+  W10-slaydlar.pdf                           — maʼruza slaydlari
+  W10-talaba-tarqatmasi.pdf                  — talaba tarqatmasi (asosiy konspekt)
+  W10-oqish-royxati.pdf                      — oʻqish roʻyxati
+  W10-keys.pdf                               — keys-stadi (talaba nusxasi)
+  W10-individual-topshiriq.pdf               — individual topshiriq + rubrika
+  W10-guruh-topshirigi.pdf                   — guruh topshirigʻi
+  W10-uy-vazifasi.pdf                        — uy vazifasi
+  W10-refleksiya.pdf                         — refleksiya mashqi
+  W10-si-topshiriqlari.pdf                   — sunʼiy intellekt bilan ishlash topshiriqlari
+  W10-loyiha-9-bosqich.pdf                   — semestr loyihasi, 9-bosqich
+  W10-muddatlar.pdf                          — muddatlar jadvali
+  laboratoriya/
+     W10-lab.pdf              — laboratoriya topshiriqlari (bosma)
+     W10-lab-R.Rmd            — R daftari (RStudio)
+     W10-lab-Python.ipynb     — Python varianti (ixtiyoriy, bir xil natija)
+     data/                    — ikkala maʼlumot toʻplami
+
+LABORATORIYADAN KEYIN TOPSHIRILADI
+  RStudio da Knit tugmasi → hosil boʻlgan W10-lab-R.html fayli.
+  Fayl nomi:  W10-Familiya-Ism.html   (kanalda eʼlon qilingan tartibda).
+  Har topshiriqning «Qaror» boʻlimi oʻz soʻzingiz bilan toʻldirilgan boʻlishi shart —
+  faqat kod ishga tushirilgan daftar «bajarilmagan» hisoblanadi.
+
+Bu paketdagi hujjatlar talaba nusxasi: oʻqituvchi uchun yechim va kalit boʻlimlari
+olib tashlangan. Kalitlar dars muhokamasidan keyin alohida eʼlon qilinadi.
